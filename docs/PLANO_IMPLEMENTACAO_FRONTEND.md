@@ -9,10 +9,10 @@ Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo 
 **Objetivo:** Preparar o esqueleto da aplicação React, ferramentas de build e configuração PWA base, sem ainda implementar telas de negócio.
 
 **Escopo:**
-- Inicializar projeto com Vite (`react-ts` ou `react`, conforme decisão de tipagem) + Tailwind CSS + Framer Motion.
+- Inicializar projeto com Vite (template `react-ts`) + Tailwind CSS + Framer Motion. Decisões de stack fixadas no [CLAUDE.md](../CLAUDE.md), Secção 1.
 - Configurar `vite-plugin-pwa` com manifest (nome, ícones, cores, `display: standalone`) e estratégias de cache base (Secção 6 do TRD): Stale-While-Revalidate para o shell, Network-First para chamadas à API.
 - Estrutura de pastas (`src/pages`, `src/components`, `src/hooks`, `src/services`, `src/lib`, `src/store`).
-- Configurar cliente HTTP para a API (ex. `axios`/`fetch` wrapper) apontando para variável de ambiente (`VITE_API_URL`).
+- Configurar cliente HTTP (axios) apontando para `VITE_API_URL`, com interceptor que injeta o JWT e desempacota o envelope `{ success, data, error }` da API.
 - Configurar cliente Supabase Auth no frontend (`@supabase/supabase-js`) para login/registo.
 - Configurar deploy no Vercel (preview deployments por PR + produção a partir de `main`).
 - Linting/formatação (ESLint + Prettier) e scripts (`dev`, `build`, `preview`).
@@ -37,7 +37,7 @@ Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo 
   - Fallback manual: dropdowns encadeados Província → Distrito/Município → Bairro.
 - Gestão de sessão (guardar/renovar JWT do Supabase, logout).
 - Rotas protegidas no router (redireciona para login se não autenticado; redireciona por `role` quando aplicável).
-- Estado global de autenticação (Context API, Zustand ou equivalente).
+- Estado global de autenticação via Context API (sessão e `role`). Dados vindos da API ficam no TanStack Query, não em Context.
 
 **Critérios de Entrega:**
 - [ ] Fluxo de registo → login → sessão persistida entre reloads funciona de ponta a ponta contra o backend real (ambiente de staging).
@@ -56,7 +56,7 @@ Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo 
 - Scroll infinito ou paginação (consumindo `LIMIT`/`OFFSET` da API).
 - Filtro por raio de busca (slider ou seleção pré-definida: 1km/5km/10km/50km).
 - Estado de carregamento, vazio ("nenhum profissional encontrado nesta área") e erro (falha de rede/permissão de localização).
-- Cache local (React Query/SWR ou equivalente) para evitar refetch desnecessário ao navegar entre telas.
+- Cache e scroll infinito via TanStack Query (`useInfiniteQuery`), evitando refetch desnecessário ao navegar entre telas.
 
 **Critérios de Entrega:**
 - [ ] Listagem exibe profissionais reais do backend de staging, ordenados corretamente por proximidade.
@@ -75,7 +75,7 @@ Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo 
 - Tela do `CLIENT`: lista dos seus pedidos com estado atual e ação de cancelar (quando aplicável).
 - Tela do `PROFESSIONAL`: lista de pedidos `OPEN` próximos (reutilizando componente de proximidade da Fase 2) com ação "Aceitar pedido".
 - Tratamento explícito de conflito de atribuição: se dois profissionais tentarem aceitar o mesmo pedido, o segundo deve receber feedback claro (ex. "Este pedido já foi atribuído") em vez de erro genérico — reflete o teste de concorrência da Fase 3 do backend.
-- Ação de marcar pedido como concluído (`PROFESSIONAL` ou `CLIENT`, conforme regra de negócio a confirmar).
+- Ação de marcar pedido como concluído. **⚠️ Decisão de produto pendente:** quem pode concluir — o `PROFESSIONAL`, o `CLIENT`, ou ambos (ex. confirmação dupla)? Nem o TRD nem o PRD definem isto, e a escolha afeta o backend (transições de estado permitidas) e a UI. Resolver antes de iniciar esta fase.
 - Notificações in-app (toast) para mudanças de estado.
 
 **Critérios de Entrega:**
