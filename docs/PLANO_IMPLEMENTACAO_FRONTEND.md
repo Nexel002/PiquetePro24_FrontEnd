@@ -18,11 +18,11 @@ Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo 
 - Linting/formatação (ESLint + Prettier) e scripts (`dev`, `build`, `preview`).
 
 **Critérios de Entrega:**
-- [ ] `npm run dev` inicia a aplicação localmente sem erros.
-- [ ] PWA instalável (manifest válido, ícones presentes) — validado via Lighthouse PWA audit.
-- [ ] Deploy "hello world" bem-sucedido na Vercel, com preview automático em PRs.
-- [ ] Variáveis de ambiente documentadas em `.env.example`, segredos fora do controlo de versão.
-- [ ] CI executa lint/build em cada push/PR.
+- [x] `npm run dev` inicia a aplicação localmente sem erros.
+- [ ] PWA instalável (manifest válido, ícones presentes) — validado via Lighthouse PWA audit. **Pendente:** manifest usa `favicon.svg` (placeholder do template Vite) como ícone único; faltam PNGs 192x192/512x512 (e maskable) antes de correr o audit — ver TODO em `vite.config.ts`.
+- [ ] Deploy "hello world" bem-sucedido na Vercel, com preview automático em PRs. **Em curso:** projeto Vercel já criado; primeira tentativa falhou por o repositório ainda não ter `package.json` (framework não detectado). Deve resolver-se automaticamente no próximo deploy, agora que o esqueleto Vite existe — confirmar após merge desta branch.
+- [x] Variáveis de ambiente documentadas em `.env.example`, segredos reais fora do controlo de versão (`.gitignore` cobre `.env`/`.env.local`/`.env.*.local`).
+- [x] CI executa lint/build em cada push/PR (`.github/workflows/ci.yml`, mesmo padrão do backend).
 
 ---
 
@@ -75,7 +75,8 @@ Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo 
 - Tela do `CLIENT`: lista dos seus pedidos com estado atual e ação de cancelar (quando aplicável).
 - Tela do `PROFESSIONAL`: lista de pedidos `OPEN` próximos (reutilizando componente de proximidade da Fase 2) com ação "Aceitar pedido".
 - Tratamento explícito de conflito de atribuição: se dois profissionais tentarem aceitar o mesmo pedido, o segundo deve receber feedback claro (ex. "Este pedido já foi atribuído") em vez de erro genérico — reflete o teste de concorrência da Fase 3 do backend.
-- Ação de marcar pedido como concluído. **⚠️ Decisão de produto pendente:** quem pode concluir — o `PROFESSIONAL`, o `CLIENT`, ou ambos (ex. confirmação dupla)? Nem o TRD nem o PRD definem isto, e a escolha afeta o backend (transições de estado permitidas) e a UI. Resolver antes de iniciar esta fase.
+- Ação de marcar pedido como concluído, **visível apenas para o `CLIENT`** (decidido: quem recebeu o serviço confirma que foi prestado). Na vista do `PROFESSIONAL`, um pedido `ASSIGNED` mostra que aguarda confirmação do cliente — não um botão de concluir desativado.
+- Ação de cancelar. **⚠️ Permissões por definir:** quem pode cancelar um pedido já `ASSIGNED` (cliente, profissional, ambos?). Resolver antes de implementar esta parte.
 - Notificações in-app (toast) para mudanças de estado.
 
 **Critérios de Entrega:**

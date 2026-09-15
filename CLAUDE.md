@@ -5,7 +5,7 @@
 Marketplace de Serviços Locais PWA para Moçambique.
 
 - **Frontend / PWA:** React + Vite + TypeScript + Tailwind CSS + Framer Motion (Vercel) — **este repositório**
-- **Backend API:** Node.js + Express + TypeScript (Fly.io — região `jnb`) — repositório separado (`PiquetePro24_Backend`)
+- **Backend API:** Node.js + Express + TypeScript (Fly.io — região `fra`, Frankfurt; ver Adendo v1.3 do TRD do backend) — repositório separado (`PiquetePro24_Backend`)
 - **Database:** Supabase PostgreSQL + PostGIS (via backend; o frontend só fala com Supabase para Auth)
 
 Documentos de referência, nesta ordem de precedência:
@@ -13,7 +13,7 @@ Documentos de referência, nesta ordem de precedência:
 1. [`docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md`](./docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md) — requisitos técnicos, **incluindo Adendos v1.2 e v1.3, que têm precedência sobre o corpo original do TRD**
 2. [`docs/PLANO_IMPLEMENTACAO_FRONTEND.md`](./docs/PLANO_IMPLEMENTACAO_FRONTEND.md) — fases, escopo e critérios de entrega
 
-> **Estado atual:** o repositório ainda só tem documentação. A Fase 0 (esqueleto Vite + PWA) está por fazer, portanto as convenções abaixo descrevem o que construir, não o que já existe.
+> **Estado atual:** Fase 0 (esqueleto Vite + PWA) implementada — ver critérios de entrega em `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`. Deploy Vercel e ícones PWA reais ainda pendentes.
 
 ---
 
