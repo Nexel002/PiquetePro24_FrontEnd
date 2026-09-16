@@ -1,0 +1,30 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { fetchProfile, updateLocation, type LocationUpdatePayload } from '../services/profile'
+import { useAuth } from '../store/AuthContext'
+
+const profileQueryKey = ['profile'] as const
+
+export function useProfile() {
+  const { session } = useAuth()
+
+  return useQuery({
+    queryKey: profileQueryKey,
+    queryFn: fetchProfile,
+    // Sem sessão não há token para o interceptor injetar — pedir só desperdiçaria um
+    // round-trip para acabar em 401.
+    enabled: session !== null,
+  })
+}
+
+export function useUpdateLocation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: LocationUpdatePayload) => updateLocation(payload),
+    onSuccess: (profile) => {
+      // A resposta do PATCH já é o perfil atualizado — grava-a diretamente na cache em
+      // vez de invalidar e esperar por um novo GET /profile.
+      queryClient.setQueryData(profileQueryKey, profile)
+    },
+  })
+}

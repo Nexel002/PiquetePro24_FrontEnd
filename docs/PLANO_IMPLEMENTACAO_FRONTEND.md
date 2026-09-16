@@ -39,11 +39,15 @@ Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo 
 - Rotas protegidas no router (redireciona para login se não autenticado; redireciona por `role` quando aplicável).
 - Estado global de autenticação via Context API (sessão e `role`). Dados vindos da API ficam no TanStack Query, não em Context.
 
+**Implementado em `feat/fase-1-auth-perfil`:** `pages/Login.tsx` (email ou telefone, sign-in/sign-up), `pages/Profile.tsx` (GPS via `hooks/useGeolocation.ts` + fallback hierárquico com lista fixa de províncias em `lib/provinces.ts`), `components/ProtectedRoute.tsx`, `services/profile.ts` + `hooks/useProfile.ts` (TanStack Query) a consumir `GET /profile`/`PATCH /profile/location` da Fase 2 do backend, logout em `store/AuthContext.tsx`.
+
+**Decisão por resolver (não implementada nesta fase):** seleção de `role` (`CLIENT`/`PROFESSIONAL`) no registo. O backend cria sempre `role = 'CLIENT'` por default na trigger de signup (Fase 2) e não expõe ainda um endpoint para um profissional se declarar como tal — decidir se isso é um campo no formulário de registo (gravado em `raw_user_meta_data` e lido pela trigger) ou um passo de onboarding separado (mais alinhado com a Fase 4, que já vai exigir KYC de qualquer forma) antes de implementar.
+
 **Critérios de Entrega:**
-- [ ] Fluxo de registo → login → sessão persistida entre reloads funciona de ponta a ponta contra o backend real (ambiente de staging).
-- [ ] Captura de GPS funciona em dispositivo/browser com permissão concedida; fallback hierárquico funciona quando negada ou indisponível.
-- [ ] Rotas protegidas bloqueiam acesso não autenticado e redirecionam corretamente por `role`.
-- [ ] Testes de componente cobrem os formulários de registo/perfil (casos de validação de campos obrigatórios).
+- [x] Fluxo de registo → login funciona de ponta a ponta contra o backend real: signup real via Supabase Auth → trigger cria `users_profile` → login → `GET /profile` no frontend mostra os dados reais. **Nota:** "sessão persistida entre reloads" não testado nesta validação (cobre login→perfil numa única navegação; a persistência via `supabase.auth.getSession()`/`onAuthStateChange` já existia da Fase 0, mas sem teste dedicado a reload de página).
+- [x] Fallback hierárquico testado contra o backend real (grava `province`/`district`/`neighborhood`, limpa `location`). Captura de GPS testada apenas no caminho de erro (permissão indisponível em ambiente headless) — **não testado em dispositivo real com permissão concedida**.
+- [x] Rotas protegidas (`ProtectedRoute`) bloqueiam acesso não autenticado e redirecionam para `/entrar`, validado com Playwright. **Redirecionamento por `role` ainda não existe** — depende da decisão de seleção de `role` acima.
+- [ ] Testes de componente automatizados (Vitest/Testing Library) ainda não configurados neste repositório — validação desta fase foi manual (Playwright ad-hoc), não uma suíte que corra em CI.
 
 ---
 
