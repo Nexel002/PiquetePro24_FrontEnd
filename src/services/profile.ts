@@ -6,7 +6,9 @@ export type UserRole = 'CLIENT' | 'PROFESSIONAL' | 'ADMIN'
 export interface UserProfile {
   id: string
   full_name: string
-  phone: string
+  // null quando o signup foi via Google (o Google não partilha telefone via OAuth) —
+  // ver getOnboardingStep abaixo.
+  phone: string | null
   role: UserRole
   province: string | null
   district: string | null
@@ -15,6 +17,18 @@ export interface UserProfile {
   latitude: number | null
   longitude: number | null
   created_at: string
+}
+
+export type OnboardingStep = 'phone' | 'location' | 'complete'
+
+// Deriva o passo de onboarding em falta a partir do próprio estado dos campos — sem
+// coluna dedicada no backend. phone null só acontece em signup via Google (email e
+// telefone já pedem o número no formulário de registo, ver Login.tsx); localização em
+// falta é comum a todos os canais, ninguém a define no signup.
+export function getOnboardingStep(profile: UserProfile): OnboardingStep {
+  if (!profile.phone) return 'phone'
+  if (!profile.province && profile.latitude == null) return 'location'
+  return 'complete'
 }
 
 export type LocationUpdatePayload =

@@ -50,9 +50,28 @@ export function Login() {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isRedirectingToGoogle, setIsRedirectingToGoogle] = useState(false)
 
   if (!isSessionLoading && session) {
     return <Navigate to="/perfil" replace />
+  }
+
+  // signInWithOAuth redireciona o browser inteiro para o Google — o error devolvido
+  // aqui só cobre falhas antes do redirect (ex. provider Google desativado no
+  // Supabase), nunca um "login falhou" no sentido normal (isso acontece do lado do
+  // Google, fora do nosso controlo). Depois de autorizar, o Google devolve o
+  // utilizador a /auth/callback (ver App.tsx).
+  async function handleGoogleSignIn() {
+    setError(null)
+    setIsRedirectingToGoogle(true)
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
+    })
+    if (oauthError) {
+      setError(describeAuthError(oauthError))
+      setIsRedirectingToGoogle(false)
+    }
   }
 
   // Troca de canal ou de modo (entrar <-> criar conta) limpa mensagens antigas — uma
@@ -118,6 +137,21 @@ export function Login() {
           {mode === 'sign-in' ? 'Entra na tua conta' : 'Cria a tua conta'}
         </p>
       </header>
+
+      <button
+        type="button"
+        onClick={() => void handleGoogleSignIn()}
+        disabled={isRedirectingToGoogle}
+        className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
+      >
+        {isRedirectingToGoogle ? 'A abrir o Google...' : 'Continuar com Google'}
+      </button>
+
+      <div className="flex items-center gap-2 text-xs text-gray-400">
+        <span className="h-px flex-1 bg-gray-200" />
+        ou
+        <span className="h-px flex-1 bg-gray-200" />
+      </div>
 
       <div className="flex gap-2 text-sm">
         <button

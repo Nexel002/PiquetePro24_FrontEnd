@@ -1,8 +1,7 @@
 import { useState, type FormEvent } from 'react'
-import { useProfile, useUpdateLocation, useUpdateProfileDetails } from '../hooks/useProfile'
-import { useGeolocation } from '../hooks/useGeolocation'
-import { useReverseGeocode } from '../hooks/useReverseGeocode'
-import { MOZAMBIQUE_PROVINCES } from '../lib/provinces'
+import { useProfile, useUpdateProfileDetails } from '../hooks/useProfile'
+import { LocationForm } from '../components/LocationForm'
+import { PHONE_PREFIX, stripPhonePrefix } from '../lib/phone'
 import type { UserRole } from '../services/profile'
 
 // Espelha o enum user_role do backend — nunca mostrar o valor cru ('CLIENT') ao
@@ -15,24 +14,9 @@ const ROLE_LABELS: Record<UserRole, string> = {
 
 const memberSinceFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long' })
 
-// Todos os telefones deste projeto seguem a convenção +258 (Moçambique — ver
-// Login.tsx). No formulário de edição, o prefixo fica visível mas fixo: o
-// utilizador só edita os dígitos locais, nunca reescreve o indicativo do país.
-const PHONE_PREFIX = '+258'
-
-function stripPhonePrefix(phone: string): string {
-  return phone.startsWith(PHONE_PREFIX) ? phone.slice(PHONE_PREFIX.length) : phone
-}
-
 export function Profile() {
   const { data: profile, isLoading, isError } = useProfile()
-  const updateLocation = useUpdateLocation()
   const updateDetails = useUpdateProfileDetails()
-  const geolocation = useGeolocation()
-
-  const [province, setProvince] = useState('')
-  const [district, setDistrict] = useState('')
-  const [neighborhood, setNeighborhood] = useState('')
 
   const [isEditingDetails, setIsEditingDetails] = useState(false)
   const [fullNameDraft, setFullNameDraft] = useState('')
@@ -41,7 +25,11 @@ export function Profile() {
   function handleStartEditingDetails() {
     if (!profile) return
     setFullNameDraft(profile.full_name)
-    setPhoneDraft(stripPhonePrefix(profile.phone))
+    // profile.phone só é null antes do onboarding obrigatório (ver OnboardingGate),
+    // que corre sempre antes de qualquer rota chegar a esta tela — em runtime nunca é
+    // null aqui, mas o tipo é string | null porque a mesma UserProfile serve o estado
+    // pré-onboarding.
+    setPhoneDraft(stripPhonePrefix(profile.phone ?? ''))
     setIsEditingDetails(true)
   }
 
@@ -56,42 +44,6 @@ export function Profile() {
       { full_name: fullNameDraft, phone: `${PHONE_PREFIX}${phoneDraft}` },
       { onSuccess: () => setIsEditingDetails(false) },
     )
-  }
-
-  // Traduz as coordenadas do GPS recém-obtido (antes de confirmar) para um nome de
-  // lugar — só ativa quando o GPS já respondeu com sucesso.
-  const pendingCoordinates = geolocation.state.status === 'success' ? geolocation.state.coordinates : null
-  const pendingPlace = useReverseGeocode(pendingCoordinates)
-
-  // Traduz as coordenadas já gravadas no perfil (quando a localização foi definida
-  // por GPS) para o mesmo nome de lugar em vez de "GPS registado".
-  const savedCoordinates =
-    profile?.latitude != null && profile.longitude != null
-      ? { latitude: profile.latitude, longitude: profile.longitude }
-      : null
-  const savedPlace = useReverseGeocode(savedCoordinates)
-
-  function handleUseGps() {
-    geolocation.locate()
-  }
-
-  // O efeito de gravar assim que o GPS responde fica no handler do botão "Confirmar",
-  // não automático ao obter coordenadas — o utilizador vê o resultado antes de o
-  // backend gravar, consistente com o fluxo do fallback manual (que também só grava
-  // ao submeter o formulário).
-  function handleConfirmGps() {
-    if (geolocation.state.status !== 'success') return
-    updateLocation.mutate(geolocation.state.coordinates)
-  }
-
-  function handleSubmitHierarchy(event: FormEvent) {
-    event.preventDefault()
-    if (!province) return
-    updateLocation.mutate({
-      province,
-      district: district || undefined,
-      neighborhood: neighborhood || undefined,
-    })
   }
 
   if (isLoading) {
@@ -112,12 +64,6 @@ export function Profile() {
       </main>
     )
   }
-
-  const currentLocationLabel = savedCoordinates
-    ? (savedPlace.data ?? (savedPlace.isError ? 'GPS registado' : 'A identificar o lugar...'))
-    : profile.province
-      ? [profile.province, profile.district, profile.neighborhood].filter(Boolean).join(' — ')
-      : 'Ainda não definida'
 
   // O interceptor de api.ts (src/lib/api.ts) já desempacota error.response.data.error
   // num Error simples — a mensagem do backend (ex. "Este telefone já está associado a
@@ -217,104 +163,7 @@ export function Profile() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium text-gray-900">Localização</h2>
-        <p className="text-sm text-gray-600">Localização atual: {currentLocationLabel}</p>
-
-        <button
-          type="button"
-          onClick={handleUseGps}
-          disabled={geolocation.state.status === 'locating'}
-          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-        >
-          {geolocation.state.status === 'locating' ? 'A localizar...' : 'Usar minha localização'}
-        </button>
-
-        {geolocation.state.status === 'error' && (
-          <p className="text-sm text-red-600">{geolocation.state.message}</p>
-        )}
-
-        {geolocation.state.status === 'success' && (
-          <div className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
-            <p className="text-sm text-gray-700">
-              Localização encontrada:{' '}
-              {pendingPlace.data ??
-                (pendingPlace.isError
-                  ? `${geolocation.state.coordinates.latitude.toFixed(4)}, ${geolocation.state.coordinates.longitude.toFixed(4)}`
-                  : 'a identificar o lugar...')}
-            </p>
-            <button
-              type="button"
-              onClick={handleConfirmGps}
-              disabled={updateLocation.isPending}
-              className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-            >
-              Confirmar esta localização
-            </button>
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 text-xs text-gray-400">
-          <span className="h-px flex-1 bg-gray-200" />
-          ou escolhe manualmente
-          <span className="h-px flex-1 bg-gray-200" />
-        </div>
-
-        <form onSubmit={handleSubmitHierarchy} className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Província
-            <select
-              value={province}
-              onChange={(event) => setProvince(event.target.value)}
-              required
-              className="rounded-lg border border-gray-300 px-3 py-2"
-            >
-              <option value="" disabled>
-                Seleciona a província
-              </option>
-              {MOZAMBIQUE_PROVINCES.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Distrito (opcional)
-            <input
-              type="text"
-              value={district}
-              onChange={(event) => setDistrict(event.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2"
-            />
-          </label>
-
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Bairro (opcional)
-            <input
-              type="text"
-              value={neighborhood}
-              onChange={(event) => setNeighborhood(event.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2"
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={!province || updateLocation.isPending}
-            className="rounded-lg border border-gray-900 px-4 py-2 text-sm font-medium text-gray-900 disabled:opacity-50"
-          >
-            Guardar localização manual
-          </button>
-        </form>
-
-        {updateLocation.isError && (
-          <p className="text-sm text-red-600">
-            Não foi possível guardar a localização. Tenta novamente.
-          </p>
-        )}
-        {updateLocation.isSuccess && (
-          <p className="text-sm text-green-700">Localização atualizada.</p>
-        )}
+        <LocationForm profile={profile} />
       </section>
     </main>
   )
