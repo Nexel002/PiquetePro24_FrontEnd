@@ -9,6 +9,27 @@ type Mode = 'sign-in' | 'sign-up'
 // qual campo mostrar.
 type Channel = 'email' | 'phone'
 
+// Traduz os erros mais comuns do Supabase Auth para mensagens compreensíveis (CLAUDE.md
+// Secção 3: nunca mostrar o erro técnico cru). O rate limit de segurança do Supabase
+// ("For security purposes, you can only request this after N seconds") aparece quando
+// se tenta submeter o formulário mais do que uma vez em sucessão rápida — não é uma
+// falha do signup em si.
+function describeAuthError(error: unknown): string {
+  const message = error instanceof Error ? error.message : ''
+
+  if (message.includes('security purposes')) {
+    return 'Aguarda alguns segundos antes de tentar novamente.'
+  }
+  if (message.includes('already registered') || message.includes('already exists')) {
+    return 'Já existe uma conta com este email ou telefone. Tenta entrar em vez de criar uma nova conta.'
+  }
+  if (message.includes('Invalid login credentials')) {
+    return 'Email/telefone ou palavra-passe incorretos.'
+  }
+
+  return message || 'Não foi possível autenticar. Tenta novamente.'
+}
+
 export function Login() {
   const { session, isLoading: isSessionLoading } = useAuth()
   const [mode, setMode] = useState<Mode>('sign-in')
@@ -51,7 +72,7 @@ export function Login() {
         if (signInError) throw signInError
       }
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Não foi possível autenticar. Tenta novamente.')
+      setError(describeAuthError(caught))
     } finally {
       setIsSubmitting(false)
     }
@@ -140,9 +161,15 @@ export function Login() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isSubmitting ? 'A entrar...' : mode === 'sign-in' ? 'Entrar' : 'Criar conta'}
+          {isSubmitting
+            ? mode === 'sign-in'
+              ? 'A entrar...'
+              : 'A criar conta...'
+            : mode === 'sign-in'
+              ? 'Entrar'
+              : 'Criar conta'}
         </button>
       </form>
 
