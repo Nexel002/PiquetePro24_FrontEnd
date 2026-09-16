@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../store/AuthContext'
 import { useBecomeProfessional } from '../hooks/useProfile'
-import { INTENDED_ROLE_STORAGE_KEY } from './Login'
+import type { ProfessionalType } from '../services/profile'
+import { INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY, INTENDED_ROLE_STORAGE_KEY } from './Login'
 
 // Destino do redirectTo em signInWithOAuth (ver Login.tsx). O supabase-js processa o
 // `code` da URL automaticamente ao carregar esta página (PKCE, detectSessionInUrl por
@@ -22,13 +23,23 @@ export function AuthCallback() {
     if (isLoading || !session || hasAppliedIntendedRole) return
 
     const intendedRole = sessionStorage.getItem(INTENDED_ROLE_STORAGE_KEY)
+    const intendedProfessionalType = sessionStorage.getItem(
+      INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY,
+    ) as ProfessionalType | null
     sessionStorage.removeItem(INTENDED_ROLE_STORAGE_KEY)
+    sessionStorage.removeItem(INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY)
 
     if (intendedRole === 'PROFESSIONAL') {
       // Falha aqui não deve travar o login — o utilizador fica como CLIENT e pode
       // ser promovido a profissional mais tarde por outro caminho (ex. Fase 4/KYC);
       // não há razão de negócio para bloquear o acesso à app por causa disto.
-      becomeProfessional.mutate(undefined, { onSettled: () => setHasAppliedIntendedRole(true) })
+      // Fallback SINGULAR nunca deve disparar na prática (Login.tsx grava sempre a
+      // sub-escolha junto com o role), mas o endpoint exige o campo — este é o valor
+      // mais conservador caso a chave se perca por algum motivo (ex. sessionStorage
+      // limpa manualmente entre o clique e o regresso do Google).
+      becomeProfessional.mutate(intendedProfessionalType ?? 'SINGULAR', {
+        onSettled: () => setHasAppliedIntendedRole(true),
+      })
     } else {
       setHasAppliedIntendedRole(true)
     }

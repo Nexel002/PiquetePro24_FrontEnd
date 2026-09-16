@@ -41,6 +41,7 @@ Para lidar com a realidade de mapeamento em Moçambique (onde existem coordenada
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 CREATE TYPE user_role AS ENUM ('CLIENT', 'PROFESSIONAL', 'ADMIN');
+CREATE TYPE professional_type AS ENUM ('SINGULAR', 'COMPANY'); -- ver Adendo v1.4, item F
 CREATE TYPE kyc_status AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
 CREATE TYPE sub_status AS ENUM ('INACTIVE', 'ACTIVE', 'EXPIRED');
 CREATE TYPE payment_gateway AS ENUM ('MPESA_MOCK', 'EMOLA_MOCK', 'MANUAL');
@@ -53,6 +54,7 @@ CREATE TYPE payment_gateway AS ENUM ('MPESA_MOCK', 'EMOLA_MOCK', 'MANUAL');
 - `full_name` (TEXT, NOT NULL)
 - `phone` (VARCHAR, UNIQUE, ~~NOT NULL~~ **nullable** — ver [Adendo v1.4, item A](#adendo-v14))
 - `role` (user_role, DEFAULT 'CLIENT')
+- `professional_type` (professional_type, NULL) — só relevante quando `role = PROFESSIONAL`; ver [Adendo v1.4, item F](#adendo-v14)
 - `province` (TEXT) — ex: "Cidade de Maputo"
 - `district` (TEXT) — ex: "KaLhamanculo"
 - `neighborhood` (TEXT) — ex: "Xipamanine"
@@ -247,7 +249,7 @@ Ou seja: a decisão **resolve** o problema original descrito na v1.2 deste Adend
 
 ## Adendo v1.4
 
-Três funcionalidades adicionadas durante a implementação da Fase 2 (Autenticação & Perfis) que não estavam previstas no corpo original do TRD nem nos Adendos anteriores — registadas aqui como requisito formal, não apenas como decisão de implementação.
+Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autenticação & Perfis) que não estavam previstas no corpo original do TRD nem nos Adendos anteriores — registadas aqui como requisito formal, não apenas como decisão de implementação.
 
 ### A. Login/Registo via Google OAuth
 
@@ -276,3 +278,44 @@ Três funcionalidades adicionadas durante a implementação da Fase 2 (Autentica
 - **Upload direto do frontend ao Storage** (não pelo backend/API): usa a `anon` key e é autorizado por RLS em `storage.objects` (o próprio utilizador só escreve na sua pasta, identificada por `auth.uid()`), respeitando o princípio geral de RLS da Secção 5 (autorização vive no banco).
 - **Conversão para WebP antes do upload**, no browser (Canvas API, sem dependência de servidor) — poupa espaço no Storage mantendo qualidade aceitável. Implementada como utilitário reutilizável (não específico ao avatar), para servir também o upload futuro de fotos de trabalhos dos profissionais (portfólio, já previsto na Secção 1 mas ainda fora de escopo de implementação).
 - **Opcional em todo o fluxo:** não faz parte do onboarding obrigatório (item B) — o utilizador pode usar a app indefinidamente sem definir avatar.
+
+### D. Eliminação de conta ("direito ao esquecimento")
+
+**Contexto:** nenhuma versão anterior do TRD (corpo original, Adendos v1.2/v1.3) previa um fluxo de eliminação de conta pelo próprio utilizador. Ao validar a Fase 2 contra o Supabase real, confirmou-se que nenhuma FK de `professional_kyc`, `subscriptions` ou `service_requests` para `users_profile` tinha `ON DELETE` definido (default `RESTRICT`) — apagar um utilizador exigia apagar manualmente cada tabela relacionada, pela ordem certa, o que não é uma operação seguramente exposta ao próprio utilizador sem tratamento explícito.
+
+**Decisão:** endpoint `DELETE /profile` (autenticado, apaga sempre a própria conta — nunca a de outro utilizador) apaga em definitivo: `auth.users` (via Admin API do Supabase, que exige a `service_role` key — só o backend pode fazê-lo), `users_profile` e todas as tabelas dependentes, e o avatar no Storage (item C), se existir.
+
+**Comportamento por relação, não um `ON DELETE CASCADE` genérico em tudo:**
+- Registos que **pertencem** ao utilizador (`professional_kyc.user_id`, `subscriptions.professional_id`, `service_requests.client_id`) → `CASCADE`. Apagar a conta apaga tudo o que só faz sentido em relação a ela.
+- `professional_kyc.reviewed_by` (um `ADMIN` que reviu o KYC de **outra** pessoa) → `SET NULL`. Apagar a conta do admin não pode apagar o KYC de terceiros que ele reviu — só perde a referência a quem reviu.
+- `service_requests.professional_id` (profissional **atribuído** ao pedido de **outro** cliente) → `SET NULL`, com o `status` do pedido reposto para `OPEN` (não `ASSIGNED` sem profissional, que não é um estado válido do ciclo de vida — Adendo v1.2, item B). O pedido pertence ao cliente que o criou (esse sim com `CASCADE`), não ao profissional; apagar a conta do profissional não pode fazer o cliente perder o pedido que criou, só liberta-o de novo para outro profissional aceitar.
+
+**UI:** confirmação em duas etapas (aviso explícito de irreversibilidade + botão de confirmação final), não um único clique — dado o impacto irreversível da ação.
+
+**Validado de ponta a ponta contra o Supabase real**, com dados de teste em todas as tabelas relacionadas: apagar um cliente com KYC/subscrição/pedido próprio remove tudo em cascata; apagar um profissional atribuído ao pedido de outro cliente preserva o pedido, repondo `OPEN`. Durante esta validação descobriu-se que a FK mais básica — `users_profile.id → auth.users.id` (da migration inicial da Fase 1) — também nunca tinha `ON DELETE` definido, e precisou do mesmo tratamento (`CASCADE`): sem essa correção, apagar qualquer conta falhava sempre, mesmo sem nenhum dado relacionado nas outras tabelas.
+
+### E. Escolha de perfil (Cliente/Profissional) no registo
+
+**Contexto:** até esta correção, todo signup — por qualquer canal — criava sempre `users_profile.role = 'CLIENT'`, sem exceção. Não havia forma de um profissional se declarar como tal no registo; a Fase 2 tinha isto registado como "decisão por resolver" desde o início, sem nunca ter sido implementado. Identificado pelo próprio utilizador ao testar o fluxo de signup.
+
+**Decisão:** a escolha "Sou cliente" / "Sou profissional" acontece logo no início do ecrã de registo, antes de qualquer canal (Google, email ou telefone) — não é uma tela de onboarding separada. O tratamento difere por canal, porque só email/telefone permitem enviar metadata customizado no momento do signup:
+
+- **Email/telefone:** a escolha vai em `raw_user_meta_data.role`, lida por `handle_new_user` (a mesma trigger dos itens A/B). Validação estrita: só `'PROFESSIONAL'` explícito é aceite; qualquer outro valor (incluindo `'ADMIN'`, que um utilizador malicioso poderia tentar enviar no próprio formulário) cai no default `'CLIENT'` — nunca uma escalação de privilégio via signup.
+- **Google:** `supabase.auth.signInWithOAuth` não aceita `options.data` como `signUp` aceita — não há como comunicar a escolha antes do redirect completo para o Google. A escolha é guardada em `sessionStorage` no frontend antes do redirect, e aplicada depois, na página de callback, via `POST /profile/become-professional` — um endpoint novo, dedicado, não um campo aberto no `PATCH /profile` genérico (`role` é sensível o suficiente para justificar isolamento, não mistura com edição trivial de nome/telefone). Transição única e atómica `CLIENT → PROFESSIONAL` (update condicional `WHERE role = 'CLIENT'`, mesmo princípio de update condicional atómico da Secção 5 para evitar corrida), idempotente: chamado outra vez sem efeito, devolve o perfil atual em vez de erro.
+
+**Fora de escopo desta correção (fica para a Fase 4):** nenhum campo adicional de perfil profissional (categoria de serviço, KYC — BI/NUIT/documento) é pedido no registo. Só o `role` fica correto desde o signup; os dados de KYC continuam a ser submetidos depois, via o fluxo já previsto na Fase 4.
+
+**Validado de ponta a ponta contra o Supabase real:** signup por email com "Profissional" selecionado grava `role: PROFESSIONAL`; com "Cliente" (default) continua `CLIENT`, sem regressão; `POST /profile/become-professional` chamado duas vezes seguidas devolve `200` em ambas, com o mesmo estado (idempotência confirmada). O fluxo completo via Google (sessionStorage → redirect → callback → `become-professional`) foi validado por partes (escrita em sessionStorage confirmada antes do redirect; o endpoint em si testado diretamente) — o round-trip completo pelo ecrã de consentimento do Google não foi automatizado nesta sessão.
+
+### F. Distinção Singular/Empresa dentro do perfil Profissional
+
+**Contexto:** ideia surgida já depois do item E estar implementado e validado — para além de "Sou cliente"/"Sou profissional", um profissional pode ser uma pessoa singular ou uma empresa, e essa distinção deveria ser perguntada logo "ao criar conta", não só desenhada na Fase 4 (KYC). Identificado pelo próprio utilizador, com a ressalva explícita de que a lógica de onboarding para empresa "deve ser mais complexa" — mas sem certeza de como, na altura.
+
+**Decisão (âmbito deliberadamente reduzido, confirmado com o utilizador):** por agora, só regista a decisão e o campo — não desenha nenhum formulário ou passo adicional diferenciado por tipo. O KYC diferenciado (ex. BI+NUIT para singular, NUIT+alvará+representante legal para empresa) fica para quando a Fase 4 for desenhada a sério; nada neste item antecipa esse desenho.
+
+- **Nova coluna** `users_profile.professional_type` (enum `professional_type`, valores `SINGULAR`/`COMPANY`, nullable), não uma coluna em `professional_kyc` — mesma lógica do item E (`role`) e do item A (`phone`): `users_profile` já é onde o resto do onboarding vive, e `professional_kyc` só passa a existir na Fase 4, o que adiaria a captura desta escolha para depois da conta já criada, contrariando o pedido de perguntar isto "ao criar conta". Null para `CLIENT`/`ADMIN`, e também para um `PROFESSIONAL` anterior a esta migration que ainda não passou por esta escolha.
+- **Momento e local da pergunta:** logo a seguir a escolher "Sou profissional" no mesmo ecrã de registo do item E — não um passo extra no onboarding obrigatório (item B), nem uma tela separada. Aparece antes de qualquer canal (Google, email ou telefone), como sub-escolha visível só quando "Sou profissional" está selecionada.
+- **Tratamento por canal**, mesmo padrão do item E: email/telefone envia `professional_type` em `raw_user_meta_data`, lido por `handle_new_user()` (mesma trigger, `create or replace function`) — só gravado quando `role` sai `PROFESSIONAL`, nunca para `CLIENT`. Google não permite metadata customizado no `signInWithOAuth`; a escolha é guardada em `sessionStorage` (par com `INTENDED_ROLE_STORAGE_KEY`) e aplicada em `/auth/callback`, agora enviada no corpo de `POST /profile/become-professional` (`{ professional_type }`) — este endpoint passa a exigir o campo sempre, mesmo no caminho idempotente, porque é a única fonte da escolha para o fluxo Google.
+- **UI:** `Profile.tsx` mostra "Tipo de profissional" (Singular/Empresa) só quando `role === 'PROFESSIONAL'` e o campo está preenchido — sem alterar o resto do ecrã de perfil.
+
+**Validado contra a suite de testes real (Vitest, Supabase real por aplicar a migration no momento da escrita deste Adendo):** `becomeProfessional()` grava `role` e `professional_type` no mesmo update atómico; `POST /profile/become-professional` sem `professional_type` no corpo devolve `400`; o caminho idempotente (role já não é `CLIENT`) continua a devolver o perfil atual sem exigir novo valor coerente. Build e lint limpos em ambos os repositórios.

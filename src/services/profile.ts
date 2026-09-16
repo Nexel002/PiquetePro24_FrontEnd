@@ -3,6 +3,11 @@ import { api } from '../lib/api'
 // Espelha o enum user_role do backend (PiquetePro24_Backend, supabase/migrations).
 export type UserRole = 'CLIENT' | 'PROFESSIONAL' | 'ADMIN'
 
+// Espelha o enum professional_type do backend
+// (20260916155516_tipo_profissional_singular_empresa.sql). Só relevante quando
+// role = PROFESSIONAL; null em qualquer outro caso.
+export type ProfessionalType = 'SINGULAR' | 'COMPANY'
+
 export interface UserProfile {
   id: string
   full_name: string
@@ -10,6 +15,7 @@ export interface UserProfile {
   // ver getOnboardingStep abaixo.
   phone: string | null
   role: UserRole
+  professional_type: ProfessionalType | null
   province: string | null
   district: string | null
   neighborhood: string | null
@@ -69,9 +75,13 @@ export async function deleteAccount(): Promise<void> {
 
 // Transição única CLIENT -> PROFESSIONAL, usada só pelo fluxo de signup via Google
 // (que não permite escolher role no momento do signInWithOAuth) — ver AuthCallback.tsx
-// e o INTENDED_ROLE_STORAGE_KEY em Login.tsx. Idempotente: se role já não for CLIENT,
-// o backend devolve o perfil atual sem erro.
-export async function becomeProfessional(): Promise<UserProfile> {
-  const response = await api.post<UserProfile>('/profile/become-professional')
+// e o INTENDED_ROLE_STORAGE_KEY/INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY em Login.tsx.
+// Idempotente: se role já não for CLIENT, o backend devolve o perfil atual sem erro
+// (nesse caso professionalType é ignorado pelo backend, mas continua obrigatório aqui
+// porque o mesmo endpoint serve o caso normal, onde é a única fonte da escolha).
+export async function becomeProfessional(professionalType: ProfessionalType): Promise<UserProfile> {
+  const response = await api.post<UserProfile>('/profile/become-professional', {
+    professional_type: professionalType,
+  })
   return response.data
 }

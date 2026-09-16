@@ -6,6 +6,7 @@ import {
   updateLocation,
   updateProfileDetails,
   type LocationUpdatePayload,
+  type ProfessionalType,
   type ProfileDetailsUpdatePayload,
 } from '../services/profile'
 import { uploadAvatar } from '../services/avatar'
@@ -57,7 +58,7 @@ export function useBecomeProfessional() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: becomeProfessional,
+    mutationFn: (professionalType: ProfessionalType) => becomeProfessional(professionalType),
     onSuccess: (profile) => {
       queryClient.setQueryData(profileQueryKey, profile)
     },

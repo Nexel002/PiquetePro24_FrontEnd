@@ -4,7 +4,7 @@ import { useDeleteAccount, useProfile, useUpdateProfileDetails, useUploadAvatar 
 import { LocationForm } from '../components/LocationForm'
 import { PHONE_PREFIX, stripPhonePrefix } from '../lib/phone'
 import { AvatarUploadError } from '../services/avatar'
-import type { UserRole } from '../services/profile'
+import type { ProfessionalType, UserRole } from '../services/profile'
 
 // Espelha o enum user_role do backend — nunca mostrar o valor cru ('CLIENT') ao
 // utilizador.
@@ -12,6 +12,13 @@ const ROLE_LABELS: Record<UserRole, string> = {
   CLIENT: 'Cliente',
   PROFESSIONAL: 'Profissional',
   ADMIN: 'Administrador',
+}
+
+// Espelha o enum professional_type do backend. Só exibido quando role é
+// PROFESSIONAL (ver dl abaixo) — para CLIENT/ADMIN o campo vem sempre null.
+const PROFESSIONAL_TYPE_LABELS: Record<ProfessionalType, string> = {
+  SINGULAR: 'Singular',
+  COMPANY: 'Empresa',
 }
 
 const memberSinceFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long' })
@@ -249,6 +256,13 @@ export function Profile() {
 
             <dt className="text-gray-500">Tipo de conta</dt>
             <dd className="text-gray-900">{ROLE_LABELS[profile.role]}</dd>
+
+            {profile.role === 'PROFESSIONAL' && profile.professional_type && (
+              <>
+                <dt className="text-gray-500">Tipo de profissional</dt>
+                <dd className="text-gray-900">{PROFESSIONAL_TYPE_LABELS[profile.professional_type]}</dd>
+              </>
+            )}
 
             <dt className="text-gray-500">Membro desde</dt>
             <dd className="text-gray-900">{memberSinceFormatter.format(new Date(profile.created_at))}</dd>

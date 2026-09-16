@@ -9,6 +9,13 @@ type Mode = 'sign-in' | 'sign-up'
 // qual campo mostrar.
 type Channel = 'email' | 'phone'
 type IntendedRole = 'CLIENT' | 'PROFESSIONAL'
+// Espelha o enum professional_type do backend
+// (20260916155516_tipo_profissional_singular_empresa.sql). Só perguntado quando
+// intendedRole === 'PROFESSIONAL' — ideia surgida depois da escolha Cliente/
+// Profissional já estar implementada (TRD Adendo v1.4, item F): um profissional pode
+// ser pessoa singular ou empresa, e isso é perguntado logo no registo, não só na Fase
+// 4 (KYC, que tratará os dois tipos de forma diferenciada).
+type IntendedProfessionalType = 'SINGULAR' | 'COMPANY'
 
 // Chave usada para guardar a escolha "Sou Profissional" ANTES do redirect para o
 // Google — signInWithOAuth não permite passar metadata customizado (diferente de
@@ -16,6 +23,9 @@ type IntendedRole = 'CLIENT' | 'PROFESSIONAL'
 // round-trip inteiro do OAuth via sessionStorage, e é lida em AuthCallback.tsx depois
 // do login completar, para chamar POST /profile/become-professional.
 export const INTENDED_ROLE_STORAGE_KEY = 'piquetepro24:intended-role'
+// Mesma razão que INTENDED_ROLE_STORAGE_KEY, para a sub-escolha Singular/Empresa —
+// só é gravada quando intendedRole é PROFESSIONAL (ver handleGoogleSignIn).
+export const INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY = 'piquetepro24:intended-professional-type'
 
 // Traduz os erros mais comuns do Supabase Auth para mensagens compreensíveis (CLAUDE.md
 // Secção 3: nunca mostrar o erro técnico cru). O rate limit de segurança do Supabase
@@ -52,6 +62,8 @@ export function Login() {
   const [mode, setMode] = useState<Mode>('sign-in')
   const [channel, setChannel] = useState<Channel>('email')
   const [intendedRole, setIntendedRole] = useState<IntendedRole>('CLIENT')
+  const [intendedProfessionalType, setIntendedProfessionalType] =
+    useState<IntendedProfessionalType>('SINGULAR')
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -78,8 +90,14 @@ export function Login() {
     // PROFESSIONAL) — só um signup novo decide o role de origem.
     if (mode === 'sign-up') {
       sessionStorage.setItem(INTENDED_ROLE_STORAGE_KEY, intendedRole)
+      if (intendedRole === 'PROFESSIONAL') {
+        sessionStorage.setItem(INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY, intendedProfessionalType)
+      } else {
+        sessionStorage.removeItem(INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY)
+      }
     } else {
       sessionStorage.removeItem(INTENDED_ROLE_STORAGE_KEY)
+      sessionStorage.removeItem(INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY)
     }
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -116,6 +134,9 @@ export function Login() {
           full_name: fullName,
           phone: channel === 'phone' ? identifier : phone,
           role: intendedRole,
+          // Só faz sentido quando role é PROFESSIONAL — a trigger do backend
+          // (handle_new_user()) ignora este campo em qualquer outro caso.
+          professional_type: intendedRole === 'PROFESSIONAL' ? intendedProfessionalType : undefined,
         }
         const { data, error: signUpError } =
           channel === 'email'
@@ -197,6 +218,50 @@ export function Login() {
                 className="sr-only"
               />
               Sou profissional
+            </label>
+          </div>
+        </fieldset>
+      )}
+
+      {mode === 'sign-up' && intendedRole === 'PROFESSIONAL' && (
+        <fieldset className="flex flex-col gap-2">
+          <legend className="text-sm font-medium text-gray-700">
+            És profissional singular ou empresa?
+          </legend>
+          <div className="flex gap-2 text-sm">
+            <label
+              className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center ${
+                intendedProfessionalType === 'SINGULAR'
+                  ? 'border-gray-900 bg-gray-900 text-white'
+                  : 'border-gray-300 text-gray-700'
+              }`}
+            >
+              <input
+                type="radio"
+                name="intended-professional-type"
+                value="SINGULAR"
+                checked={intendedProfessionalType === 'SINGULAR'}
+                onChange={() => setIntendedProfessionalType('SINGULAR')}
+                className="sr-only"
+              />
+              Singular
+            </label>
+            <label
+              className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center ${
+                intendedProfessionalType === 'COMPANY'
+                  ? 'border-gray-900 bg-gray-900 text-white'
+                  : 'border-gray-300 text-gray-700'
+              }`}
+            >
+              <input
+                type="radio"
+                name="intended-professional-type"
+                value="COMPANY"
+                checked={intendedProfessionalType === 'COMPANY'}
+                onChange={() => setIntendedProfessionalType('COMPANY')}
+                className="sr-only"
+              />
+              Empresa
             </label>
           </div>
         </fieldset>
