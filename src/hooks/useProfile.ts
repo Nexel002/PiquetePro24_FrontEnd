@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  becomeProfessional,
   deleteAccount,
   fetchProfile,
   updateLocation,
@@ -43,6 +44,20 @@ export function useUpdateProfileDetails() {
 
   return useMutation({
     mutationFn: (payload: ProfileDetailsUpdatePayload) => updateProfileDetails(payload),
+    onSuccess: (profile) => {
+      queryClient.setQueryData(profileQueryKey, profile)
+    },
+  })
+}
+
+// Usado só em AuthCallback.tsx, depois de um signup via Google em que o utilizador
+// tinha escolhido "Profissional" antes do redirect (ver INTENDED_ROLE_STORAGE_KEY em
+// Login.tsx). Não expõe UI própria fora desse fluxo.
+export function useBecomeProfessional() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: becomeProfessional,
     onSuccess: (profile) => {
       queryClient.setQueryData(profileQueryKey, profile)
     },

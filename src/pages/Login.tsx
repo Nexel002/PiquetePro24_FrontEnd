@@ -8,6 +8,14 @@ type Mode = 'sign-in' | 'sign-up'
 // plano do backend) — o Supabase Auth trata ambos nativamente, o frontend só decide
 // qual campo mostrar.
 type Channel = 'email' | 'phone'
+type IntendedRole = 'CLIENT' | 'PROFESSIONAL'
+
+// Chave usada para guardar a escolha "Sou Profissional" ANTES do redirect para o
+// Google — signInWithOAuth não permite passar metadata customizado (diferente de
+// signUp, que aceita options.data), por isso a escolha tem de sobreviver ao
+// round-trip inteiro do OAuth via sessionStorage, e é lida em AuthCallback.tsx depois
+// do login completar, para chamar POST /profile/become-professional.
+export const INTENDED_ROLE_STORAGE_KEY = 'piquetepro24:intended-role'
 
 // Traduz os erros mais comuns do Supabase Auth para mensagens compreensíveis (CLAUDE.md
 // Secção 3: nunca mostrar o erro técnico cru). O rate limit de segurança do Supabase
@@ -43,6 +51,7 @@ export function Login() {
   const { session, isLoading: isSessionLoading } = useAuth()
   const [mode, setMode] = useState<Mode>('sign-in')
   const [channel, setChannel] = useState<Channel>('email')
+  const [intendedRole, setIntendedRole] = useState<IntendedRole>('CLIENT')
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
@@ -64,6 +73,14 @@ export function Login() {
   async function handleGoogleSignIn() {
     setError(null)
     setIsRedirectingToGoogle(true)
+    // A escolha só é relevante em modo sign-up: entrar com uma conta Google já
+    // existente não deve poder mudar o role de quem já é CLIENT (ou já é
+    // PROFESSIONAL) — só um signup novo decide o role de origem.
+    if (mode === 'sign-up') {
+      sessionStorage.setItem(INTENDED_ROLE_STORAGE_KEY, intendedRole)
+    } else {
+      sessionStorage.removeItem(INTENDED_ROLE_STORAGE_KEY)
+    }
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${window.location.origin}/auth/callback` },
@@ -90,11 +107,16 @@ export function Login() {
 
     try {
       if (mode === 'sign-up') {
-        // full_name e phone vão em raw_user_meta_data: a trigger on_auth_user_created
-        // do backend (Fase 2) lê daqui para criar users_profile atomicamente — sem
-        // isto o insert falha porque full_name/phone são NOT NULL (mesmo no signup por
-        // email, que não tem número de telefone próprio em auth.users).
-        const metadata = { full_name: fullName, phone: channel === 'phone' ? identifier : phone }
+        // full_name, phone e role vão em raw_user_meta_data: a trigger
+        // on_auth_user_created do backend (Fase 2) lê daqui para criar users_profile
+        // atomicamente — sem full_name/phone o insert falha (NOT NULL); role sem
+        // valor reconhecido cai em CLIENT (a trigger só aceita 'PROFESSIONAL'
+        // explícito, nunca 'ADMIN' vindo do próprio signup).
+        const metadata = {
+          full_name: fullName,
+          phone: channel === 'phone' ? identifier : phone,
+          role: intendedRole,
+        }
         const { data, error: signUpError } =
           channel === 'email'
             ? await supabase.auth.signUp({ email: identifier, password, options: { data: metadata } })
@@ -137,6 +159,48 @@ export function Login() {
           {mode === 'sign-in' ? 'Entra na tua conta' : 'Cria a tua conta'}
         </p>
       </header>
+
+      {mode === 'sign-up' && (
+        <fieldset className="flex flex-col gap-2">
+          <legend className="text-sm font-medium text-gray-700">Como vais usar o PiquetePro24?</legend>
+          <div className="flex gap-2 text-sm">
+            <label
+              className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center ${
+                intendedRole === 'CLIENT'
+                  ? 'border-gray-900 bg-gray-900 text-white'
+                  : 'border-gray-300 text-gray-700'
+              }`}
+            >
+              <input
+                type="radio"
+                name="intended-role"
+                value="CLIENT"
+                checked={intendedRole === 'CLIENT'}
+                onChange={() => setIntendedRole('CLIENT')}
+                className="sr-only"
+              />
+              Sou cliente
+            </label>
+            <label
+              className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center ${
+                intendedRole === 'PROFESSIONAL'
+                  ? 'border-gray-900 bg-gray-900 text-white'
+                  : 'border-gray-300 text-gray-700'
+              }`}
+            >
+              <input
+                type="radio"
+                name="intended-role"
+                value="PROFESSIONAL"
+                checked={intendedRole === 'PROFESSIONAL'}
+                onChange={() => setIntendedRole('PROFESSIONAL')}
+                className="sr-only"
+              />
+              Sou profissional
+            </label>
+          </div>
+        </fieldset>
+      )}
 
       <button
         type="button"

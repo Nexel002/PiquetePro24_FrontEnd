@@ -66,3 +66,12 @@ export async function updateProfileDetails(payload: ProfileDetailsUpdatePayload)
 export async function deleteAccount(): Promise<void> {
   await api.delete('/profile')
 }
+
+// Transição única CLIENT -> PROFESSIONAL, usada só pelo fluxo de signup via Google
+// (que não permite escolher role no momento do signInWithOAuth) — ver AuthCallback.tsx
+// e o INTENDED_ROLE_STORAGE_KEY em Login.tsx. Idempotente: se role já não for CLIENT,
+// o backend devolve o perfil atual sem erro.
+export async function becomeProfessional(): Promise<UserProfile> {
+  const response = await api.post<UserProfile>('/profile/become-professional')
+  return response.data
+}
