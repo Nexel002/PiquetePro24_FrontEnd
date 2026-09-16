@@ -16,6 +16,7 @@ export function Login() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
+  const [phone, setPhone] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -32,8 +33,9 @@ export function Login() {
       if (mode === 'sign-up') {
         // full_name e phone vão em raw_user_meta_data: a trigger on_auth_user_created
         // do backend (Fase 2) lê daqui para criar users_profile atomicamente — sem
-        // isto o insert falha porque full_name/phone são NOT NULL.
-        const metadata = { full_name: fullName, phone: channel === 'phone' ? identifier : undefined }
+        // isto o insert falha porque full_name/phone são NOT NULL (mesmo no signup por
+        // email, que não tem número de telefone próprio em auth.users).
+        const metadata = { full_name: fullName, phone: channel === 'phone' ? identifier : phone }
         const { error: signUpError } =
           channel === 'email'
             ? await supabase.auth.signUp({ email: identifier, password, options: { data: metadata } })
@@ -106,6 +108,20 @@ export function Login() {
             className="rounded-lg border border-gray-300 px-3 py-2"
           />
         </label>
+
+        {mode === 'sign-up' && channel === 'email' && (
+          <label className="flex flex-col gap-1 text-sm text-gray-700">
+            Telefone
+            <input
+              type="tel"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              placeholder="+258840000000"
+              required
+              className="rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </label>
+        )}
 
         <label className="flex flex-col gap-1 text-sm text-gray-700">
           Palavra-passe
