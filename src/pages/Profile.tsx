@@ -1,7 +1,8 @@
-import { useState, type FormEvent } from 'react'
-import { useProfile, useUpdateProfileDetails } from '../hooks/useProfile'
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { useProfile, useUpdateProfileDetails, useUploadAvatar } from '../hooks/useProfile'
 import { LocationForm } from '../components/LocationForm'
 import { PHONE_PREFIX, stripPhonePrefix } from '../lib/phone'
+import { AvatarUploadError } from '../services/avatar'
 import type { UserRole } from '../services/profile'
 
 // Espelha o enum user_role do backend — nunca mostrar o valor cru ('CLIENT') ao
@@ -17,10 +18,22 @@ const memberSinceFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long
 export function Profile() {
   const { data: profile, isLoading, isError } = useProfile()
   const updateDetails = useUpdateProfileDetails()
+  const uploadAvatar = useUploadAvatar()
+  const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const [isEditingDetails, setIsEditingDetails] = useState(false)
   const [fullNameDraft, setFullNameDraft] = useState('')
   const [phoneDraft, setPhoneDraft] = useState('')
+
+  function handleAvatarSelected(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0]
+    event.target.value = '' // permite escolher o mesmo ficheiro outra vez a seguir
+    if (file) uploadAvatar.mutate(file)
+  }
+
+  function handleRemoveAvatar() {
+    updateDetails.mutate({ avatar_url: null })
+  }
 
   function handleStartEditingDetails() {
     if (!profile) return
@@ -73,11 +86,32 @@ export function Profile() {
       ? updateDetails.error.message
       : 'Não foi possível guardar os dados. Tenta novamente.'
 
+  const avatarErrorMessage =
+    uploadAvatar.error instanceof AvatarUploadError
+      ? uploadAvatar.error.message
+      : 'Não foi possível enviar a foto. Tenta novamente.'
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-gray-900">O meu perfil</h1>
-        <p className="text-sm text-gray-600">{profile.full_name}</p>
+      <header className="flex items-center gap-4">
+        {profile.avatar_url ? (
+          <img
+            src={profile.avatar_url}
+            alt=""
+            className="h-16 w-16 rounded-full object-cover"
+          />
+        ) : (
+          <div
+            aria-hidden
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-gray-200 text-xl font-medium text-gray-500"
+          >
+            {profile.full_name.charAt(0).toUpperCase()}
+          </div>
+        )}
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">O meu perfil</h1>
+          <p className="text-sm text-gray-600">{profile.full_name}</p>
+        </div>
       </header>
 
       <section className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4">
@@ -96,6 +130,54 @@ export function Profile() {
 
         {isEditingDetails ? (
           <form onSubmit={handleSubmitDetails} className="flex flex-col gap-3">
+            {/* Foto de perfil: opcional, upload de ficheiro ou câmara (capture="user"
+                abre a câmara frontal em dispositivos móveis que a suportam; em
+                desktop cai para a seleção de ficheiro normal). Conversão para WebP
+                acontece em services/avatar.ts antes do upload. */}
+            <div className="flex items-center gap-3">
+              {profile.avatar_url ? (
+                <img src={profile.avatar_url} alt="" className="h-14 w-14 rounded-full object-cover" />
+              ) : (
+                <div
+                  aria-hidden
+                  className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-lg font-medium text-gray-500"
+                >
+                  {fullNameDraft.charAt(0).toUpperCase() || '?'}
+                </div>
+              )}
+              <div className="flex flex-col gap-1">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => avatarInputRef.current?.click()}
+                    disabled={uploadAvatar.isPending}
+                    className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 disabled:opacity-50"
+                  >
+                    {uploadAvatar.isPending ? 'A enviar...' : 'Alterar foto'}
+                  </button>
+                  {profile.avatar_url && (
+                    <button
+                      type="button"
+                      onClick={handleRemoveAvatar}
+                      disabled={updateDetails.isPending || uploadAvatar.isPending}
+                      className="text-sm text-gray-600 underline disabled:opacity-50"
+                    >
+                      Remover
+                    </button>
+                  )}
+                </div>
+                {uploadAvatar.isError && <p className="text-sm text-red-600">{avatarErrorMessage}</p>}
+              </div>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                capture="user"
+                onChange={handleAvatarSelected}
+                hidden
+              />
+            </div>
+
             <label className="flex flex-col gap-1 text-sm text-gray-700">
               Nome
               <input

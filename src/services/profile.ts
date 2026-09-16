@@ -16,6 +16,9 @@ export interface UserProfile {
   location: unknown
   latitude: number | null
   longitude: number | null
+  // URL pública no bucket 'avatars' do Supabase Storage; opcional (ver
+  // services/avatar.ts para o fluxo de upload).
+  avatar_url: string | null
   created_at: string
 }
 
@@ -38,6 +41,8 @@ export type LocationUpdatePayload =
 export interface ProfileDetailsUpdatePayload {
   full_name?: string
   phone?: string
+  // null explícito remove a foto; undefined deixa o campo intocado.
+  avatar_url?: string | null
 }
 
 export async function fetchProfile(): Promise<UserProfile> {
