@@ -30,6 +30,8 @@ Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo 
 
 **Objetivo:** Implementar o fluxo de registo/login e a tela de gestão de perfil, incluindo captura de localização (GPS e fallback hierárquico), consumindo a API da Fase 2 do backend.
 
+> **Nota:** login com Google, onboarding obrigatório de telefone/localização e foto de perfil não estavam no escopo original desta fase nem no corpo do TRD — foram adicionados durante a implementação (pedido explícito do utilizador) e registados formalmente como requisito no [TRD Adendo v1.4](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md#adendo-v14).
+
 **Escopo:**
 - Telas de registo e login (Supabase Auth, email/telefone/Google), com seleção de `role` inicial (`CLIENT` ou `PROFISSIONAL`) conforme fluxo de produto.
 - Onboarding obrigatório pós-signup: telefone (só para quem entra via Google) e localização (todos os canais) — ver decisão detalhada abaixo.
@@ -75,6 +77,9 @@ UI: no cabeçalho do perfil e na secção "Os meus dados" (modo edição), mostr
 - [x] Fallback hierárquico testado contra o backend real (grava `province`/`district`/`neighborhood`, limpa `location`). Captura de GPS testada apenas no caminho de erro (permissão indisponível em ambiente headless) — **não testado em dispositivo real com permissão concedida**.
 - [x] Rotas protegidas (`ProtectedRoute`) bloqueiam acesso não autenticado e redirecionam para `/entrar`, validado com Playwright. **Redirecionamento por `role` ainda não existe** — depende da decisão de seleção de `role` acima.
 - [ ] Testes de componente automatizados (Vitest/Testing Library) ainda não configurados neste repositório — validação desta fase foi manual (Playwright ad-hoc), não uma suíte que corra em CI.
+- [x] **(TRD Adendo v1.4, item A)** Login/registo via Google OAuth (`signInWithOAuth` + `/auth/callback`). Botão visível e funcional na UI; fluxo completo de autorização Google não testado de ponta a ponta nesta sessão (exige interação humana no ecrã de consentimento do Google, fora do alcance de automação headless) — validado indiretamente simulando o shape de signup que o Google produz (metadata `name`, sem `phone`).
+- [x] **(TRD Adendo v1.4, item B)** Onboarding obrigatório de telefone (só quem entra via Google) e localização (todos os canais), via `OnboardingGate` + `pages/onboarding/`. Validado de ponta a ponta: acesso direto a `/perfil` sem completar os passos é bloqueado e devolvido ao passo em falta; sequência telefone → localização → perfil confirmada.
+- [x] **(TRD Adendo v1.4, item C)** Foto de perfil opcional, com conversão para WebP reutilizável (`lib/imageConversion.ts`) e upload direto ao Storage. Validado de ponta a ponta: upload, `mimetype: image/webp` confirmado no ficheiro gravado, exibição na UI, remoção.
 
 ---
 
