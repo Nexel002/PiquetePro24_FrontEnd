@@ -1,5 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { fetchProfile, updateLocation, type LocationUpdatePayload } from '../services/profile'
+import {
+  fetchProfile,
+  updateLocation,
+  updateProfileDetails,
+  type LocationUpdatePayload,
+  type ProfileDetailsUpdatePayload,
+} from '../services/profile'
 import { useAuth } from '../store/AuthContext'
 
 const profileQueryKey = ['profile'] as const
@@ -24,6 +30,17 @@ export function useUpdateLocation() {
     onSuccess: (profile) => {
       // A resposta do PATCH já é o perfil atualizado — grava-a diretamente na cache em
       // vez de invalidar e esperar por um novo GET /profile.
+      queryClient.setQueryData(profileQueryKey, profile)
+    },
+  })
+}
+
+export function useUpdateProfileDetails() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: ProfileDetailsUpdatePayload) => updateProfileDetails(payload),
+    onSuccess: (profile) => {
       queryClient.setQueryData(profileQueryKey, profile)
     },
   })

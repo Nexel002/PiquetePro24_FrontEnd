@@ -21,6 +21,11 @@ export type LocationUpdatePayload =
   | { latitude: number; longitude: number }
   | { province: string; district?: string; neighborhood?: string }
 
+export interface ProfileDetailsUpdatePayload {
+  full_name?: string
+  phone?: string
+}
+
 export async function fetchProfile(): Promise<UserProfile> {
   const response = await api.get<UserProfile>('/profile')
   return response.data
@@ -28,5 +33,10 @@ export async function fetchProfile(): Promise<UserProfile> {
 
 export async function updateLocation(payload: LocationUpdatePayload): Promise<UserProfile> {
   const response = await api.patch<UserProfile>('/profile/location', payload)
+  return response.data
+}
+
+export async function updateProfileDetails(payload: ProfileDetailsUpdatePayload): Promise<UserProfile> {
+  const response = await api.patch<UserProfile>('/profile', payload)
   return response.data
 }
