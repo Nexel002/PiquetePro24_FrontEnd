@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  deleteAccount,
   fetchProfile,
   updateLocation,
   updateProfileDetails,
@@ -7,6 +8,7 @@ import {
   type ProfileDetailsUpdatePayload,
 } from '../services/profile'
 import { uploadAvatar } from '../services/avatar'
+import { supabase } from '../lib/supabase'
 import { useAuth } from '../store/AuthContext'
 
 const profileQueryKey = ['profile'] as const
@@ -43,6 +45,23 @@ export function useUpdateProfileDetails() {
     mutationFn: (payload: ProfileDetailsUpdatePayload) => updateProfileDetails(payload),
     onSuccess: (profile) => {
       queryClient.setQueryData(profileQueryKey, profile)
+    },
+  })
+}
+
+// Depois do backend apagar a conta (auth.users + tudo em cascata, ver plano do
+// backend), a sessão local no browser ainda "parece" válida até expirar — signOut()
+// limpa-a explicitamente e a UI (ver Profile.tsx) redireciona para fora de qualquer
+// rota protegida. queryClient.clear() evita que dados do utilizador apagado
+// sobrevivam na cache do TanStack Query.
+export function useDeleteAccount() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: deleteAccount,
+    onSuccess: async () => {
+      await supabase.auth.signOut()
+      queryClient.clear()
     },
   })
 }

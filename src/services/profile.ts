@@ -59,3 +59,10 @@ export async function updateProfileDetails(payload: ProfileDetailsUpdatePayload)
   const response = await api.patch<UserProfile>('/profile', payload)
   return response.data
 }
+
+// Apaga a conta "a 100%": auth.users, users_profile e todas as tabelas dependentes em
+// cascata (ver plano do backend), mais o avatar no Storage. Irreversível — não há
+// desfazer depois desta chamada.
+export async function deleteAccount(): Promise<void> {
+  await api.delete('/profile')
+}

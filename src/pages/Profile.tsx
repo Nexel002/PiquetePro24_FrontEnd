@@ -1,5 +1,6 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
-import { useProfile, useUpdateProfileDetails, useUploadAvatar } from '../hooks/useProfile'
+import { useNavigate } from 'react-router-dom'
+import { useDeleteAccount, useProfile, useUpdateProfileDetails, useUploadAvatar } from '../hooks/useProfile'
 import { LocationForm } from '../components/LocationForm'
 import { PHONE_PREFIX, stripPhonePrefix } from '../lib/phone'
 import { AvatarUploadError } from '../services/avatar'
@@ -16,14 +17,21 @@ const ROLE_LABELS: Record<UserRole, string> = {
 const memberSinceFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long' })
 
 export function Profile() {
+  const navigate = useNavigate()
   const { data: profile, isLoading, isError } = useProfile()
   const updateDetails = useUpdateProfileDetails()
   const uploadAvatar = useUploadAvatar()
+  const deleteAccount = useDeleteAccount()
   const avatarInputRef = useRef<HTMLInputElement>(null)
 
   const [isEditingDetails, setIsEditingDetails] = useState(false)
   const [fullNameDraft, setFullNameDraft] = useState('')
   const [phoneDraft, setPhoneDraft] = useState('')
+  const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
+
+  function handleConfirmDeleteAccount() {
+    deleteAccount.mutate(undefined, { onSuccess: () => navigate('/', { replace: true }) })
+  }
 
   function handleAvatarSelected(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]
@@ -90,6 +98,11 @@ export function Profile() {
     uploadAvatar.error instanceof AvatarUploadError
       ? uploadAvatar.error.message
       : 'Não foi possível enviar a foto. Tenta novamente.'
+
+  const deleteAccountErrorMessage =
+    deleteAccount.error instanceof Error
+      ? deleteAccount.error.message
+      : 'Não foi possível apagar a conta. Tenta novamente.'
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
@@ -246,6 +259,47 @@ export function Profile() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium text-gray-900">Localização</h2>
         <LocationForm profile={profile} />
+      </section>
+
+      <section className="flex flex-col gap-2 rounded-lg border border-red-200 p-4">
+        <h2 className="text-lg font-medium text-red-700">Zona de perigo</h2>
+
+        {isConfirmingDelete ? (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-gray-700">
+              Isto apaga a tua conta e todos os dados associados (perfil, localização, foto,
+              pedidos, KYC, subscrição) de forma <strong>irreversível</strong>. Não há como
+              recuperar depois.
+            </p>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={handleConfirmDeleteAccount}
+                disabled={deleteAccount.isPending}
+                className="rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {deleteAccount.isPending ? 'A apagar...' : 'Sim, apagar a minha conta'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsConfirmingDelete(false)}
+                disabled={deleteAccount.isPending}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
+              >
+                Cancelar
+              </button>
+            </div>
+            {deleteAccount.isError && <p className="text-sm text-red-600">{deleteAccountErrorMessage}</p>}
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsConfirmingDelete(true)}
+            className="self-start rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700"
+          >
+            Apagar conta
+          </button>
+        )}
       </section>
     </main>
   )
