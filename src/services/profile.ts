@@ -12,6 +12,8 @@ export interface UserProfile {
   district: string | null
   neighborhood: string | null
   location: unknown
+  latitude: number | null
+  longitude: number | null
   created_at: string
 }
 

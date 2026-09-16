@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useProfile, useUpdateLocation } from '../hooks/useProfile'
 import { useGeolocation } from '../hooks/useGeolocation'
+import { useReverseGeocode } from '../hooks/useReverseGeocode'
 import { MOZAMBIQUE_PROVINCES } from '../lib/provinces'
 
 export function Profile() {
@@ -11,6 +12,19 @@ export function Profile() {
   const [province, setProvince] = useState('')
   const [district, setDistrict] = useState('')
   const [neighborhood, setNeighborhood] = useState('')
+
+  // Traduz as coordenadas do GPS recém-obtido (antes de confirmar) para um nome de
+  // lugar — só ativa quando o GPS já respondeu com sucesso.
+  const pendingCoordinates = geolocation.state.status === 'success' ? geolocation.state.coordinates : null
+  const pendingPlace = useReverseGeocode(pendingCoordinates)
+
+  // Traduz as coordenadas já gravadas no perfil (quando a localização foi definida
+  // por GPS) para o mesmo nome de lugar em vez de "GPS registado".
+  const savedCoordinates =
+    profile?.latitude != null && profile.longitude != null
+      ? { latitude: profile.latitude, longitude: profile.longitude }
+      : null
+  const savedPlace = useReverseGeocode(savedCoordinates)
 
   function handleUseGps() {
     geolocation.locate()
@@ -54,6 +68,12 @@ export function Profile() {
     )
   }
 
+  const currentLocationLabel = savedCoordinates
+    ? (savedPlace.data ?? (savedPlace.isError ? 'GPS registado' : 'A identificar o lugar...'))
+    : profile.province
+      ? [profile.province, profile.district, profile.neighborhood].filter(Boolean).join(' — ')
+      : 'Ainda não definida'
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
       <header>
@@ -63,14 +83,7 @@ export function Profile() {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium text-gray-900">Localização</h2>
-        <p className="text-sm text-gray-600">
-          Localização atual:{' '}
-          {profile.location
-            ? 'GPS registado'
-            : profile.province
-              ? [profile.province, profile.district, profile.neighborhood].filter(Boolean).join(' — ')
-              : 'Ainda não definida'}
-        </p>
+        <p className="text-sm text-gray-600">Localização atual: {currentLocationLabel}</p>
 
         <button
           type="button"
@@ -88,8 +101,11 @@ export function Profile() {
         {geolocation.state.status === 'success' && (
           <div className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
             <p className="text-sm text-gray-700">
-              Localização encontrada ({geolocation.state.coordinates.latitude.toFixed(4)},{' '}
-              {geolocation.state.coordinates.longitude.toFixed(4)}).
+              Localização encontrada:{' '}
+              {pendingPlace.data ??
+                (pendingPlace.isError
+                  ? `${geolocation.state.coordinates.latitude.toFixed(4)}, ${geolocation.state.coordinates.longitude.toFixed(4)}`
+                  : 'a identificar o lugar...')}
             </p>
             <button
               type="button"
