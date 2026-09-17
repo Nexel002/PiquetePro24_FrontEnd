@@ -123,10 +123,11 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - Cache e scroll infinito via TanStack Query (`useInfiniteQuery`), evitando refetch desnecessário ao navegar entre telas.
 
 **Critérios de Entrega:**
-- [ ] Listagem exibe profissionais reais do backend de staging, ordenados corretamente por proximidade.
-- [ ] Alterar o raio de busca atualiza os resultados sem recarregar a página inteira.
-- [ ] Estados de vazio/erro têm feedback visual claro (não tela em branco).
-- [ ] Testado em condição de rede lenta/3G simulada (Network-First não bloqueia a UI indefinidamente).
+- [x] Listagem exibe profissionais reais do backend, ordenados corretamente por proximidade (`FindProfessionals.tsx`, consome `GET /professionals/nearby` via `useNearbyProfessionals`). Build (`tsc -b` + `vite build`) e lint confirmados limpos; validação manual completa (login real → busca → lista) **não foi possível nesta sessão** por não haver driver de browser (Playwright/chromium-cli) disponível na máquina — confirmado apenas que o dev server serve os novos módulos sem erro de compilação (`curl` aos ficheiros via Vite, HTTP 200).
+- [x] Alterar o raio de busca atualiza os resultados sem recarregar a página inteira — slider de raio (1-50km) muda um parâmetro do React Query (`useNearbyProfessionals`), refetch automático, sem reload.
+- [x] Estados de vazio/erro têm feedback visual claro (mensagens dedicadas para `isLoading`/`isError`/lista vazia, não tela em branco).
+- [ ] Testado em condição de rede lenta/3G simulada. **Não feito** — fora do escopo desta entrega (sem simulação de rede configurada no projeto).
+- **Desvio deliberado:** não foi implementado scroll infinito/`useInfiniteQuery` nem paginação incremental — a query usa `limit`/`offset` fixos (`limit=20`), suficiente para o volume esperado nesta fase. Reavaliar se a listagem crescer a ponto de justificar paginação real.
 
 ---
 
@@ -140,14 +141,14 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - Tela do `PROFESSIONAL`: lista de pedidos `OPEN` próximos (reutilizando componente de proximidade da Fase 2) com ação "Aceitar pedido".
 - Tratamento explícito de conflito de atribuição: se dois profissionais tentarem aceitar o mesmo pedido, o segundo deve receber feedback claro (ex. "Este pedido já foi atribuído") em vez de erro genérico — reflete o teste de concorrência da Fase 3 do backend.
 - Ação de marcar pedido como concluído, **visível apenas para o `CLIENT`** (decidido: quem recebeu o serviço confirma que foi prestado). Na vista do `PROFESSIONAL`, um pedido `ASSIGNED` mostra que aguarda confirmação do cliente — não um botão de concluir desativado.
-- Ação de cancelar. **⚠️ Permissões por definir:** quem pode cancelar um pedido já `ASSIGNED` (cliente, profissional, ambos?). Resolver antes de implementar esta parte.
-- Notificações in-app (toast) para mudanças de estado.
+- Ação de cancelar. **Decisão tomada (2026-09-17, ver plano do backend):** só o cliente pode cancelar, em qualquer estado não terminal (`OPEN` ou `ASSIGNED`) — mesma regra do endpoint de concluir. Um profissional atribuído não tem ação de cancelar na UI (só o cliente vê o botão).
+- Notificações in-app (toast) para mudanças de estado. **Implementado** com `sonner` (`<Toaster />` montado em `App.tsx`, nível raiz): criar pedido, aceitar, concluir e cancelar disparam `toast.success`/`toast.error` a partir dos hooks (`useServiceRequests.ts`), reaproveitando a mensagem específica que o interceptor de `lib/api.ts` já extrai do backend (ex. "Este pedido já não está disponível para atribuição.") em vez de um texto genérico.
 
 **Critérios de Entrega:**
-- [ ] Criação de pedido persiste corretamente e aparece na listagem do cliente com estado `OPEN`.
-- [ ] Aceitar um pedido já atribuído por outro profissional exibe mensagem de conflito específica, não um erro técnico cru.
-- [ ] Transições de estado refletem-se na UI em tempo real ou após refresh (dependendo da estratégia de sincronização escolhida).
-- [ ] Testes E2E (ex. Playwright/Cypress) cobrem o fluxo: criar pedido → profissional aceita → conclusão.
+- [x] Criação de pedido persiste corretamente e aparece na listagem do cliente com estado `OPEN` (`FindProfessionals.tsx` cria via `useCreateServiceRequest`; `MyServiceRequests.tsx` lista via novo endpoint `GET /service_requests` — **adicionado fora do escopo original desta fase**, ver TRD Adendo v1.5/backend: sem ele o cliente não tinha como voltar a ver um pedido já criado).
+- [x] Aceitar um pedido já atribuído por outro profissional exibe mensagem de conflito específica (`NearbyServiceRequests.tsx`: "pode já ter sido atribuído a outro profissional" em vez de erro técnico cru) — reflete o 409 que o backend devolve quando a corrida de `assign` é perdida (testado no backend, ver critério de concorrência da Fase 3).
+- [x] Transições de estado refletem-se na UI após refresh — `complete`/`cancel`/`assign` invalidam a query de listagem correspondente (React Query `invalidateQueries`), sem necessidade de reload manual. **Não em tempo real** (sem websocket/polling) — só após a própria ação do utilizador.
+- [ ] Testes E2E (Playwright/Cypress) cobrindo o fluxo completo. **Não feito** — não existe suíte E2E neste repositório; validação foi build/lint limpos + leitura do fluxo, sem execução visual (sem driver de browser disponível nesta sessão).
 
 ---
 
