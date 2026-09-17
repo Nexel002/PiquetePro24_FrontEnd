@@ -137,6 +137,22 @@ LIMIT $page_size OFFSET $page_offset;
 - **Service Worker**: Configurado via `vite-plugin-pwa` com estratégia Stale-While-Revalidate para o shell da aplicação e Network-First para requisições à API de serviços.
 - **Geolocalização Offline**: Armazenamento temporário das últimas coordenadas conhecidas em localStorage / IndexedDB caso a ligação 4G oscile.
 
+## 7. Perfil ADMIN (espelha o backend)
+
+**Contexto:** ver TRD do backend, Secção 7, para o texto completo (como se chega a `ADMIN`, tabela de funcionalidades, itens fora do escopo atual). Esta secção resume só a perspetiva do frontend.
+
+**Funcionalidades disponíveis hoje:**
+
+| Funcionalidade | Onde na app |
+|---|---|
+| Listar submissões de KYC, com filtro por estado | `/admin/kyc` |
+| Aprovar uma submissão de KYC | `/admin/kyc`, botão "Aprovar" |
+| Rejeitar uma submissão de KYC com motivo obrigatório | `/admin/kyc`, botão "Rejeitar" |
+
+Rota visível só quando `profile.role === 'ADMIN'` (link condicional em `Home.tsx`) — mesma convenção usada para "Pedidos perto de ti"/"Verificação de identidade". A restrição real de segurança vive no backend (`requireRole`), não nesta condição de UI.
+
+**Fora do escopo atual:** ver TRD do backend, Secção 7 — inclui gestão de subscrições, moderação de contas, métricas agregadas e visualizador de imagem do documento KYC dentro da tela de admin (hoje sem `<img>` a mostrar o documento).
+
 ---
 
 ## Adendo v1.2
