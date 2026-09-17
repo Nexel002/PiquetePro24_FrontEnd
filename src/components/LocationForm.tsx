@@ -38,9 +38,23 @@ export function LocationForm({ profile, onSaved }: { profile: UserProfile; onSav
   // não automático ao obter coordenadas — o utilizador vê o resultado antes de o
   // backend gravar, consistente com o fluxo do fallback manual (que também só grava
   // ao submeter o formulário).
+  //
+  // province/district/neighborhood vão junto das coordenadas quando a geocodificação
+  // reversa já respondeu (pendingPlace.data) — cache legível da hierarquia ao lado do
+  // GPS, para não deixar esses campos sempre em branco quando a localização vem por
+  // GPS. Se a geocodificação ainda não respondeu ou falhou, seguem undefined e o
+  // backend grava null nesses campos (não bloqueia a confirmação por isso).
   function handleConfirmGps() {
     if (geolocation.state.status !== 'success') return
-    updateLocation.mutate(geolocation.state.coordinates, { onSuccess: onSaved })
+    updateLocation.mutate(
+      {
+        ...geolocation.state.coordinates,
+        province: pendingPlace.data?.province ?? undefined,
+        district: pendingPlace.data?.district ?? undefined,
+        neighborhood: pendingPlace.data?.neighborhood ?? undefined,
+      },
+      { onSuccess: onSaved },
+    )
   }
 
   function handleSubmitHierarchy(event: FormEvent) {
@@ -53,7 +67,7 @@ export function LocationForm({ profile, onSaved }: { profile: UserProfile; onSav
   }
 
   const currentLocationLabel = savedCoordinates
-    ? (savedPlace.data ?? (savedPlace.isError ? 'GPS registado' : 'A identificar o lugar...'))
+    ? (savedPlace.data?.placeName ?? (savedPlace.isError ? 'GPS registado' : 'A identificar o lugar...'))
     : profile.province
       ? [profile.province, profile.district, profile.neighborhood].filter(Boolean).join(' — ')
       : 'Ainda não definida'
@@ -79,7 +93,7 @@ export function LocationForm({ profile, onSaved }: { profile: UserProfile; onSav
         <div className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
           <p className="text-sm text-gray-700">
             Localização encontrada:{' '}
-            {pendingPlace.data ??
+            {pendingPlace.data?.placeName ??
               (pendingPlace.isError
                 ? `${geolocation.state.coordinates.latitude.toFixed(4)}, ${geolocation.state.coordinates.longitude.toFixed(4)}`
                 : 'a identificar o lugar...')}

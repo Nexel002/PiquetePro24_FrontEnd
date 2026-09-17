@@ -41,7 +41,15 @@ export function getOnboardingStep(profile: UserProfile): OnboardingStep {
 }
 
 export type LocationUpdatePayload =
-  | { latitude: number; longitude: number }
+  | {
+      latitude: number
+      longitude: number
+      // Preenchidos a partir da geocodificação reversa do próprio GPS quando
+      // disponível — cache legível da hierarquia junto às coordenadas.
+      province?: string
+      district?: string
+      neighborhood?: string
+    }
   | { province: string; district?: string; neighborhood?: string }
 
 export interface ProfileDetailsUpdatePayload {
