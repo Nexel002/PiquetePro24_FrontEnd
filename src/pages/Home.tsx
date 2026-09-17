@@ -17,9 +17,17 @@ export function Home() {
               a carregar) vê a descoberta de profissionais — a mesma conta nunca
               precisa das duas telas ao mesmo tempo (ver Fase 2/3 do frontend). */}
           {profile?.role === 'PROFESSIONAL' ? (
-            <Link to="/pedidos-proximos" className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white">
-              Pedidos perto de ti
-            </Link>
+            <>
+              <Link to="/pedidos-proximos" className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white">
+                Pedidos perto de ti
+              </Link>
+              <Link
+                to="/verificacao-identidade"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
+              >
+                Verificação de identidade
+              </Link>
+            </>
           ) : (
             <>
               <Link to="/profissionais" className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white">

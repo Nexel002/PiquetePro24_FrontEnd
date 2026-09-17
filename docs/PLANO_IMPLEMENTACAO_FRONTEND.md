@@ -163,11 +163,15 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - Tela de estado da subscrição (`INACTIVE`/`ACTIVE`/`EXPIRED`) com data de expiração visível.
 - Bloqueio de funcionalidades dependentes (ex. aceitar pedidos) enquanto KYC não está `APPROVED` ou subscrição não está `ACTIVE`, com mensagens explicativas do que falta.
 
+**Implementado em `feat/fase-4-kyc-onboarding`** (consumindo só a Fase 4 do backend — ver nota de escopo abaixo): `services/kyc.ts` (tipos + `fetchOwnKyc`/`submitKyc`/`uploadKycDocument`), `hooks/useKyc.ts` (`useOwnKyc`, `useSubmitKyc`), `pages/Kyc.tsx` (formulário de submissão BI/NUIT/documento + tela de estado com os três badges PENDING/APPROVED/REJECTED e `review_notes` visível na rejeição), rota `/verificacao-identidade` em `App.tsx`, link condicional em `Home.tsx` (só `profile.role === 'PROFESSIONAL'`). Upload usa signed upload URL (`POST /kyc/upload-url` + `supabase.storage.uploadToSignedUrl`) — primeira vez que este padrão aparece no frontend (diferente do avatar, que usa bucket público com upload direto). Validado manualmente no browser com utilizadores de teste reais (signup via Admin API, sessão real) contra o backend real: submissão → PENDING, rejeição via `/admin/kyc/:id` com `review_notes` → badge vermelho com motivo, resubmissão (upsert) → PENDING limpo, aprovação → badge verde, formulário de submissão escondido. Utilizadores e ficheiros de teste apagados após validação.
+
+**Decisão de escopo (fora do TRD original, registada aqui e no TRD — ver Adendo abaixo):** esta entrega cobre só a parte de KYC. A parte de subscrição (Backend Fase 5) fica para quando essa fase do backend existir — não havia endpoint `POST /subscriptions` para consumir. Dividir a fase evita a regra fullstack (CLAUDE.md — backend e frontend andam sempre juntos) bloquear a entrega de KYC à espera de Subscrição, que depende de uma fase do backend ainda não iniciada.
+
 **Critérios de Entrega:**
-- [ ] Upload de documento KYC funciona e o estado atualiza corretamente após revisão (simulada em staging).
-- [ ] Profissional com KYC pendente/rejeitado ou subscrição inativa não consegue aceder às ações de aceitar pedidos — com explicação clara na UI, não apenas botão desabilitado sem contexto.
-- [ ] Fluxo de subscrição mock completo testado: seleção → pendente → ativo (após webhook simulado no backend).
-- [ ] Testes cobrem os três estados de KYC e os três estados de subscrição na UI.
+- [x] Upload de documento KYC funciona e o estado atualiza corretamente após revisão (simulada em staging). Validado manualmente (ver nota acima); sem staging dedicado ainda (Fase 7), testado contra o Supabase de desenvolvimento do projeto.
+- [ ] Profissional com KYC pendente/rejeitado ou subscrição inativa não consegue aceder às ações de aceitar pedidos — com explicação clara na UI, não apenas botão desabilitado sem contexto. **Pendente:** depende da parte de subscrição (Backend Fase 5), ainda não implementada.
+- [ ] Fluxo de subscrição mock completo testado: seleção → pendente → ativo (após webhook simulado no backend). **Pendente:** Backend Fase 5 ainda não implementada.
+- [ ] Testes cobrem os três estados de KYC e os três estados de subscrição na UI. **Pendente:** projeto não tem test runner configurado (sem Vitest/RTL) — decisão explícita de não o introduzir nesta entrega; os três estados de KYC foram validados manualmente (ver nota acima), não por teste automatizado.
 
 ---
 
