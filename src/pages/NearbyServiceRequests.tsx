@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useAssignServiceRequest, useNearbyServiceRequests } from '../hooks/useServiceRequests'
+import { BackButton } from '../components/BackButton'
 
 // Só faz sentido para profissionais (Home.tsx só mostra o link quando
 // profile.role === 'PROFESSIONAL') — não há verificação de role aqui porque o
@@ -24,8 +25,9 @@ export function NearbyServiceRequests() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">Pedidos perto de ti</h1>
+      <header className="flex items-center gap-3">
+        <BackButton />
+        <h1 className="flex-1 text-2xl font-semibold text-gray-900">Pedidos perto de ti</h1>
         <Link to="/perfil" className="text-sm text-gray-600 underline">
           Perfil
         </Link>
