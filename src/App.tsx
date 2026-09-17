@@ -11,6 +11,7 @@ import { FindProfessionals } from './pages/FindProfessionals'
 import { MyServiceRequests } from './pages/MyServiceRequests'
 import { NearbyServiceRequests } from './pages/NearbyServiceRequests'
 import { Kyc } from './pages/Kyc'
+import { AdminKyc } from './pages/AdminKyc'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { OnboardingGate } from './components/OnboardingGate'
 import { AuthProvider } from './store/AuthContext'
@@ -105,6 +106,19 @@ function App() {
                   <OnboardingGate>
                     <Kyc />
                   </OnboardingGate>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* TRD Adendo v1.6: painel mínimo para ADMIN rever KYC. Sem
+                OnboardingGate — um ADMIN não passa pelo onboarding de
+                telefone/localização de CLIENT/PROFESSIONAL. O guard de role real
+                está dentro do próprio componente (ver AdminKyc.tsx). */}
+            <Route
+              path="/admin/kyc"
+              element={
+                <ProtectedRoute>
+                  <AdminKyc />
                 </ProtectedRoute>
               }
             />
