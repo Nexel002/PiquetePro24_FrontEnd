@@ -329,3 +329,24 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 **Não é uma segunda fonte de verdade:** estes três campos continuam a ser só uma cache legível (ex. "Baixa, Maputo" em `currentLocationLabel`) quando a localização foi definida por GPS. A busca por raio/proximidade (Fase 3) usa exclusivamente as coordenadas, nunca estes campos de texto.
 
 **Validado:** build e lint (`tsc -b`, `eslint`) limpos. Sem suite de testes automatizados no frontend nesta fase (o repositório não tem Vitest/testing-library configurado) — validação end-to-end da tela feita manualmente (ver Plano de Implementação do Frontend).
+
+## Adendo v1.5
+
+### A. `GET /service_requests` — listagem dos próprios pedidos do cliente (espelha o backend)
+
+**Contexto:** ver TRD do backend, Adendo v1.5, item A — a Fase 3 original do backend só previa `POST /service_requests` (criação) e `GET /service_requests/nearby` (para profissionais). Ao construir o consumo destes endpoints nas Fases 2/3 do frontend (regra do CLAUDE.md: nenhum endpoint fica sem consumo real na mesma entrega), ficou claro que sem uma listagem "os meus pedidos" o cliente não tinha como voltar a um pedido já criado para o concluir ou cancelar.
+
+**Decisão:** backend passou a expor `GET /service_requests` (pedidos do cliente autenticado, qualquer estado, sem paginação); frontend consome via `fetchMyServiceRequests()`/`useMyServiceRequests()` (`src/services/serviceRequests.ts`, `src/hooks/useServiceRequests.ts`) numa nova tela `MyServiceRequests.tsx` (`/os-meus-pedidos`), que mostra o estado de cada pedido e as ações `Concluir`/`Cancelar` só quando o estado atual as permite (espelhando exatamente as transições que o backend já valida — `ASSIGNED` para concluir, `OPEN`/`ASSIGNED` para cancelar).
+
+### B. Consumo completo da Fase 3 do backend (proximidade + ciclo de vida de pedidos)
+
+**Contexto:** os 6 endpoints originais da Fase 3 do backend (`GET /professionals/nearby`, `POST /service_requests`, `GET /service_requests/nearby`, `assign`/`complete`/`cancel`) tinham ficado sem nenhum consumo no frontend depois de o backend os implementar — identificado ao auditar explicitamente a cadeia endpoint → api → hook → UI (regra do CLAUDE.md).
+
+**Decisão:** implementadas as Fases 2 e 3 do frontend (ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md` para os critérios de entrega detalhados e desvios de escopo assumidos, incluindo o item A acima):
+
+- `FindProfessionals.tsx` (`/profissionais`): busca de profissionais por raio (GPS), com criação de pedido diretamente a partir da lista.
+- `MyServiceRequests.tsx` (`/os-meus-pedidos`): listagem e gestão dos próprios pedidos do cliente.
+- `NearbyServiceRequests.tsx` (`/pedidos-proximos`): pedidos `OPEN` próximos para profissionais, com ação de aceitar.
+- `Home.tsx` passa a mostrar navegação condicional por `role` (`PROFESSIONAL` vê "Pedidos perto de ti"; outros veem "Procurar profissionais" + "Os meus pedidos").
+
+**Validado:** build (`tsc -b` + `vite build`) e lint (`eslint`) limpos. Validação manual completa (login real, fluxo ponta a ponta no browser) **não foi possível nesta sessão** — sem driver de browser (Playwright/chromium-cli) disponível na máquina de desenvolvimento usada. Confirmado apenas que o dev server (Vite) serve e transforma os novos módulos sem erro de compilação. Recomenda-se validação manual/Playwright antes de considerar as Fases 2/3 do frontend definitivamente fechadas.
