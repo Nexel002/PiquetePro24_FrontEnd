@@ -1,8 +1,15 @@
 import { api } from '../lib/api'
 
-export async function reverseGeocode(latitude: number, longitude: number): Promise<string> {
-  const response = await api.get<{ placeName: string }>('/geocode/reverse', {
+export interface ReverseGeocodeResult {
+  placeName: string
+  province: string | null
+  district: string | null
+  neighborhood: string | null
+}
+
+export async function reverseGeocode(latitude: number, longitude: number): Promise<ReverseGeocodeResult> {
+  const response = await api.get<ReverseGeocodeResult>('/geocode/reverse', {
     params: { latitude, longitude },
   })
-  return response.data.placeName
+  return response.data
 }
