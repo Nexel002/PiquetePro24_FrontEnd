@@ -10,6 +10,7 @@ import { CompleteLocation } from './pages/onboarding/CompleteLocation'
 import { FindProfessionals } from './pages/FindProfessionals'
 import { MyServiceRequests } from './pages/MyServiceRequests'
 import { NearbyServiceRequests } from './pages/NearbyServiceRequests'
+import { Kyc } from './pages/Kyc'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { OnboardingGate } from './components/OnboardingGate'
 import { AuthProvider } from './store/AuthContext'
@@ -88,6 +89,21 @@ function App() {
                 <ProtectedRoute>
                   <OnboardingGate>
                     <NearbyServiceRequests />
+                  </OnboardingGate>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Backend Fase 4: verificação de identidade. Sem requireRole no
+                backend (qualquer utilizador autenticado pode submeter o próprio
+                KYC) — mesma decisão de FindProfessionals/NearbyServiceRequests: o
+                link em Home.tsx só aparece para profile.role === 'PROFESSIONAL'. */}
+            <Route
+              path="/verificacao-identidade"
+              element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <Kyc />
                   </OnboardingGate>
                 </ProtectedRoute>
               }
