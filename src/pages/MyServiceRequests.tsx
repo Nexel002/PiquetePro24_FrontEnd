@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useCancelServiceRequest, useCompleteServiceRequest, useMyServiceRequests } from '../hooks/useServiceRequests'
 import type { RequestStatus } from '../services/serviceRequests'
+import { BackButton } from '../components/BackButton'
 
 const STATUS_LABELS: Record<RequestStatus, string> = {
   OPEN: 'Aberto',
@@ -28,8 +29,9 @@ export function MyServiceRequests() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold text-gray-900">Os meus pedidos</h1>
+      <header className="flex items-center gap-3">
+        <BackButton />
+        <h1 className="flex-1 text-2xl font-semibold text-gray-900">Os meus pedidos</h1>
         <Link to="/perfil" className="text-sm text-gray-600 underline">
           Perfil
         </Link>

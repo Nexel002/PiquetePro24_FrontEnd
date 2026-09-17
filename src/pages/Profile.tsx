@@ -2,6 +2,7 @@ import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDeleteAccount, useProfile, useUpdateProfileDetails, useUploadAvatar } from '../hooks/useProfile'
 import { LocationForm } from '../components/LocationForm'
+import { BackButton } from '../components/BackButton'
 import { PHONE_PREFIX, stripPhonePrefix } from '../lib/phone'
 import { AvatarUploadError } from '../services/avatar'
 import type { ProfessionalType, UserRole } from '../services/profile'
@@ -114,6 +115,7 @@ export function Profile() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
       <header className="flex items-center gap-4">
+        <BackButton />
         {profile.avatar_url ? (
           <img
             src={profile.avatar_url}
