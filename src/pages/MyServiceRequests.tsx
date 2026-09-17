@@ -107,13 +107,6 @@ export function MyServiceRequests() {
           ))}
         </ul>
       )}
-
-      {completeRequest.isError && (
-        <p className="text-sm text-red-600">Não foi possível concluir este pedido. Tenta novamente.</p>
-      )}
-      {cancelRequest.isError && (
-        <p className="text-sm text-red-600">Não foi possível cancelar este pedido. Tenta novamente.</p>
-      )}
     </main>
   )
 }

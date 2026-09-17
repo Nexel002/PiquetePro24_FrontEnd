@@ -164,10 +164,6 @@ export function FindProfessionals() {
                       Cancelar
                     </button>
                   </div>
-                  {createRequest.isError && (
-                    <p className="text-sm text-red-600">Não foi possível criar o pedido. Tenta novamente.</p>
-                  )}
-                  {createRequest.isSuccess && <p className="text-sm text-green-700">Pedido criado com sucesso.</p>}
                 </form>
               )}
             </li>

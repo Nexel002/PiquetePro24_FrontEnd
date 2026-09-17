@@ -99,13 +99,6 @@ export function NearbyServiceRequests() {
           ))}
         </ul>
       )}
-
-      {assignRequest.isError && (
-        <p className="text-sm text-red-600">
-          Não foi possível aceitar este pedido — pode já ter sido atribuído a outro profissional.
-        </p>
-      )}
-      {assignRequest.isSuccess && <p className="text-sm text-green-700">Pedido aceite com sucesso.</p>}
     </main>
   )
 }
