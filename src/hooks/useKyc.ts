@@ -1,8 +1,18 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { fetchOwnKyc, submitKyc, uploadKycDocument, type SubmitKycPayload } from '../services/kyc'
+import {
+  fetchKycSubmissions,
+  fetchOwnKyc,
+  reviewKyc,
+  submitKyc,
+  uploadKycDocument,
+  type KycStatus,
+  type ReviewKycPayload,
+  type SubmitKycPayload,
+} from '../services/kyc'
 import { useAuth } from '../store/AuthContext'
 
 const kycQueryKey = ['kyc'] as const
+const kycSubmissionsQueryKey = (status?: KycStatus) => ['kyc', 'admin', status ?? 'all'] as const
 
 export function useOwnKyc() {
   const { session } = useAuth()
@@ -32,6 +42,31 @@ export function useSubmitKyc() {
     },
     onSuccess: (kyc) => {
       queryClient.setQueryData(kycQueryKey, kyc)
+    },
+  })
+}
+
+// TRD Adendo v1.6 — fila de revisão do ADMIN. Sem `enabled: session !== null` extra:
+// a rota só é montada dentro de uma tela já protegida por role, e um 403 aqui é tão
+// improvável quanto em qualquer outro hook autenticado.
+export function useKycSubmissions(status?: KycStatus) {
+  return useQuery({
+    queryKey: kycSubmissionsQueryKey(status),
+    queryFn: () => fetchKycSubmissions(status),
+  })
+}
+
+export function useReviewKyc() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (input: { kycId: string; payload: ReviewKycPayload }) => reviewKyc(input.kycId, input.payload),
+    onSuccess: () => {
+      // Invalida em vez de setQueryData: a resposta é só a submissão revista, mas a
+      // lista pode ter filtro de status ativo (ex. ?status=PENDING) e a linha revista
+      // já não deve lá aparecer — mais simples pedir a lista de novo do que replicar
+      // a lógica do filtro no cliente.
+      void queryClient.invalidateQueries({ queryKey: ['kyc', 'admin'] })
     },
   })
 }

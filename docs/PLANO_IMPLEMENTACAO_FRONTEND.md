@@ -167,11 +167,14 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 **Decisão de escopo (fora do TRD original, registada aqui e no TRD — ver Adendo abaixo):** esta entrega cobre só a parte de KYC. A parte de subscrição (Backend Fase 5) fica para quando essa fase do backend existir — não havia endpoint `POST /subscriptions` para consumir. Dividir a fase evita a regra fullstack (CLAUDE.md — backend e frontend andam sempre juntos) bloquear a entrega de KYC à espera de Subscrição, que depende de uma fase do backend ainda não iniciada.
 
+**Item adicional fora do escopo original (TRD Adendo v1.6):** o backend expõe `GET /admin/kyc` e `PATCH /admin/kyc/:id` desde a Fase 4, mas nenhuma tela consumia esses endpoints — só eram exercíveis via API direta. Identificado ao promover a primeira conta real a `ADMIN` em produção e constatar que não havia forma de a usar dentro da app. Ver Adendo v1.6 do TRD para o contexto/decisão completos.
+
 **Critérios de Entrega:**
 - [x] Upload de documento KYC funciona e o estado atualiza corretamente após revisão (simulada em staging). Validado manualmente (ver nota acima); sem staging dedicado ainda (Fase 7), testado contra o Supabase de desenvolvimento do projeto.
 - [ ] Profissional com KYC pendente/rejeitado ou subscrição inativa não consegue aceder às ações de aceitar pedidos — com explicação clara na UI, não apenas botão desabilitado sem contexto. **Pendente:** depende da parte de subscrição (Backend Fase 5), ainda não implementada.
 - [ ] Fluxo de subscrição mock completo testado: seleção → pendente → ativo (após webhook simulado no backend). **Pendente:** Backend Fase 5 ainda não implementada.
 - [ ] Testes cobrem os três estados de KYC e os três estados de subscrição na UI. **Pendente:** projeto não tem test runner configurado (sem Vitest/RTL) — decisão explícita de não o introduzir nesta entrega; os três estados de KYC foram validados manualmente (ver nota acima), não por teste automatizado.
+- [ ] Tela de administração (TRD Adendo v1.6) permite a um `ADMIN` listar submissões KYC por estado e aprovar/rejeitar cada uma, com motivo obrigatório na rejeição — só acessível quando `profile.role === 'ADMIN'`.
 
 ---
 

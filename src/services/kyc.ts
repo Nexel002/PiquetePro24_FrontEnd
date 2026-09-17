@@ -42,6 +42,25 @@ export async function submitKyc(payload: SubmitKycPayload): Promise<Professional
   return response.data
 }
 
+// TRD Adendo v1.6: superfície mínima para um ADMIN exercer os endpoints
+// administrativos da Fase 4 (GET /admin/kyc, PATCH /admin/kyc/:id) — sem paginação,
+// mesmo espírito de fetchMyServiceRequests (volume esperado baixo para uma fila de
+// revisão manual).
+export async function fetchKycSubmissions(status?: KycStatus): Promise<ProfessionalKyc[]> {
+  const response = await api.get<ProfessionalKyc[]>('/admin/kyc', { params: status ? { status } : undefined })
+  return response.data
+}
+
+export interface ReviewKycPayload {
+  status: 'APPROVED' | 'REJECTED'
+  review_notes?: string
+}
+
+export async function reviewKyc(kycId: string, payload: ReviewKycPayload): Promise<ProfessionalKyc> {
+  const response = await api.patch<ProfessionalKyc>(`/admin/kyc/${kycId}`, payload)
+  return response.data
+}
+
 const KYC_DOCUMENTS_BUCKET = 'kyc-documents'
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024
 

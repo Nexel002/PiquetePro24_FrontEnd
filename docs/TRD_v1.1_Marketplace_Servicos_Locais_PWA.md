@@ -350,3 +350,17 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 - `Home.tsx` passa a mostrar navegação condicional por `role` (`PROFESSIONAL` vê "Pedidos perto de ti"; outros veem "Procurar profissionais" + "Os meus pedidos").
 
 **Validado:** build (`tsc -b` + `vite build`) e lint (`eslint`) limpos. Validação manual completa (login real, fluxo ponta a ponta no browser) **não foi possível nesta sessão** — sem driver de browser (Playwright/chromium-cli) disponível na máquina de desenvolvimento usada. Confirmado apenas que o dev server (Vite) serve e transforma os novos módulos sem erro de compilação. Recomenda-se validação manual/Playwright antes de considerar as Fases 2/3 do frontend definitivamente fechadas.
+
+---
+
+## Adendo v1.6
+
+### A. Painel de administração para revisão de KYC (espelha o backend)
+
+**Contexto:** ver TRD do backend, Adendo v1.6, item A. A Fase 4 implementou os endpoints administrativos (`GET /admin/kyc`, `PATCH /admin/kyc/:id`) e a policy de RLS que restringe `bi_document_url` a `ADMIN`, mas nem o TRD original nem o plano do frontend previam nenhuma tela para os exercer — só eram acessíveis diretamente via API. Identificado depois de promover a primeira conta real a `ADMIN` em produção e constatar que não havia forma de a usar dentro da app.
+
+**Decisão:** nova tela no frontend, acessível só a `profile.role === 'ADMIN'`, que lista submissões KYC (com filtro por estado) e permite aprovar/rejeitar cada uma (rejeição exige motivo, espelhando `review_notes` obrigatório já validado no backend). Sem alteração de schema/endpoint no backend — o consumo é da API já existente desde a Fase 4.
+
+**Frontend:** nova rota protegida (`/admin/kyc`), visível só quando `profile.role === 'ADMIN'`, mesma convenção de visibilidade condicional por role já usada em `Home.tsx`.
+
+**Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, novo item na Fase 4.

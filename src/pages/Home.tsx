@@ -16,7 +16,11 @@ export function Home() {
           {/* PROFESSIONAL vê pedidos disponíveis perto de si; CLIENT (ou perfil ainda
               a carregar) vê a descoberta de profissionais — a mesma conta nunca
               precisa das duas telas ao mesmo tempo (ver Fase 2/3 do frontend). */}
-          {profile?.role === 'PROFESSIONAL' ? (
+          {profile?.role === 'ADMIN' ? (
+            <Link to="/admin/kyc" className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white">
+              Revisão de KYC
+            </Link>
+          ) : profile?.role === 'PROFESSIONAL' ? (
             <>
               <Link to="/pedidos-proximos" className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white">
                 Pedidos perto de ti
