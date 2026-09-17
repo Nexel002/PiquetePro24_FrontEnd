@@ -174,7 +174,9 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - [ ] Profissional com KYC pendente/rejeitado ou subscrição inativa não consegue aceder às ações de aceitar pedidos — com explicação clara na UI, não apenas botão desabilitado sem contexto. **Pendente:** depende da parte de subscrição (Backend Fase 5), ainda não implementada.
 - [ ] Fluxo de subscrição mock completo testado: seleção → pendente → ativo (após webhook simulado no backend). **Pendente:** Backend Fase 5 ainda não implementada.
 - [ ] Testes cobrem os três estados de KYC e os três estados de subscrição na UI. **Pendente:** projeto não tem test runner configurado (sem Vitest/RTL) — decisão explícita de não o introduzir nesta entrega; os três estados de KYC foram validados manualmente (ver nota acima), não por teste automatizado.
-- [ ] Tela de administração (TRD Adendo v1.6) permite a um `ADMIN` listar submissões KYC por estado e aprovar/rejeitar cada uma, com motivo obrigatório na rejeição — só acessível quando `profile.role === 'ADMIN'`.
+- [x] Tela de administração (TRD Adendo v1.6) permite a um `ADMIN` listar submissões KYC por estado e aprovar/rejeitar cada uma, com motivo obrigatório na rejeição — só acessível quando `profile.role === 'ADMIN'`. Implementado em `feat/painel-admin-kyc` (`pages/AdminKyc.tsx`, rota `/admin/kyc`), validado manualmente no browser com a conta admin real e um profissional de teste descartável.
+
+**Nota (Adendo v1.6):** o papel `ADMIN` como um todo está consolidado no TRD, Secção 7 ("Perfil ADMIN"), não repetido aqui por fase.
 
 ---
 
