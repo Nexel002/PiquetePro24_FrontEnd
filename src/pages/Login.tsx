@@ -56,8 +56,12 @@ export function Login() {
   const [recoveryError, setRecoveryError] = useState<string | null>(null)
   const [isSubmittingRecovery, setIsSubmittingRecovery] = useState(false)
 
+  // Home ("/") é quem decide o ecrã por role (admin vê os links de administração,
+  // profissional/cliente veem os deles) — redirecionar para /perfil aqui obrigava
+  // sempre a um passo manual extra para lá chegar, mesmo o admin logo a seguir a
+  // entrar.
   if (!isSessionLoading && session) {
-    return <Navigate to="/perfil" replace />
+    return <Navigate to="/" replace />
   }
 
   // signInWithOAuth redireciona o browser inteiro para o Google — o error devolvido
