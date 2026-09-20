@@ -34,6 +34,12 @@ export function Home() {
                 Pedidos de serviço
               </Link>
               <Link
+                to="/admin/metricas"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
+              >
+                Métricas
+              </Link>
+              <Link
                 to="/admin/audit-log"
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
               >
