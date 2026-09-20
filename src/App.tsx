@@ -16,6 +16,7 @@ import { AdminAuditLog } from './pages/AdminAuditLog'
 import { AdminUsers } from './pages/AdminUsers'
 import { AdminUserDetail } from './pages/AdminUserDetail'
 import { AdminServiceRequests } from './pages/AdminServiceRequests'
+import { AdminMetrics } from './pages/AdminMetrics'
 import { DefinirNovaPassword } from './pages/DefinirNovaPassword'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { OnboardingGate } from './components/OnboardingGate'
@@ -166,6 +167,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminServiceRequests />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/metricas"
+              element={
+                <ProtectedRoute>
+                  <AdminMetrics />
                 </ProtectedRoute>
               }
             />
