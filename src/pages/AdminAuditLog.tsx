@@ -35,19 +35,25 @@ export function AdminAuditLog() {
   // outros filtros), para a página poder ser recarregada ou partilhada já filtrada.
   const [searchParams, setSearchParams] = useSearchParams()
   const userIdFilter = searchParams.get('user_id') ?? undefined
+  // Adendo v1.9, item C: ?entity_type=&entity_id= na URL, escrito pelo link
+  // "Ver histórico" de AdminServiceRequests.tsx — vêm sempre os dois juntos.
+  const entityTypeFilter = searchParams.get('entity_type') ?? undefined
+  const entityIdFilter = searchParams.get('entity_id') ?? undefined
 
   const { data: entries, isLoading, isError } = useAuditLog({
     action: actionFilter.trim(),
     success: successFilter === 'ALL' ? undefined : successFilter === 'true',
     userId: userIdFilter,
+    entityType: entityTypeFilter,
+    entityId: entityIdFilter,
     limit: PAGE_SIZE,
     offset,
   })
 
-  function handleClearUserFilter() {
+  function handleClearDeepLinkFilter(keys: string[]) {
     setSearchParams((current) => {
       const next = new URLSearchParams(current)
-      next.delete('user_id')
+      keys.forEach((key) => next.delete(key))
       return next
     })
     setOffset(0)
@@ -85,7 +91,23 @@ export function AdminAuditLog() {
           <span>
             A mostrar só o histórico do utilizador <span className="font-medium">{userIdFilter}</span>
           </span>
-          <button type="button" onClick={handleClearUserFilter} className="text-gray-600 underline">
+          <button type="button" onClick={() => handleClearDeepLinkFilter(['user_id'])} className="text-gray-600 underline">
+            Limpar
+          </button>
+        </div>
+      )}
+
+      {entityTypeFilter && entityIdFilter && (
+        <div className="flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700">
+          <span>
+            A mostrar só a linha do tempo de <span className="font-medium">{entityTypeFilter}</span> /{' '}
+            <span className="font-medium">{entityIdFilter}</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => handleClearDeepLinkFilter(['entity_type', 'entity_id'])}
+            className="text-gray-600 underline"
+          >
             Limpar
           </button>
         </div>

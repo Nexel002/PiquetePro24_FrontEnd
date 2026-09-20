@@ -25,6 +25,10 @@ export interface AuditLogFilters {
   // concreto (ver Adendo v1.8). A ficha de utilizador (AdminUserDetail.tsx) é
   // esse caso de uso.
   userId?: string
+  // Adendo v1.9, item C: idem, para a timeline de um pedido de serviço específico
+  // (AdminServiceRequests.tsx) — os dois vêm sempre juntos, nunca só um dos dois.
+  entityType?: string
+  entityId?: string
   limit: number
   offset: number
 }
@@ -41,6 +45,8 @@ export async function fetchAuditLog(filters: AuditLogFilters): Promise<AuditLogE
       // explícito para não depender desse comportamento por acidente.
       success: filters.success === undefined ? undefined : String(filters.success),
       user_id: filters.userId || undefined,
+      entity_type: filters.entityType || undefined,
+      entity_id: filters.entityId || undefined,
       limit: filters.limit,
       offset: filters.offset,
     },
