@@ -380,3 +380,32 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 **Frontend:** nova rota protegida (`/admin/kyc`), visível só quando `profile.role === 'ADMIN'`, mesma convenção de visibilidade condicional por role já usada em `Home.tsx`.
 
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, novo item na Fase 4.
+
+## Adendo v1.7
+
+### A. Infraestrutura de email transacional (espelha o backend)
+
+**Contexto:** ver TRD do backend, Adendo v1.7. O backend passou a ter `EmailService`/`CatalogoTemplatesEmail` (nodemailer/SMTP) e dois endpoints novos — identificado como consumo em falta ao perguntar explicitamente "o que falta no frontend" depois da entrega do backend, não durante a implementação em si (desvio à regra do CLAUDE.md Secção 1 deste repositório, corrigido nesta mesma entrega).
+
+**Implementado em `feat/notificacoes-email-e-audit-log`:**
+- `services/notifications.ts` (`sendWelcomeNotification`) — chamado em dois pontos, sempre sem `await` bloqueante e com o erro engolido (`.catch(() => {})`): `Login.tsx`, logo a seguir a um `signUp()` por email/telefone com sessão imediata (`data.session` preenchida); `AuthCallback.tsx`, quando o redirect do Google partiu de um `sign-up` (mesmo sinal — presença de `INTENDED_ROLE_STORAGE_KEY` — que já decide se se chama `become-professional`). **Limitação conhecida, herdada do backend e não resolvida aqui:** se o Supabase exigir confirmação de email antes de emitir sessão, não há chamada nenhuma no momento do signup — falaria disparar depois do primeiro login pós-confirmação, o que não foi implementado (o `else` que já existe em `Login.tsx` para o caso "sem sessão imediata" não dispara o welcome).
+- `services/passwordRecovery.ts` (`requestPasswordRecovery`) + ecrã "Esqueci a password" dentro de `Login.tsx` (troca o formulário principal por um formulário só de email quando `showRecovery` é `true`, visível apenas em `mode === 'sign-in'` e `channel === 'email'` — recuperação por telefone não é suportada pelo backend, que gera o link via `admin.generateLink` para um endereço de email). A mensagem de sucesso mostrada é sempre a que o backend devolve (`response.data.message`), nunca um texto fixo no frontend — evita duplicar a cópia e mantém a garantia anti-enumeração do lado que a decide. Um erro real (rede, `400` de email inválido, `429` de rate limit, ver Adendo v1.7 do backend) aparece à parte, nunca disfarçado da mensagem de sucesso.
+- `pages/DefinirNovaPassword.tsx`, rota `/definir-nova-password` (sem `ProtectedRoute` — a sessão de recuperação resolve-se de forma assíncrona via `detectSessionInUrl`, e um `ProtectedRoute` a decidir antes disso mandaria embora um link válido; a própria tela espera `isLoading` ficar `false`, mesmo padrão de `AuthCallback.tsx`, antes de decidir se mostra o formulário, o erro de "link inválido/expirado", ou a confirmação). Chama `supabase.auth.updateUser({ password })` diretamente, sem passar pelo backend — fluxo padrão do Supabase Auth. `describeAuthError` (tradução de erros do Supabase Auth) foi extraída de `Login.tsx` para `lib/authErrors.ts`, reutilizada pelas duas telas.
+
+**Resolve uma limitação já registada na Fase 1:** a nota "Configurar SMTP próprio... é decisão explicitamente adiada — sem isso, também não há como enviar um email de boas-vindas personalizado" deixa de se aplicar ao email de boas-vindas e à recuperação de password (os dois têm agora template próprio, via SMTP próprio do backend). Continua a aplicar-se só ao email de **confirmação de conta** no signup por email/telefone, que continua a ser enviado pelo Supabase Auth diretamente (fora do controlo do `EmailService`).
+
+**Validado:** `tsc -b` (strict) e `vite build` de produção limpos; `eslint` sem erros novos (um aviso pré-existente em `AuthContext.tsx`, sem relação com esta mudança). **Não validado interativamente num browser** (sem ferramenta de automação de browser disponível nesta sessão, ao contrário de entregas anteriores validadas com Playwright) — confirmado apenas que os módulos novos transformam sem erro no servidor de desenvolvimento do Vite (sem overlay de erro de sintaxe/import).
+
+**Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, itens da Fase 1.
+
+## Adendo v1.8
+
+### A. Audit log — histórico de ações (espelha o backend)
+
+**Contexto:** ver TRD do backend, Adendo v1.8. `GET /admin/audit-log` existe no backend, protegido por `ADMIN` — estava na mesma situação em que `GET /admin/kyc` esteve antes do Adendo v1.6 deste TRD: endpoint pronto, sem nenhuma tela a consumi-lo, até esta entrega.
+
+**Implementado em `feat/notificacoes-email-e-audit-log`:** `services/auditLog.ts` (`fetchAuditLog`) + `hooks/useAuditLog.ts` (TanStack Query) + `pages/AdminAuditLog.tsx`, rota `/admin/audit-log`, mesma convenção de guard de role dentro do próprio componente já usada em `AdminKyc.tsx` (`profile.role !== 'ADMIN'` → `<Navigate to="/" />`). Filtros implementados: `action` (texto livre, espelha o campo do backend) e `success` (Todos/Sucesso/Falha); paginação simples Anterior/Seguinte via `limit`/`offset` (sem filtro por `user_id`/`entity_type`/intervalo de datas nesta entrega — o backend já os aceita, mas não há ainda um caso de uso concreto que os peça na UI; fica como extensão natural). `created_at` é formatado explicitamente em `Africa/Maputo` (`toLocaleString` com `timeZone`), não na hora local do browser do admin — o TRD do backend deixa essa conversão como responsabilidade de quem exibe. Link condicional em `Home.tsx`, ao lado do link de "Revisão de KYC", visível só a `profile.role === 'ADMIN'`.
+
+**Validado:** `tsc -b` (strict) e `vite build` de produção limpos; `eslint` sem erros novos. **Não validado interativamente num browser** (mesma limitação de ferramenta descrita no Adendo v1.7) nem contra o backend real com dados de audit log de verdade — a migration do backend (`supabase/migrations/20260919180000_audit_log.sql`) ainda não tinha sido aplicada ao Supabase real no momento desta entrega (ver TRD do backend, Adendo v1.8).
+
+**Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, item da Fase 4.

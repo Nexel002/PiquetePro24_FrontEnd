@@ -12,6 +12,8 @@ import { MyServiceRequests } from './pages/MyServiceRequests'
 import { NearbyServiceRequests } from './pages/NearbyServiceRequests'
 import { Kyc } from './pages/Kyc'
 import { AdminKyc } from './pages/AdminKyc'
+import { AdminAuditLog } from './pages/AdminAuditLog'
+import { DefinirNovaPassword } from './pages/DefinirNovaPassword'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { OnboardingGate } from './components/OnboardingGate'
 import { AuthProvider } from './store/AuthContext'
@@ -28,6 +30,11 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/entrar" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+
+            {/* TRD Adendo v1.7 (backend): destino do link de recuperação de
+                password. Sem ProtectedRoute de propósito — ver comentário em
+                DefinirNovaPassword.tsx. */}
+            <Route path="/definir-nova-password" element={<DefinirNovaPassword />} />
 
             {/* Telas de onboarding: exigem sessão (ProtectedRoute) mas não podem
                 exigir onboarding completo (OnboardingGate) — senão criam um ciclo de
@@ -119,6 +126,17 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminKyc />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* TRD Adendo v1.8: mesma convenção do painel de KYC acima — guard de
+                role dentro do próprio componente (ver AdminAuditLog.tsx). */}
+            <Route
+              path="/admin/audit-log"
+              element={
+                <ProtectedRoute>
+                  <AdminAuditLog />
                 </ProtectedRoute>
               }
             />
