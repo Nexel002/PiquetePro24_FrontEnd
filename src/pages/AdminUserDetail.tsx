@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
+import { toast } from 'sonner'
 import { useProfile } from '../hooks/useProfile'
-import { useAdminUserDetail } from '../hooks/useAdminUsers'
+import { useAdminUserDetail, useResendEmail } from '../hooks/useAdminUsers'
 import { BackButton } from '../components/BackButton'
 import type { UserRole } from '../services/profile'
-import type { AdminUserDetail as AdminUserDetailData } from '../services/adminUsers'
+import type { AdminUserDetail as AdminUserDetailData, ResendEmailTemplate } from '../services/adminUsers'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   CLIENT: 'Cliente',
@@ -17,6 +19,12 @@ const KYC_STATUS_LABELS: Record<NonNullable<AdminUserDetailData['kyc_status']>, 
   REJECTED: 'Rejeitado',
 }
 
+const RESEND_EMAIL_LABELS: Record<ResendEmailTemplate, string> = {
+  welcome: 'Boas-vindas',
+  kyc_aprovado: 'KYC aprovado',
+  kyc_rejeitado: 'KYC rejeitado',
+}
+
 const memberSinceFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long' })
 
 // TRD Adendo v1.9, item B. Mesma convenção de guard de role dentro do próprio
@@ -25,6 +33,8 @@ export function AdminUserDetail() {
   const { id } = useParams<{ id: string }>()
   const { data: profile, isLoading: isProfileLoading } = useProfile()
   const { data: user, isLoading, isError } = useAdminUserDetail(id ?? '')
+  const resendEmailMutation = useResendEmail()
+  const [resendTemplate, setResendTemplate] = useState<ResendEmailTemplate>('welcome')
 
   if (isProfileLoading) {
     return (
@@ -40,6 +50,27 @@ export function AdminUserDetail() {
 
   if (!id) {
     return <Navigate to="/admin/utilizadores" replace />
+  }
+
+  function handleResendEmail() {
+    if (!id) return
+    resendEmailMutation.mutate(
+      { userId: id, template: resendTemplate },
+      {
+        onSuccess: (result) => {
+          if (result.enviado) {
+            toast.success('Email reenviado.')
+          } else if (result.motivo === 'desligado') {
+            // Estado válido em dev/test (sem SMTP configurado) — não é um erro do
+            // admin nem do utilizador, mas também não é "sucesso" no sentido normal.
+            toast.info('Envio de email está desligado neste ambiente (sem SMTP configurado).')
+          } else {
+            toast.error('Não foi possível enviar o email. Tenta novamente.')
+          }
+        },
+        onError: (err) => toast.error(err instanceof Error ? err.message : 'Não foi possível reenviar o email.'),
+      },
+    )
   }
 
   return (
@@ -114,6 +145,36 @@ export function AdminUserDetail() {
           >
             Ver histórico de ações
           </Link>
+
+          {/* Adendo v1.9, item F: sem endpoint novo de leitura — reaproveita o
+              EmailService já existente do lado do backend. Sem lógica de mostrar só
+              os templates "relevantes" para este utilizador (ex. esconder KYC para
+              um CLIENT sem submissão) — decisão consciente de simplicidade, o admin
+              sabe o que está a fazer ao escolher. */}
+          <section className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4">
+            <h2 className="text-sm font-medium text-gray-500">Reenviar email</h2>
+            <div className="flex gap-2">
+              <select
+                value={resendTemplate}
+                onChange={(event) => setResendTemplate(event.target.value as ResendEmailTemplate)}
+                className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
+              >
+                {Object.entries(RESEND_EMAIL_LABELS).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={handleResendEmail}
+                disabled={resendEmailMutation.isPending}
+                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 disabled:opacity-50"
+              >
+                {resendEmailMutation.isPending ? 'A enviar...' : 'Reenviar'}
+              </button>
+            </div>
+          </section>
         </>
       )}
     </main>
