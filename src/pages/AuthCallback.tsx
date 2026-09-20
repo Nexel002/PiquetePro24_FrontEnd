@@ -3,6 +3,7 @@ import { Navigate } from 'react-router-dom'
 import { useAuth } from '../store/AuthContext'
 import { useBecomeProfessional } from '../hooks/useProfile'
 import type { ProfessionalType } from '../services/profile'
+import { sendWelcomeNotification } from '../services/notifications'
 import { INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY, INTENDED_ROLE_STORAGE_KEY } from './Login'
 
 // Destino do redirectTo em signInWithOAuth (ver Login.tsx). O supabase-js processa o
@@ -28,6 +29,15 @@ export function AuthCallback() {
     ) as ProfessionalType | null
     sessionStorage.removeItem(INTENDED_ROLE_STORAGE_KEY)
     sessionStorage.removeItem(INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY)
+
+    // A chave só existe quando o redirect partiu de Login.tsx em modo sign-up (ver
+    // handleGoogleSignIn) — presença dela, não o seu valor, é o sinal de "isto é uma
+    // conta nova", o mesmo sinal que já decide se se chama become-professional.
+    // Idempotente do lado do backend (TRD Adendo v1.7): não há problema se disparar
+    // outra vez por engano.
+    if (intendedRole !== null) {
+      void sendWelcomeNotification().catch(() => {})
+    }
 
     if (intendedRole === 'PROFESSIONAL') {
       // Falha aqui não deve travar o login — o utilizador fica como CLIENT e pode

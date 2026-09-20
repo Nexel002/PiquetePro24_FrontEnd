@@ -2,6 +2,9 @@ import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../store/AuthContext'
+import { sendWelcomeNotification } from '../services/notifications'
+import { requestPasswordRecovery } from '../services/passwordRecovery'
+import { describeAuthError } from '../lib/authErrors'
 
 type Mode = 'sign-in' | 'sign-up'
 // Backend Fase 2: registo/login suporta email ou telefone (decisão registada no
@@ -27,36 +30,6 @@ export const INTENDED_ROLE_STORAGE_KEY = 'piquetepro24:intended-role'
 // só é gravada quando intendedRole é PROFESSIONAL (ver handleGoogleSignIn).
 export const INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY = 'piquetepro24:intended-professional-type'
 
-// Traduz os erros mais comuns do Supabase Auth para mensagens compreensíveis (CLAUDE.md
-// Secção 3: nunca mostrar o erro técnico cru). O rate limit de segurança do Supabase
-// ("For security purposes, you can only request this after N seconds") aparece quando
-// se tenta submeter o formulário mais do que uma vez em sucessão rápida — não é uma
-// falha do signup em si.
-function describeAuthError(error: unknown): string {
-  const message = error instanceof Error ? error.message : ''
-
-  if (message.includes('security purposes')) {
-    return 'Aguarda alguns segundos antes de tentar novamente.'
-  }
-  if (message.includes('email rate limit exceeded')) {
-    return 'Foram enviados demasiados emails de confirmação recentemente. Aguarda uns minutos e tenta novamente.'
-  }
-  if (message.includes('already registered') || message.includes('already exists')) {
-    return 'Já existe uma conta com este email ou telefone. Tenta entrar em vez de criar uma nova conta.'
-  }
-  if (message.includes('Invalid login credentials')) {
-    return 'Email/telefone ou palavra-passe incorretos.'
-  }
-  if (message.includes('Email not confirmed')) {
-    return 'Ainda não confirmaste o teu email. Verifica a caixa de entrada antes de entrares.'
-  }
-  if (message.includes('Phone not confirmed')) {
-    return 'Ainda não confirmaste o teu telefone. Verifica o SMS recebido antes de entrares.'
-  }
-
-  return message || 'Não foi possível autenticar. Tenta novamente.'
-}
-
 export function Login() {
   const { session, isLoading: isSessionLoading } = useAuth()
   const [mode, setMode] = useState<Mode>('sign-in')
@@ -72,6 +45,16 @@ export function Login() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isRedirectingToGoogle, setIsRedirectingToGoogle] = useState(false)
+
+  // Ecrã "Esqueci a password" — estado à parte do formulário principal, mostrado no
+  // lugar dele (não um modal) quando showRecovery é true. Só disponível no canal
+  // email: o backend gera o link via supabase.auth.admin.generateLink({ type:
+  // 'recovery' }), que exige um endereço de email (ver TRD Adendo v1.7 do backend).
+  const [showRecovery, setShowRecovery] = useState(false)
+  const [recoveryEmail, setRecoveryEmail] = useState('')
+  const [recoveryMessage, setRecoveryMessage] = useState<string | null>(null)
+  const [recoveryError, setRecoveryError] = useState<string | null>(null)
+  const [isSubmittingRecovery, setIsSubmittingRecovery] = useState(false)
 
   if (!isSessionLoading && session) {
     return <Navigate to="/perfil" replace />
@@ -156,6 +139,13 @@ export function Login() {
               ? 'Conta criada. Verifica o teu email para confirmar antes de entrares.'
               : 'Conta criada. Verifica o teu telefone para confirmar antes de entrares.',
           )
+        } else {
+          // Só faz sentido chamar isto quando há sessão imediata: sem ela ainda não
+          // há token para o interceptor de lib/api.ts injetar (ver TRD Adendo v1.7 do
+          // backend — limitação conhecida quando o projeto exige confirmação de
+          // email antes de emitir sessão). Sem await/toast: uma falha aqui não pode
+          // parecer que o signup em si falhou, e o endpoint é idempotente.
+          void sendWelcomeNotification().catch(() => {})
         }
       } else {
         const { error: signInError } =
@@ -170,6 +160,80 @@ export function Login() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // A mensagem de sucesso é sempre a que o backend devolveu (anti-enumeração, ver
+  // services/passwordRecovery.ts) — um erro real (rede, 400, 429 de rate limit)
+  // aparece à parte, nunca disfarçado de sucesso.
+  async function handleRecoverySubmit(event: FormEvent) {
+    event.preventDefault()
+    setRecoveryError(null)
+    setRecoveryMessage(null)
+    setIsSubmittingRecovery(true)
+
+    try {
+      const message = await requestPasswordRecovery(recoveryEmail)
+      setRecoveryMessage(message)
+    } catch (caught) {
+      setRecoveryError(caught instanceof Error ? caught.message : 'Não foi possível pedir a recuperação. Tenta novamente.')
+    } finally {
+      setIsSubmittingRecovery(false)
+    }
+  }
+
+  if (showRecovery) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-6">
+        <header>
+          <h1 className="text-2xl font-semibold text-gray-900">Recuperar password</h1>
+          <p className="text-sm text-gray-600">Indica o teu email para receberes um link de recuperação.</p>
+        </header>
+
+        <form onSubmit={(event) => void handleRecoverySubmit(event)} className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1 text-sm text-gray-700">
+            Email
+            <input
+              type="email"
+              value={recoveryEmail}
+              onChange={(event) => setRecoveryEmail(event.target.value)}
+              required
+              className="rounded-lg border border-gray-300 px-3 py-2"
+            />
+          </label>
+
+          {recoveryError && (
+            <p role="alert" className="text-sm text-red-600">
+              {recoveryError}
+            </p>
+          )}
+          {recoveryMessage && (
+            <p role="status" className="text-sm text-green-700">
+              {recoveryMessage}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={isSubmittingRecovery}
+            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {isSubmittingRecovery ? 'A enviar...' : 'Enviar link de recuperação'}
+          </button>
+        </form>
+
+        <button
+          type="button"
+          onClick={() => {
+            setShowRecovery(false)
+            setRecoveryError(null)
+            setRecoveryMessage(null)
+          }}
+          className="text-sm text-gray-600 underline"
+        >
+          Voltar a entrar
+        </button>
+      </main>
+    )
   }
 
   return (
@@ -356,6 +420,16 @@ export function Login() {
             className="rounded-lg border border-gray-300 px-3 py-2"
           />
         </label>
+
+        {mode === 'sign-in' && channel === 'email' && (
+          <button
+            type="button"
+            onClick={() => setShowRecovery(true)}
+            className="self-end text-xs text-gray-600 underline"
+          >
+            Esqueci a password
+          </button>
+        )}
 
         {error && (
           <p role="alert" className="text-sm text-red-600">
