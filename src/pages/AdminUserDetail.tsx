@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useProfile } from '../hooks/useProfile'
-import { useAdminUserDetail, useResendEmail } from '../hooks/useAdminUsers'
+import { useAdminUserDetail, useBanUser, useChangeUserRole, useResendEmail, useUnbanUser } from '../hooks/useAdminUsers'
 import { BackButton } from '../components/BackButton'
-import type { UserRole } from '../services/profile'
+import type { ProfessionalType, UserRole } from '../services/profile'
 import type { AdminUserDetail as AdminUserDetailData, ResendEmailTemplate } from '../services/adminUsers'
 
 const ROLE_LABELS: Record<UserRole, string> = {
@@ -25,7 +25,20 @@ const RESEND_EMAIL_LABELS: Record<ResendEmailTemplate, string> = {
   kyc_rejeitado: 'KYC rejeitado',
 }
 
+const PROFESSIONAL_TYPE_LABELS: Record<ProfessionalType, string> = {
+  SINGULAR: 'Profissional singular',
+  COMPANY: 'Empresa',
+}
+
 const memberSinceFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long' })
+const banExpiryFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long', timeStyle: 'short' })
+
+// Adendo v1.9, item G: ban_duration indefinido (876000h, ~100 anos) faz
+// banned_until cair muito longe no futuro — qualquer data futura já conta como
+// "banido" para efeitos da UI, sem precisar de um valor sentinela especial.
+function isBanned(bannedUntil: string | null): boolean {
+  return bannedUntil !== null && new Date(bannedUntil).getTime() > Date.now()
+}
 
 // TRD Adendo v1.9, item B. Mesma convenção de guard de role dentro do próprio
 // componente já usada em AdminKyc.tsx/AdminAuditLog.tsx/AdminUsers.tsx.
@@ -35,6 +48,14 @@ export function AdminUserDetail() {
   const { data: user, isLoading, isError } = useAdminUserDetail(id ?? '')
   const resendEmailMutation = useResendEmail()
   const [resendTemplate, setResendTemplate] = useState<ResendEmailTemplate>('welcome')
+
+  const banMutation = useBanUser()
+  const unbanMutation = useUnbanUser()
+  const [isConfirmingBan, setIsConfirmingBan] = useState(false)
+
+  const changeRoleMutation = useChangeUserRole()
+  const [targetProfessionalType, setTargetProfessionalType] = useState<ProfessionalType>('SINGULAR')
+  const [isConfirmingRoleChange, setIsConfirmingRoleChange] = useState(false)
 
   if (isProfileLoading) {
     return (
@@ -69,6 +90,44 @@ export function AdminUserDetail() {
           }
         },
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Não foi possível reenviar o email.'),
+      },
+    )
+  }
+
+  function handleConfirmBan() {
+    if (!id) return
+    banMutation.mutate(id, {
+      onSuccess: () => {
+        toast.success('Utilizador banido.')
+        setIsConfirmingBan(false)
+      },
+      onError: (err) => toast.error(err instanceof Error ? err.message : 'Não foi possível banir este utilizador.'),
+    })
+  }
+
+  function handleUnban() {
+    if (!id) return
+    unbanMutation.mutate(id, {
+      onSuccess: () => toast.success('Banimento levantado.'),
+      onError: (err) => toast.error(err instanceof Error ? err.message : 'Não foi possível levantar o banimento.'),
+    })
+  }
+
+  function handleConfirmRoleChange() {
+    if (!id || !user) return
+    const payload =
+      user.role === 'CLIENT'
+        ? ({ role: 'PROFESSIONAL', professionalType: targetProfessionalType } as const)
+        : ({ role: 'CLIENT' } as const)
+
+    changeRoleMutation.mutate(
+      { userId: id, payload },
+      {
+        onSuccess: () => {
+          toast.success('Role alterado.')
+          setIsConfirmingRoleChange(false)
+        },
+        onError: (err) => toast.error(err instanceof Error ? err.message : 'Não foi possível alterar o role.'),
       },
     )
   }
@@ -174,6 +233,115 @@ export function AdminUserDetail() {
                 {resendEmailMutation.isPending ? 'A enviar...' : 'Reenviar'}
               </button>
             </div>
+          </section>
+
+          {/* Adendo v1.9, item G: moderação de contas. "sign-out" (revogar sessões
+              por ID) não existe nesta entrega — o SDK instalado exige o JWT da
+              sessão, não um ID de utilizador; ver TRD para o detalhe. Mudar role só
+              aparece para CLIENT/PROFESSIONAL — nunca para ADMIN, o backend rejeita
+              e a UI nem oferece a opção. */}
+          <section className="flex flex-col gap-3 rounded-lg border border-red-200 p-4">
+            <h2 className="text-sm font-medium text-red-700">Moderação de conta</h2>
+
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-gray-700">
+                {isBanned(user.banned_until)
+                  ? `Conta banida até ${banExpiryFormatter.format(new Date(user.banned_until as string))}.`
+                  : 'Conta sem banimento ativo.'}
+              </p>
+
+              {isBanned(user.banned_until) ? (
+                <button
+                  type="button"
+                  onClick={handleUnban}
+                  disabled={unbanMutation.isPending}
+                  className="self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
+                >
+                  {unbanMutation.isPending ? 'A levantar banimento...' : 'Levantar banimento'}
+                </button>
+              ) : isConfirmingBan ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleConfirmBan}
+                    disabled={banMutation.isPending}
+                    className="rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                  >
+                    {banMutation.isPending ? 'A banir...' : 'Sim, banir'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsConfirmingBan(false)}
+                    disabled={banMutation.isPending}
+                    className="text-sm text-gray-600 underline disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsConfirmingBan(true)}
+                  className="self-start rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700"
+                >
+                  Banir conta
+                </button>
+              )}
+            </div>
+
+            {user.role !== 'ADMIN' && (
+              <div className="flex flex-col gap-2 border-t border-red-100 pt-3">
+                <p className="text-sm text-gray-700">
+                  Role atual: <span className="font-medium">{ROLE_LABELS[user.role]}</span>
+                </p>
+
+                {isConfirmingRoleChange ? (
+                  <div className="flex flex-col gap-2">
+                    {user.role === 'CLIENT' && (
+                      <select
+                        value={targetProfessionalType}
+                        onChange={(event) => setTargetProfessionalType(event.target.value as ProfessionalType)}
+                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
+                      >
+                        {Object.entries(PROFESSIONAL_TYPE_LABELS).map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleConfirmRoleChange}
+                        disabled={changeRoleMutation.isPending}
+                        className="rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                      >
+                        {changeRoleMutation.isPending
+                          ? 'A alterar...'
+                          : `Sim, mudar para ${user.role === 'CLIENT' ? 'Profissional' : 'Cliente'}`}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsConfirmingRoleChange(false)}
+                        disabled={changeRoleMutation.isPending}
+                        className="text-sm text-gray-600 underline disabled:opacity-50"
+                      >
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsConfirmingRoleChange(true)}
+                    className="self-start rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700"
+                  >
+                    Mudar para {user.role === 'CLIENT' ? 'Profissional' : 'Cliente'}
+                  </button>
+                )}
+              </div>
+            )}
           </section>
         </>
       )}
