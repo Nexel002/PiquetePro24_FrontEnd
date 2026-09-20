@@ -418,4 +418,20 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 **Validado:** `tsc -b` (strict) e `vite build` de produção limpos; `eslint` sem erros novos. **Não validado interativamente num browser** (mesma limitação de ferramenta descrita no Adendo v1.7) nem contra o backend real com dados de audit log de verdade — a migration do backend (`supabase/migrations/20260919180000_audit_log.sql`) ainda não tinha sido aplicada ao Supabase real no momento desta entrega (ver TRD do backend, Adendo v1.8).
 
+## Adendo v1.9
+
+### A. Painel de Administração Avançado (espelha o backend) — planeado, nada implementado ainda
+
+**Contexto:** ver TRD do backend, Adendo v1.9 — sessão de brainstorm explícita com o utilizador sobre capacidades de `ADMIN` para além de KYC e audit log. Só planeamento nesta entrega, sem código: fica registado aqui antes de o backend sequer ter os endpoints, para não repetir o erro já corrigido antes nesta sessão (reportar uma fase como pronta sem confirmar consumo pelo frontend).
+
+**Por implementar quando o backend expuser os endpoints correspondentes (Fase 9 do plano do backend):**
+- `pages/AdminUsers.tsx` + `AdminUserDetail.tsx` — diretório de utilizadores (pesquisa por nome/telefone/role/província) e ficha individual, com link para `/admin/audit-log?user_id=` (exige estender `services/auditLog.ts`, hoje limitado a `action`/`success`, para aceitar `user_id` como filtro — o backend já aceita desde o Adendo v1.8).
+- `pages/AdminServiceRequests.tsx` — lista de todos os pedidos de serviço da plataforma (filtros por estado/província/data) + link para a timeline de um pedido via `/admin/audit-log?entity_type=service_requests&entity_id=`.
+- `pages/AdminMetrics.tsx` — tiles com as métricas agregadas do backend (utilizadores por role, funil de KYC, profissionais por província, tempos médios de pedidos). Sem componente financeiro (depende da Fase 5 do backend).
+- Secção ou tela de alertas de segurança, a consumir `GET /admin/security-alerts`.
+- Na ficha de utilizador: botões para banir/desbanir, revogar sessões, mudar `role` (só `CLIENT ↔ PROFESSIONAL`, nunca `ADMIN` — o próprio backend rejeita, mas a UI não deve nem oferecer a opção) e reenviar um email (boas-vindas/KYC aprovado/KYC rejeitado).
+- Link condicional em `Home.tsx` para os novos ecrãs, mesma convenção de "Revisão de KYC"/"Histórico de ações".
+
+**Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, nova Fase 8.
+
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, item da Fase 4.

@@ -241,6 +241,31 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 8 — Painel de Administração Avançado (espelha o backend)
+
+**Objetivo:** Consumir os endpoints da Fase 9 do backend (`Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` e TRD Adendo v1.9 desse repositório) — diretório de utilizadores, visão administrativa de pedidos de serviço, métricas agregadas, alertas de segurança, ferramentas operacionais e moderação de contas. Ver TRD deste repositório, Adendo v1.9, para a lista completa.
+
+**Nota de dependência:** só pode começar depois de cada endpoint correspondente existir no backend (Fase 9 desse repositório) — nenhum destes ecrãs tem para onde apontar antes disso. Não depende de nenhuma fase deste plano além da Fase 4 (mesma convenção de acesso `profile.role === 'ADMIN'` já estabelecida em `AdminKyc.tsx`/`AdminAuditLog.tsx`).
+
+**Escopo:**
+- `pages/AdminUsers.tsx` + `AdminUserDetail.tsx` — diretório e ficha individual, com link para o histórico desse utilizador em `/admin/audit-log?user_id=`.
+- `pages/AdminServiceRequests.tsx` — lista global de pedidos + link para a timeline de um pedido via `/admin/audit-log?entity_type=service_requests&entity_id=`.
+- `pages/AdminMetrics.tsx` — tiles com as métricas agregadas (sem componente financeiro).
+- Alertas de segurança (secção própria ou dentro do ecrã de audit log existente).
+- Na ficha de utilizador: banir/desbanir, revogar sessões, mudar `role` (`CLIENT ↔ PROFESSIONAL` só — a UI não oferece `ADMIN` como opção, mesmo que o backend já rejeitasse), reenviar email.
+- Estender `services/auditLog.ts` (hoje só `action`/`success`) para aceitar `user_id`/`entity_type`/`entity_id`/intervalo de datas.
+- Links condicionais em `Home.tsx`, mesma convenção dos ecrãs de admin existentes.
+
+**Critérios de Entrega:**
+- [ ] Diretório de utilizadores funciona (pesquisa, filtro por role) e a ficha individual mostra os dados corretos.
+- [ ] Link "Ver histórico" na ficha de utilizador abre o audit log já filtrado por esse utilizador.
+- [ ] Lista de pedidos de serviço mostra pedidos de qualquer cliente, não só do admin autenticado.
+- [ ] Métricas mostradas batem com uma verificação manual contra o backend.
+- [ ] Ações de moderação (banir/desbanir/revogar sessão/mudar role) têm confirmação explícita antes de executar (mesma convenção de "Apagar conta" em `Profile.tsx` — duas etapas para uma ação destrutiva/sensível).
+- [ ] Nenhum ecrã ou botão oferece promover alguém a `ADMIN`.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -249,9 +274,10 @@ Fase 0 (Fundação PWA)
           └─> Fase 2 (Busca por Proximidade)
                  └─> Fase 3 (Ciclo de Vida do Pedido)
                         └─> Fase 4 (KYC & Subscrição)
-                               └─> Fase 5 (Offline & Resiliência)
-                                      └─> Fase 6 (Acessibilidade & Performance)
-                                             └─> Fase 7 (Integração Final & Deploy)
+                               ├─> Fase 5 (Offline & Resiliência)
+                               │      └─> Fase 6 (Acessibilidade & Performance)
+                               │             └─> Fase 7 (Integração Final & Deploy)
+                               └─> Fase 8 (Painel de Administração Avançado — depende da Fase 9 do backend)
 ```
 
 **Alinhamento com o Backend:** cada fase deste plano depende do endpoint correspondente já estar disponível (ainda que em staging) no repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend) — Fase 1 ↔ Backend Fase 2, Fase 2/3 ↔ Backend Fase 3, Fase 4 ↔ Backend Fases 4-5, Fase 7 ↔ Backend Fase 7. A documentação OpenAPI publicada desde cedo pelo backend (ver Adendo v1.2 no plano do backend) é o contrato de referência para desbloquear o desenvolvimento do frontend antes de cada endpoint estar 100% pronto (mock local contra o schema documentado).
