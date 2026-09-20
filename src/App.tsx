@@ -13,6 +13,8 @@ import { NearbyServiceRequests } from './pages/NearbyServiceRequests'
 import { Kyc } from './pages/Kyc'
 import { AdminKyc } from './pages/AdminKyc'
 import { AdminAuditLog } from './pages/AdminAuditLog'
+import { AdminUsers } from './pages/AdminUsers'
+import { AdminUserDetail } from './pages/AdminUserDetail'
 import { DefinirNovaPassword } from './pages/DefinirNovaPassword'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { OnboardingGate } from './components/OnboardingGate'
@@ -137,6 +139,24 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminAuditLog />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* TRD Adendo v1.9, item B — mesma convenção dos ecrãs de admin acima. */}
+            <Route
+              path="/admin/utilizadores"
+              element={
+                <ProtectedRoute>
+                  <AdminUsers />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/utilizadores/:id"
+              element={
+                <ProtectedRoute>
+                  <AdminUserDetail />
                 </ProtectedRoute>
               }
             />

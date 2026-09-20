@@ -20,6 +20,11 @@ export interface AuditLogEntry {
 export interface AuditLogFilters {
   action?: string
   success?: boolean
+  // Adendo v1.9, item B: o backend já aceitava user_id desde a Fase 8 — só o
+  // frontend limitava a action/success por não haver ainda um caso de uso
+  // concreto (ver Adendo v1.8). A ficha de utilizador (AdminUserDetail.tsx) é
+  // esse caso de uso.
+  userId?: string
   limit: number
   offset: number
 }
@@ -35,6 +40,7 @@ export async function fetchAuditLog(filters: AuditLogFilters): Promise<AuditLogE
       // serializaria `false` como string 'false' de qualquer forma, mas fica
       // explícito para não depender desse comportamento por acidente.
       success: filters.success === undefined ? undefined : String(filters.success),
+      user_id: filters.userId || undefined,
       limit: filters.limit,
       offset: filters.offset,
     },
