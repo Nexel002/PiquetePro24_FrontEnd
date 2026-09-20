@@ -6,6 +6,8 @@ import { BackButton } from '../components/BackButton'
 import { PHONE_PREFIX, stripPhonePrefix } from '../lib/phone'
 import { AvatarUploadError } from '../services/avatar'
 import type { ProfessionalType, UserRole } from '../services/profile'
+import { supabase } from '../lib/supabase'
+import { describeAuthError } from '../lib/authErrors'
 
 // Espelha o enum user_role do backend — nunca mostrar o valor cru ('CLIENT') ao
 // utilizador.
@@ -36,6 +38,20 @@ export function Profile() {
   const [fullNameDraft, setFullNameDraft] = useState('')
   const [phoneDraft, setPhoneDraft] = useState('')
   const [isConfirmingDelete, setIsConfirmingDelete] = useState(false)
+
+  // Mudar password estando já autenticado — diferente da recuperação
+  // (DefinirNovaPassword.tsx, para quem esqueceu e não tem sessão). Chama
+  // supabase.auth.updateUser() diretamente com a sessão normal, sem passar pelo
+  // backend (mesma chamada da recuperação, sessão diferente). Sem pedir a password
+  // atual: é o comportamento por omissão do Supabase Auth para uma sessão já válida
+  // — decisão consciente de simplicidade, não uma omissão; reautenticação adicional
+  // fica como extensão futura se algum dia for pedida.
+  const [isChangingPassword, setIsChangingPassword] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [passwordSuccess, setPasswordSuccess] = useState<string | null>(null)
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false)
 
   function handleConfirmDeleteAccount() {
     deleteAccount.mutate(undefined, { onSuccess: () => navigate('/', { replace: true }) })
@@ -73,6 +89,50 @@ export function Profile() {
       { full_name: fullNameDraft, phone: `${PHONE_PREFIX}${phoneDraft}` },
       { onSuccess: () => setIsEditingDetails(false) },
     )
+  }
+
+  function handleStartChangingPassword() {
+    setIsChangingPassword(true)
+    setPasswordError(null)
+    setPasswordSuccess(null)
+  }
+
+  function handleCancelChangingPassword() {
+    setIsChangingPassword(false)
+    setNewPassword('')
+    setConfirmNewPassword('')
+    setPasswordError(null)
+  }
+
+  // Não colapsa a secção em caso de sucesso, ao contrário de handleSubmitDetails —
+  // a confirmação fica visível dentro do próprio formulário até o utilizador fechar
+  // manualmente, para não desaparecer antes de ser lida.
+  async function handleChangePassword(event: FormEvent) {
+    event.preventDefault()
+    setPasswordError(null)
+    setPasswordSuccess(null)
+
+    if (newPassword.length < 6) {
+      setPasswordError('A password tem de ter pelo menos 6 caracteres.')
+      return
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError('As passwords não coincidem.')
+      return
+    }
+
+    setIsSubmittingPassword(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setIsSubmittingPassword(false)
+
+    if (error) {
+      setPasswordError(describeAuthError(error))
+      return
+    }
+
+    setPasswordSuccess('Password atualizada.')
+    setNewPassword('')
+    setConfirmNewPassword('')
   }
 
   if (isLoading) {
@@ -275,6 +335,74 @@ export function Profile() {
       <section className="flex flex-col gap-3">
         <h2 className="text-lg font-medium text-gray-900">Localização</h2>
         <LocationForm profile={profile} />
+      </section>
+
+      <section className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-medium text-gray-900">Segurança</h2>
+          {!isChangingPassword && (
+            <button type="button" onClick={handleStartChangingPassword} className="text-sm text-gray-600 underline">
+              Mudar password
+            </button>
+          )}
+        </div>
+
+        {isChangingPassword && (
+          <form onSubmit={(event) => void handleChangePassword(event)} className="flex flex-col gap-3">
+            <label className="flex flex-col gap-1 text-sm text-gray-700">
+              Nova password
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                required
+                minLength={6}
+                className="rounded-lg border border-gray-300 px-3 py-2"
+              />
+            </label>
+
+            <label className="flex flex-col gap-1 text-sm text-gray-700">
+              Confirmar nova password
+              <input
+                type="password"
+                value={confirmNewPassword}
+                onChange={(event) => setConfirmNewPassword(event.target.value)}
+                required
+                minLength={6}
+                className="rounded-lg border border-gray-300 px-3 py-2"
+              />
+            </label>
+
+            {passwordError && (
+              <p role="alert" className="text-sm text-red-600">
+                {passwordError}
+              </p>
+            )}
+            {passwordSuccess && (
+              <p role="status" className="text-sm text-green-700">
+                {passwordSuccess}
+              </p>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                type="submit"
+                disabled={isSubmittingPassword}
+                className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              >
+                {isSubmittingPassword ? 'A guardar...' : 'Guardar nova password'}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelChangingPassword}
+                disabled={isSubmittingPassword}
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
+              >
+                Fechar
+              </button>
+            </div>
+          </form>
+        )}
       </section>
 
       <section className="flex flex-col gap-2 rounded-lg border border-red-200 p-4">
