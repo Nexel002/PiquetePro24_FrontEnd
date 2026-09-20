@@ -9,8 +9,9 @@ import { INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY, INTENDED_ROLE_STORAGE_KEY } fro
 // Destino do redirectTo em signInWithOAuth (ver Login.tsx). O supabase-js processa o
 // `code` da URL automaticamente ao carregar esta página (PKCE, detectSessionInUrl por
 // default) e dispara onAuthStateChange — AuthContext já reage a isso, esta página só
-// espera a sessão ficar disponível e segue para /perfil (o ProtectedRoute/
-// OnboardingGate tratam do resto, incluindo forçar o onboarding se for a primeira vez).
+// espera a sessão ficar disponível e segue para "/" (o ProtectedRoute/OnboardingGate
+// tratam do resto, incluindo forçar o onboarding se for a primeira vez; a Home decide
+// o ecrã por role, mesmo motivo do redirect de Login.tsx).
 //
 // Antes de navegar, aplica a escolha "Sou Profissional" feita antes do redirect (se
 // alguma), guardada em sessionStorage porque signInWithOAuth não permite passar
@@ -57,7 +58,7 @@ export function AuthCallback() {
   }, [isLoading, session, hasAppliedIntendedRole])
 
   if (!isLoading && session && hasAppliedIntendedRole) {
-    return <Navigate to="/perfil" replace />
+    return <Navigate to="/" replace />
   }
 
   if (!isLoading && !session) {
