@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useSearchParams } from 'react-router-dom'
 import { useProfile } from '../hooks/useProfile'
 import { useAuditLog } from '../hooks/useAuditLog'
+import { useAdminSecurityAlerts } from '../hooks/useAdminSecurityAlerts'
 import { BackButton } from '../components/BackButton'
 
 const PAGE_SIZE = 25
@@ -20,6 +21,39 @@ function formatMaputoDateTime(iso: string): string {
     hour: '2-digit',
     minute: '2-digit',
   })
+}
+
+// TRD Adendo v1.9, item E: secção de alertas (não uma tela à parte — o próprio TRD
+// dava a escolha) embutida no topo do audit log, de onde os dados vêm. Sem alertas,
+// não mostra nada — uma secção "sem alertas" permanente seria ruído, não é o tipo de
+// coisa que vale confirmar ativamente que "está tudo bem".
+function SecurityAlertsPanel({ onFilterByUser }: { onFilterByUser: (userId: string) => void }) {
+  const { data: alerts } = useAdminSecurityAlerts({ windowHours: 24, minAttempts: 5 })
+
+  if (!alerts || alerts.length === 0) {
+    return null
+  }
+
+  return (
+    <section className="flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3">
+      <h2 className="text-sm font-semibold text-amber-800">Alertas de segurança (últimas 24h)</h2>
+      <ul className="flex flex-col gap-1 text-sm text-amber-800">
+        {alerts.map((alert) => (
+          <li key={`${alert.groupType}-${alert.groupKey}`} className="flex items-center justify-between gap-2">
+            <span>
+              {alert.attempts} tentativas negadas · {alert.groupType === 'user_id' ? 'utilizador' : 'IP'}{' '}
+              <span className="font-medium">{alert.groupKey}</span>
+            </span>
+            {alert.groupType === 'user_id' && (
+              <button type="button" onClick={() => onFilterByUser(alert.groupKey)} className="underline">
+                Ver histórico
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  )
 }
 
 // TRD Adendo v1.8: superfície mínima para o ADMIN consultar o audit log — mesma
@@ -59,6 +93,20 @@ export function AdminAuditLog() {
     setOffset(0)
   }
 
+  // Clicar num alerta por utilizador reaproveita o mesmo ?user_id= que
+  // AdminUserDetail.tsx já escreve (item B) — limpa o filtro de entidade (item C)
+  // porque os dois nunca fazem sentido juntos.
+  function handleFilterByUser(userId: string) {
+    setSearchParams((current) => {
+      const next = new URLSearchParams(current)
+      next.set('user_id', userId)
+      next.delete('entity_type')
+      next.delete('entity_id')
+      return next
+    })
+    setOffset(0)
+  }
+
   if (isProfileLoading) {
     return (
       <main className="flex min-h-dvh items-center justify-center">
@@ -85,6 +133,8 @@ export function AdminAuditLog() {
         <BackButton />
         <h1 className="flex-1 text-2xl font-semibold text-gray-900">Histórico de ações</h1>
       </header>
+
+      <SecurityAlertsPanel onFilterByUser={handleFilterByUser} />
 
       {userIdFilter && (
         <div className="flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700">
