@@ -380,3 +380,30 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 **Frontend:** nova rota protegida (`/admin/kyc`), visível só quando `profile.role === 'ADMIN'`, mesma convenção de visibilidade condicional por role já usada em `Home.tsx`.
 
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, novo item na Fase 4.
+
+## Adendo v1.7
+
+### A. Infraestrutura de email transacional (espelha o backend) — nada consumido ainda
+
+**Contexto:** ver TRD do backend, Adendo v1.7. O backend passou a ter `EmailService`/`CatalogoTemplatesEmail` (nodemailer/SMTP) e dois endpoints novos, mas nenhum deles é chamado por este repositório ainda — identificado ao perguntar explicitamente "o que falta no frontend" depois da entrega do backend, não durante a implementação (desvio à regra do CLAUDE.md Secção 1 deste repositório, corrigido agora).
+
+**Por consumir:**
+- `POST /notifications/welcome` — o backend espera que o frontend o chame logo a seguir a um `supabase.auth.signUp()` bem-sucedido **com sessão imediata**. Se o projeto exigir confirmação de email antes de emitir sessão, não há token disponível nesse instante — nesse caso só dá para chamar depois do primeiro login pós-confirmação. `Login.tsx` já distingue os dois casos (mensagem de sucesso vs. sessão imediata, ver Fase 1) — é o ponto natural para decidir quando chamar.
+- `POST /auth/password-recovery` — não existe hoje nenhum ecrã "Esqueci a password" em `Login.tsx`. Falta um formulário (só email) que chame este endpoint, e mostre sempre a mesma mensagem genérica devolvida pelo backend (o backend já é anti-enumeração; o frontend não deve tentar ser "mais esperto" e distinguir os casos).
+- **`/definir-nova-password`** — rota nova, ainda inexistente. O link de recuperação do backend redireciona para `${FRONTEND_URL}/definir-nova-password` (ver TRD do backend) — sem esta tela, o link do email não tem para onde ir. Implementação: ler a sessão de recuperação que o Supabase estabelece via URL (`detectSessionInUrl`, já ligado por default nesta app), formulário de nova password, `supabase.auth.updateUser({ password })` diretamente — sem passar pelo backend, fluxo padrão do Supabase Auth.
+
+**Resolve uma limitação já registada nesta Fase 1:** a nota "Configurar SMTP próprio... é decisão explicitamente adiada — sem isso, também não há como enviar um email de boas-vindas personalizado" (ver Fase 1 do plano) deixa de se aplicar — o backend já não depende do serviço de email de teste do Supabase para o email de boas-vindas nem para a recuperação de password (os dois têm template próprio, via SMTP próprio). Continua a aplicar-se só ao email de **confirmação de conta** no signup por email/telefone, que continua a ser enviado pelo Supabase Auth diretamente (fora do controlo do `EmailService`).
+
+**Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, novos itens na Fase 1.
+
+## Adendo v1.8
+
+### A. Audit log — histórico de ações (espelha o backend) — sem tela nenhuma ainda
+
+**Contexto:** ver TRD do backend, Adendo v1.8. `GET /admin/audit-log` existe no backend, protegido por `ADMIN`, mas está na mesma situação em que `GET /admin/kyc` esteve antes do Adendo v1.6 deste TRD: endpoint pronto, sem nenhuma tela a consumi-lo.
+
+**Decisão:** nova tela, mesma convenção do Adendo v1.6 (`/admin/kyc`) — acessível só a `profile.role === 'ADMIN'`, lista o audit log com os filtros que o backend já aceita (`user_id`, `action`, `entity_type`, `success`, intervalo de datas), paginada. Sem alteração de schema/endpoint no backend.
+
+**Frontend:** nova rota protegida (ex. `/admin/audit-log`), visível só quando `profile.role === 'ADMIN'` — mesmo padrão de link condicional em `Home.tsx` usado para `/admin/kyc`.
+
+**Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, novo item na Fase 4.
