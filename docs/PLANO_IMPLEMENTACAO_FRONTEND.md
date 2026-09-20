@@ -257,8 +257,8 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - Links condicionais em `Home.tsx`, mesma convenção dos ecrãs de admin existentes.
 
 **Critérios de Entrega:**
-- [ ] Diretório de utilizadores funciona (pesquisa, filtro por role) e a ficha individual mostra os dados corretos.
-- [ ] Link "Ver histórico" na ficha de utilizador abre o audit log já filtrado por esse utilizador.
+- [x] Diretório de utilizadores funciona (pesquisa, filtro por role) e a ficha individual mostra os dados corretos — `services/adminUsers.ts`, `hooks/useAdminUsers.ts`, `pages/AdminUsers.tsx` (`/admin/utilizadores`) + `pages/AdminUserDetail.tsx` (`/admin/utilizadores/:id`). `tsc -b`/`vite build`/`eslint` limpos; sem validação interativa em browser (sem ferramenta de automação disponível nesta sessão).
+- [x] Link "Ver histórico" na ficha de utilizador abre o audit log já filtrado por esse utilizador — `AdminAuditLog.tsx` passou a ler `?user_id=` da URL (`useSearchParams`), com indicador do filtro ativo e botão para o limpar; `services/auditLog.ts` estendido para enviar `user_id` ao backend (que já o aceitava desde a Fase 8).
 - [ ] Lista de pedidos de serviço mostra pedidos de qualquer cliente, não só do admin autenticado.
 - [ ] Métricas mostradas batem com uma verificação manual contra o backend.
 - [ ] Ações de moderação (banir/desbanir/revogar sessão/mudar role) têm confirmação explícita antes de executar (mesma convenção de "Apagar conta" em `Profile.tsx` — duas etapas para uma ação destrutiva/sensível).

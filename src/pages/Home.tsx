@@ -22,6 +22,12 @@ export function Home() {
                 Revisão de KYC
               </Link>
               <Link
+                to="/admin/utilizadores"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
+              >
+                Utilizadores
+              </Link>
+              <Link
                 to="/admin/audit-log"
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
               >
