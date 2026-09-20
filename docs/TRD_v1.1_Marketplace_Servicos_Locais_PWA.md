@@ -398,6 +398,16 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, itens da Fase 1.
 
+### B. Mudar password estando autenticado — pedido do utilizador, sem componente no backend
+
+**Contexto:** pedido explícito do utilizador ao testar a recuperação de password (item A) — reparou que não havia forma de mudar a password estando já com sessão iniciada, só o fluxo de "esqueci a password" para quem não está autenticado. Diferente do item A: **não existe endpoint novo no backend nem alteração ao TRD do backend** — usa a mesma chamada `supabase.auth.updateUser({ password })` que `DefinirNovaPassword.tsx` já usa, só que com a sessão normal do utilizador em vez da sessão especial de recuperação.
+
+**Implementado em `pages/Profile.tsx`:** nova secção "Segurança", mesma convenção de toggle "Editar"/"Fechar" já usada na secção "Os meus dados" — botão "Mudar password" revela um formulário (nova password + confirmação), sem pedir a password atual. **Decisão consciente, não uma omissão:** o Supabase Auth não exige a password atual para `updateUser()` com uma sessão já válida — reautenticação adicional (pedir a password atual antes de aceitar a nova) fica como extensão futura, só se vier a ser pedida. `describeAuthError` (já extraída para `lib/authErrors.ts` no item A) é reutilizada para traduzir um eventual erro do Supabase Auth.
+
+**Validado:** `tsc -b` (strict), `vite build` de produção e `eslint` limpos (mesmo aviso pré-existente de sempre, sem relação). Sem validação interativa em browser, mesma limitação de ferramenta do item A.
+
+**Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, novo item na Fase 1.
+
 ## Adendo v1.8
 
 ### A. Audit log — histórico de ações (espelha o backend)
