@@ -432,8 +432,9 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 **E. Alertas de segurança — implementado em `feat/admin-alertas-seguranca`:** `services/adminSecurityAlerts.ts` (`fetchSecurityAlerts`) + `hooks/useAdminSecurityAlerts.ts` + componente `SecurityAlertsPanel`, embutido no topo de `AdminAuditLog.tsx` — secção, não tela à parte (as duas opções estavam abertas desde o Adendo v1.9 original). Sem alertas na janela (24h/5 tentativas por omissão), não mostra nada — uma secção "sem alertas" permanente seria ruído. Clicar num alerta agrupado por `user_id` filtra o audit log por esse utilizador, reaproveitando o mesmo `?user_id=` do item B (limpa `entity_type`/`entity_id` do item C, que nunca fazem sentido ao mesmo tempo); alertas por `ip_address` são só informativos, sem filtro correspondente no audit log (não implementado ainda). `tsc -b`/`vite build`/`eslint` limpos. **Não validado contra dados reais** — a função RPC `admin_security_alerts()` também não foi aplicada ao Supabase.
 
+**F. Reenviar email — implementado em `feat/admin-ferramentas-operacionais`:** `services/adminUsers.ts` ganha `resendEmail` + `hooks/useAdminUsers.ts` ganha `useResendEmail` — secção nova em `AdminUserDetail.tsx` com um `<select>` dos três templates (boas-vindas/KYC aprovado/KYC rejeitado) e um botão "Reenviar". Sem lógica de esconder templates "não relevantes" para o utilizador em causa — decisão consciente de simplicidade, o admin sabe o que está a fazer. Feedback distingue três casos via `toast` (`sonner`): sucesso, "desligado" (sem SMTP configurado no ambiente — informativo, não erro) e falha real. `tsc -b`/`vite build`/`eslint` limpos; sem validação interativa em browser.
+
 **Por implementar, quando o backend expuser os endpoints correspondentes:**
-- **F.** Na ficha de utilizador: botão para reenviar um email (boas-vindas/KYC aprovado/KYC rejeitado).
 - **G.** Na ficha de utilizador: banir/desbanir, revogar sessões, mudar `role` (só `CLIENT ↔ PROFESSIONAL`, nunca `ADMIN` — o próprio backend rejeita, mas a UI não deve nem oferecer a opção).
 
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 8.

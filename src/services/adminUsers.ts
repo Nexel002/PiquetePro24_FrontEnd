@@ -51,3 +51,18 @@ export async function fetchUserDetail(userId: string): Promise<AdminUserDetail> 
   const response = await api.get<AdminUserDetail>(`/admin/users/${userId}`)
   return response.data
 }
+
+// Espelha ResendEmailTemplate do backend (adminResendEmailService.ts).
+export type ResendEmailTemplate = 'welcome' | 'kyc_aprovado' | 'kyc_rejeitado'
+
+export interface ResendEmailResult {
+  enviado: boolean
+  motivo?: 'desligado' | 'falha'
+}
+
+// TRD Adendo v1.9, item F: se um utilizador disser "não recebi o email", o admin
+// tem um botão em vez de precisar de reproduzir a ação de negócio original.
+export async function resendEmail(userId: string, template: ResendEmailTemplate): Promise<ResendEmailResult> {
+  const response = await api.post<ResendEmailResult>(`/admin/users/${userId}/resend-email`, { template })
+  return response.data
+}
