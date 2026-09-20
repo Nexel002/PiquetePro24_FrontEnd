@@ -15,6 +15,7 @@ import { AdminKyc } from './pages/AdminKyc'
 import { AdminAuditLog } from './pages/AdminAuditLog'
 import { AdminUsers } from './pages/AdminUsers'
 import { AdminUserDetail } from './pages/AdminUserDetail'
+import { AdminServiceRequests } from './pages/AdminServiceRequests'
 import { DefinirNovaPassword } from './pages/DefinirNovaPassword'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { OnboardingGate } from './components/OnboardingGate'
@@ -157,6 +158,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminUserDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/pedidos-servico"
+              element={
+                <ProtectedRoute>
+                  <AdminServiceRequests />
                 </ProtectedRoute>
               }
             />
