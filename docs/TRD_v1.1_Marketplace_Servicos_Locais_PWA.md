@@ -437,3 +437,19 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 **G. Moderação de contas — implementado em `feat/admin-moderacao-contas`:** `services/adminUsers.ts` ganha `banUser`/`unbanUser`/`changeUserRole` + `hooks/useAdminUsers.ts` ganha `useBanUser`/`useUnbanUser`/`useChangeUserRole` (cada mutação invalida a query de detalhe do utilizador, para o novo estado — `banned_until` ou `role` — aparecer de imediato). Nova secção "Moderação de conta" em `AdminUserDetail.tsx`: mostra se a conta está banida (e até quando, `banned_until` vindo da ficha do backend) e alterna entre "Banir conta"/"Levantar banimento"; "mudar role" é um toggle fixo entre o role atual e o outro (nunca um `<select>` com `ADMIN` como opção), pedindo `professionalType` (`SINGULAR`/`COMPANY`) apenas ao promover `CLIENT` → `PROFESSIONAL`. Confirmação em duas etapas antes de cada ação, mesma convenção de "Apagar conta" em `Profile.tsx`. **"Revogar sessões" não implementado — removido do escopo desta entrega.** O desenho original assumia um endpoint de sign-out por ID de utilizador; o SDK do Supabase Auth instalado (`GoTrueAdminApi.signOut(jwt, scope)`) exige o JWT da sessão a terminar, não um ID, e não há alternativa nesta versão (ver TRD do backend, Adendo v1.9, item G, para o detalhe completo). `ban`/`unban` já cobrem o caso de uso de segurança na prática. `tsc -b`/`vite build`/`eslint` limpos; sem validação interativa em browser; sem suite de testes automatizados configurada neste frontend.
 
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 8.
+
+## Adendo v1.11
+
+### A. CSP e headers de segurança no `vercel.json` (espelha o backend)
+
+**Contexto:** ver TRD do backend, Adendo v1.11 — auditoria de segurança fullstack (`appsec-health-audit`) pedida explicitamente pelo utilizador, cobrindo backend e frontend na mesma ronda. Identificou ausência de Content-Security-Policy e de headers HTTP básicos (`X-Frame-Options`, `X-Content-Type-Options`) neste repositório.
+
+**Decisão:** bloco `headers` adicionado a `vercel.json` (branch `fix/appsec-audit-csp-hardening`), aplicado a todas as rotas (`source: "/(.*)"`):
+- `Content-Security-Policy`: `default-src 'self'`, scripts/estilos/fontes restritos a `'self'` (`style-src` inclui `'unsafe-inline'` como precaução — sem inline styles no código actualmente, mas Tailwind/Framer Motion podem gerar estilo em runtime dependendo da versão), `img-src` permite `https:`/`data:` (avatares e uploads podem vir de qualquer storage), `connect-src` restrito a `'self'`, `https://*.supabase.co` (API/Auth do Supabase) e `https://*.fly.dev` (API do backend), `frame-ancestors 'none'` (protecção contra clickjacking).
+- `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`.
+
+**Verificado antes de aplicar:** sem `dangerouslySetInnerHTML` no código (`grep` confirmou zero ocorrências), sem scripts/fontes externas hardcoded em `index.html`, `npm run build` limpo com a alteração.
+
+**Pendência explícita:** o header CSP só é aplicado pelo Vercel em produção/preview, não pelo `vite dev` local — por não haver ambiente de preview acessível nesta sessão, a validação de que nenhuma chamada legítima é bloqueada pela CSP fica para o primeiro deploy real, antes de mergear para `main`.
+
+**Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 7 (novo critério de entrega adicionado nesta ronda — a Fase 7 original já cobria validação de CORS/autenticação contra produção, mas não CSP/headers).

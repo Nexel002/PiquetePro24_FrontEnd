@@ -238,6 +238,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - [ ] Deploy de produção na Vercel validado com smoke tests (login, busca, criação de pedido funcionam em produção).
 - [ ] Nenhum erro de CORS ou autenticação em produção.
 - [ ] Runbook de deploy/rollback documentado e testado pelo menos uma vez.
+- [x] **(Adiantado no Adendo v1.11, auditoria `appsec-health-audit`)** CSP e headers de segurança (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`) configurados em `vercel.json`. **Pendente:** validar no primeiro deploy real (preview/produção) que a CSP não bloqueia nenhuma chamada legítima ao Supabase/backend — o header só é aplicado pelo Vercel, não pelo `vite dev` local.
 
 ---
 
