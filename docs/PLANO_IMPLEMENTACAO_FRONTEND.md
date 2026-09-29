@@ -222,6 +222,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - [ ] Lighthouse Performance score > 80 em simulação de rede 4G/dispositivo médio.
 - [ ] Nenhuma tela crítica (login, busca, criação de pedido) sem estado de carregamento/erro tratado.
 - [ ] Revisão manual em pelo menos 3 tamanhos de viewport (mobile pequeno, mobile grande, desktop).
+- [x] **(Adiantado no Adendo v1.13, pedido do utilizador)** Identidade visual da marca aplicada — paleta `piquete-*`, fontes Inter/Outfit alojadas no bundle (compatível com a CSP e offline), componentes `Button`/`Input`/`Card` em `src/components/ui/`, ícones PWA quadrados. **Pendente:** migrar para os componentes novos os ecrãs que ainda usam o estilo antigo (subscrição, trabalhos aceites, KYC, perfil, painel de admin).
 
 ---
 

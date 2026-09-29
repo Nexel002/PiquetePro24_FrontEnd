@@ -26,6 +26,9 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // woff2 acrescentado ao padrão por omissão (js/css/html): sem isto as fontes
+        // de @fontsource não entram no precache e, offline, a UI perde a tipografia.
+        globPatterns: ['**/*.{js,css,html,woff2}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\/api\/.*/,
