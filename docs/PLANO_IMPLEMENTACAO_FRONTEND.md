@@ -20,7 +20,8 @@ Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo 
 **Critérios de Entrega:**
 - [x] `npm run dev` inicia a aplicação localmente sem erros.
 - [ ] PWA instalável (manifest válido, ícones presentes) — validado via Lighthouse PWA audit. **Pendente só o audit:** manifest único em `vite.config.ts` (o `vite-plugin-pwa` injecta o `<link>`) com ícones quadrados `pwa-192x192.png`, `pwa-512x512.png` e `pwa-maskable-512x512.png`, mais `apple-touch-icon.png` (180, fundo opaco) — gerados a partir do escudo do logótipo, porque o `pwa-icon.png` é horizontal (1024x343) e não serve de ícone. Falta correr o Lighthouse sobre `npm run build && npm run preview` e marcar aqui.
-- [ ] Deploy "hello world" bem-sucedido na Vercel, com preview automático em PRs. **Em curso:** projeto Vercel já criado; primeira tentativa falhou por o repositório ainda não ter `package.json` (framework não detectado). Deve resolver-se automaticamente no próximo deploy, agora que o esqueleto Vite existe — confirmar após merge desta branch.
+- [x] Deploy "hello world" bem-sucedido na Vercel. A primeira tentativa falhou por o repositório ainda não ter `package.json` (framework não detectado); resolvido com o esqueleto Vite. **Confirmado em 29/09/2026:** `https://piquete-pro24-front-end.vercel.app` serve a app a partir de `main` (`/`, `/entrar` e `/profissionais` respondem 200, `manifest.webmanifest` ligado, headers do `vercel.json` aplicados — incluindo a CSP), e é o domínio que o backend tem em `CORS_ORIGIN` (TRD Adendo v1.3, item E).
+- [ ] Preview automático em PRs na Vercel. **Não verificado:** sem acesso ao painel da Vercel nem ao `gh` nesta máquina; confirmar no separador "Deployments" do projeto ao abrir o próximo PR.
 - [x] Variáveis de ambiente documentadas em `.env.example`, segredos reais fora do controlo de versão (`.gitignore` cobre `.env`/`.env.local`/`.env.*.local`).
 - [x] CI executa lint/build em cada push/PR (`.github/workflows/ci.yml`, mesmo padrão do backend).
 
@@ -245,7 +246,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - [ ] Deploy de produção na Vercel validado com smoke tests (login, busca, criação de pedido funcionam em produção).
 - [ ] Nenhum erro de CORS ou autenticação em produção.
 - [ ] Runbook de deploy/rollback documentado e testado pelo menos uma vez.
-- [x] **(Adiantado no Adendo v1.11, auditoria `appsec-health-audit`)** CSP e headers de segurança (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`) configurados em `vercel.json`. **Pendente:** validar no primeiro deploy real (preview/produção) que a CSP não bloqueia nenhuma chamada legítima ao Supabase/backend — o header só é aplicado pelo Vercel, não pelo `vite dev` local.
+- [x] **(Adiantado no Adendo v1.11, auditoria `appsec-health-audit`)** CSP e headers de segurança (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`) configurados em `vercel.json`. **Pendente:** validar no primeiro deploy real (preview/produção) que a CSP não bloqueia nenhuma chamada legítima ao Supabase/backend — o header só é aplicado pelo Vercel, não pelo `vite dev` local. **Parcial (29/09/2026):** em produção, `/`, `/entrar` e `/profissionais` carregam sem nenhuma violação de CSP (`securitypolicyviolation` e consola) nem pedidos falhados — mas sem sessão a app não chama o Supabase nem o backend, por isso só a casca da app ficou validada. Falta repetir com login real (Supabase Auth + chamadas a `piquetepro24-backend.fly.dev`).
 
 ---
 
