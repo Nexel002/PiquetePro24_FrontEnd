@@ -3,6 +3,8 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useProfile } from '../hooks/useProfile'
 import { useAdminUserDetail, useBanUser, useChangeUserRole, useResendEmail, useUnbanUser } from '../hooks/useAdminUsers'
+import { useActivateSubscriptionManually, useUserSubscription } from '../hooks/useSubscription'
+import type { SubscriptionStatus } from '../services/subscriptions'
 import { BackButton } from '../components/BackButton'
 import type { ProfessionalType, UserRole } from '../services/profile'
 import type { AdminUserDetail as AdminUserDetailData, ResendEmailTemplate } from '../services/adminUsers'
@@ -205,6 +207,8 @@ export function AdminUserDetail() {
             Ver histórico de ações
           </Link>
 
+          {user.role === 'PROFESSIONAL' && <SubscricaoDoProfissional userId={user.id} />}
+
           {/* Adendo v1.9, item F: sem endpoint novo de leitura — reaproveita o
               EmailService já existente do lado do backend. Sem lógica de mostrar só
               os templates "relevantes" para este utilizador (ex. esconder KYC para
@@ -346,5 +350,125 @@ export function AdminUserDetail() {
         </>
       )}
     </main>
+  )
+}
+
+const SUBSCRIPTION_STATUS_LABELS: Record<SubscriptionStatus, string> = {
+  INACTIVE: 'Inativa',
+  ACTIVE: 'Ativa',
+  EXPIRED: 'Expirada',
+}
+
+const subscriptionDateFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long', timeZone: 'Africa/Maputo' })
+
+// Backend TRD Adendo v1.12, item D: ativação manual — o caminho de produção enquanto não
+// houver integração M-Pesa/e-Mola real. Componente próprio (e não mais estado dentro de
+// AdminUserDetail) para os hooks de subscrição só correrem para perfis PROFESSIONAL: o
+// backend não tem subscrição para CLIENT/ADMIN e o pedido seria desperdício. Mesma
+// confirmação em dois passos das outras ações desta ficha.
+function SubscricaoDoProfissional({ userId }: { userId: string }) {
+  const { data: summary, isLoading, isError } = useUserSubscription(userId)
+  const activateMutation = useActivateSubscriptionManually()
+  const [note, setNote] = useState('')
+  const [isConfirming, setIsConfirming] = useState(false)
+
+  function handleConfirm() {
+    activateMutation.mutate(
+      { userId, note: note.trim() },
+      {
+        onSuccess: (subscription) => {
+          toast.success(
+            subscription.expires_at
+              ? `Subscrição ativada até ${subscriptionDateFormatter.format(new Date(subscription.expires_at))}.`
+              : 'Subscrição ativada.',
+          )
+          setNote('')
+          setIsConfirming(false)
+        },
+        onError: (err) => toast.error(err instanceof Error ? err.message : 'Não foi possível ativar a subscrição.'),
+      },
+    )
+  }
+
+  return (
+    <section className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4">
+      <h2 className="text-sm font-medium text-gray-500">Subscrição</h2>
+
+      {isLoading && <div className="h-12 animate-pulse rounded bg-gray-200" />}
+
+      {isError && <p className="text-sm text-gray-600">Não foi possível carregar a subscrição deste profissional.</p>}
+
+      {summary && (
+        <>
+          <p className="text-sm text-gray-700">
+            Estado: <span className="font-medium">{SUBSCRIPTION_STATUS_LABELS[summary.status]}</span>
+            {summary.valid_until && summary.status === 'ACTIVE' && (
+              <> — válida até {subscriptionDateFormatter.format(new Date(summary.valid_until))}</>
+            )}
+          </p>
+
+          {!summary.kyc_approved ? (
+            <p className="text-sm text-gray-600">
+              A ativação só fica disponível depois de o KYC deste profissional ser aprovado.
+            </p>
+          ) : isConfirming ? (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-gray-700">
+                Confirmas que recebeste {summary.plan.amount} {summary.plan.currency}? A subscrição fica ativa por{' '}
+                {summary.plan.duration_days} dias
+                {summary.status === 'ACTIVE' ? ', somados aos que ainda restam' : ''}.
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleConfirm}
+                  disabled={activateMutation.isPending}
+                  className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                >
+                  {activateMutation.isPending ? 'A ativar...' : 'Sim, ativar'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsConfirming(false)}
+                  disabled={activateMutation.isPending}
+                  className="text-sm text-gray-600 underline disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form
+              onSubmit={(event) => {
+                event.preventDefault()
+                setIsConfirming(true)
+              }}
+              className="flex flex-col gap-2"
+            >
+              <label className="flex flex-col gap-1 text-sm text-gray-700">
+                Nota sobre o pagamento recebido
+                {/* Fica no audit log — é a única prova de um pagamento feito por fora. */}
+                <textarea
+                  required
+                  maxLength={500}
+                  rows={2}
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  placeholder="ex. Pago em numerário, recibo 0042"
+                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={note.trim().length === 0}
+                className="self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
+              >
+                {summary.status === 'ACTIVE' ? 'Renovar manualmente' : 'Ativar subscrição'}
+              </button>
+            </form>
+          )}
+        </>
+      )}
+    </section>
   )
 }

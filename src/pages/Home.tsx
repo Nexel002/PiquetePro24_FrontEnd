@@ -39,7 +39,9 @@ export function Home() {
             ) : profile?.role === 'PROFESSIONAL' ? (
               <>
                 <Link to="/pedidos-proximos" className={primaryButtonClass}>Pedidos perto de ti</Link>
+                <Link to="/trabalhos-aceites" className={secondaryButtonClass}>Trabalhos aceites</Link>
                 <Link to="/verificacao-identidade" className={secondaryButtonClass}>Verificação de identidade</Link>
+                <Link to="/subscricao" className={secondaryButtonClass}>Subscrição</Link>
               </>
             ) : (
               <>
@@ -47,7 +49,7 @@ export function Home() {
                 <Link to="/os-meus-pedidos" className={secondaryButtonClass}>Os meus pedidos</Link>
               </>
             )}
-            
+
             <div className="flex items-center gap-3 my-2">
               <span className="h-px flex-1 bg-gray-200" />
             </div>
