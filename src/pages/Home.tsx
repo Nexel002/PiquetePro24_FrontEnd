@@ -52,10 +52,22 @@ export function Home() {
                 Pedidos perto de ti
               </Link>
               <Link
+                to="/trabalhos-aceites"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
+              >
+                Trabalhos aceites
+              </Link>
+              <Link
                 to="/verificacao-identidade"
                 className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
               >
                 Verificação de identidade
+              </Link>
+              <Link
+                to="/subscricao"
+                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
+              >
+                Subscrição
               </Link>
             </>
           ) : (

@@ -453,3 +453,19 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 **Pendência explícita:** o header CSP só é aplicado pelo Vercel em produção/preview, não pelo `vite dev` local — por não haver ambiente de preview acessível nesta sessão, a validação de que nenhuma chamada legítima é bloqueada pela CSP fica para o primeiro deploy real, antes de mergear para `main`.
 
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 7 (novo critério de entrega adicionado nesta ronda — a Fase 7 original já cobria validação de CORS/autenticação contra produção, mas não CSP/headers).
+
+## Adendo v1.12
+
+**Contexto:** ver TRD do backend, Adendo v1.12 — Fase 5 (subscrições e abstração de pagamentos). Esta secção resume só a perspetiva do frontend.
+
+**Decisões com impacto no frontend (tomadas pelo utilizador, 29/09/2026):**
+- **Aceitar pedidos exige KYC `APPROVED` e subscrição ativa.** "Pedidos perto de ti" continua a mostrar os pedidos a quem ainda não é elegível, mas bloqueia "Aceitar pedido" e explica o que falta, pela ordem real (primeiro KYC, depois subscrição).
+- **Pagamento só depois do KYC aprovado.** O ecrã `/subscricao` não mostra o formulário de pagamento a quem ainda não tem o KYC aprovado — manda-o para a verificação de identidade.
+- **Contacto do cliente só para o profissional atribuído**, e só enquanto o pedido está em curso. Novo ecrã `/trabalhos-aceites` (consome `GET /service_requests/assigned`); o contacto (`GET /service_requests/:id/contact`) só é pedido quando o profissional o abre.
+- **Ativação manual pelo ADMIN** na ficha de utilizador, com nota obrigatória — é o caminho de produção enquanto não houver integração real M-Pesa/e-Mola (`payments_available: false` em `GET /subscriptions`, e o ecrã de subscrição explica que a ativação é feita pela equipa).
+
+**Pagamento assíncrono:** `POST /subscriptions` devolve `202` (pedido enviado ao telemóvel, não pago). O frontend faz polling a `GET /subscriptions` a cada 3 s só enquanto a última transação está `PENDING` — nunca fora disso, para não gastar dados numa rede móvel.
+
+**Fora do âmbito:** testes automatizados de UI (o repositório continua sem test runner); histórico de pagamentos para o profissional; qualquer pagamento real.
+
+**Critérios de entrega correspondentes:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 4.

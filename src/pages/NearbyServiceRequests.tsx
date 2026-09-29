@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useAssignServiceRequest, useNearbyServiceRequests } from '../hooks/useServiceRequests'
 import { BackButton } from '../components/BackButton'
+import { EligibilityNotice } from '../components/EligibilityNotice'
+import { useProfessionalEligibility } from '../hooks/useProfessionalEligibility'
 
 // Só faz sentido para profissionais (Home.tsx só mostra o link quando
 // profile.role === 'PROFESSIONAL') — não há verificação de role aqui porque o
@@ -17,10 +19,20 @@ export function NearbyServiceRequests() {
   const coordinates = geolocation.state.status === 'success' ? geolocation.state.coordinates : null
   const nearby = useNearbyServiceRequests(coordinates, { radiusKm })
   const assignRequest = useAssignServiceRequest()
+  const eligibility = useProfessionalEligibility()
+  // Só bloqueia quando se SABE que falta algo: a carregar ou com erro na leitura, o
+  // botão fica ativo e o backend decide (devolve 403 com a explicação, se for o caso).
+  const aceitarBloqueado = !eligibility.isLoading && !eligibility.isError && !eligibility.eligible
+  const navigate = useNavigate()
 
+  // Depois de aceitar, o passo seguinte é contactar o cliente — é em "Trabalhos
+  // aceites" que o contacto está (Backend TRD Adendo v1.12, item B).
   function handleAssign(requestId: string) {
     setAssigningId(requestId)
-    assignRequest.mutate(requestId, { onSettled: () => setAssigningId(null) })
+    assignRequest.mutate(requestId, {
+      onSuccess: () => navigate('/trabalhos-aceites'),
+      onSettled: () => setAssigningId(null),
+    })
   }
 
   return (
@@ -32,6 +44,11 @@ export function NearbyServiceRequests() {
           Perfil
         </Link>
       </header>
+
+      {/* Os pedidos continuam visíveis sem KYC/subscrição — o profissional vê o que
+          há na zona antes de pagar. Só o botão "Aceitar" fica bloqueado, e o aviso
+          diz o que falta. O backend aplica a mesma regra (403) de qualquer forma. */}
+      <EligibilityNotice eligibility={eligibility} />
 
       <div className="flex flex-col gap-3">
         <button
@@ -92,7 +109,8 @@ export function NearbyServiceRequests() {
               <button
                 type="button"
                 onClick={() => handleAssign(request.id)}
-                disabled={assigningId === request.id}
+                disabled={assigningId === request.id || aceitarBloqueado}
+                aria-describedby={aceitarBloqueado ? 'aviso-elegibilidade' : undefined}
                 className="self-start rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
                 {assigningId === request.id ? 'A aceitar...' : 'Aceitar pedido'}

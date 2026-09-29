@@ -11,6 +11,8 @@ import { FindProfessionals } from './pages/FindProfessionals'
 import { MyServiceRequests } from './pages/MyServiceRequests'
 import { NearbyServiceRequests } from './pages/NearbyServiceRequests'
 import { Kyc } from './pages/Kyc'
+import { Subscription } from './pages/Subscription'
+import { AssignedServiceRequests } from './pages/AssignedServiceRequests'
 import { AdminKyc } from './pages/AdminKyc'
 import { AdminAuditLog } from './pages/AdminAuditLog'
 import { AdminUsers } from './pages/AdminUsers'
@@ -116,6 +118,30 @@ function App() {
                 <ProtectedRoute>
                   <OnboardingGate>
                     <Kyc />
+                  </OnboardingGate>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Backend Fase 5 (TRD Adendo v1.12): subscrição e trabalhos aceites. O
+                backend exige role PROFESSIONAL em /subscriptions; o link em Home.tsx
+                só aparece a profissionais, mesma convenção das rotas acima. */}
+            <Route
+              path="/subscricao"
+              element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <Subscription />
+                  </OnboardingGate>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/trabalhos-aceites"
+              element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <AssignedServiceRequests />
                   </OnboardingGate>
                 </ProtectedRoute>
               }
