@@ -12,13 +12,18 @@ export default defineConfig({
         name: 'PiquetePro24',
         short_name: 'PiquetePro24',
         description: 'Marketplace de Serviços Locais para Moçambique',
-        theme_color: '#0f172a',
+        theme_color: '#031F4B',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
-        // TODO(design): favicon.svg é placeholder do template Vite. Substituir por
-        // ícones PWA reais (192x192 e 512x512 PNG, mais maskable) antes da Fase 6.
-        icons: [{ src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml' }],
+        // Ícones quadrados com só o escudo do logótipo: o pwa-icon.png é horizontal
+        // (1024x343) e, declarado como 192/512, o Chrome rejeita-o e a PWA deixa de ser
+        // instalável. O maskable tem o escudo dentro da zona segura (80%) sobre fundo opaco.
+        icons: [
+          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
+        ],
       },
       workbox: {
         runtimeCaching: [

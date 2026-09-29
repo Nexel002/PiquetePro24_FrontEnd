@@ -1,9 +1,11 @@
-import { useState, type FormEvent } from 'react'
+import { useId, useState, type FormEvent } from 'react'
 import { useUpdateLocation } from '../hooks/useProfile'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useReverseGeocode } from '../hooks/useReverseGeocode'
 import { MOZAMBIQUE_PROVINCES } from '../lib/provinces'
 import type { UserProfile } from '../services/profile'
+import { Button } from './ui/Button'
+import { Input } from './ui/Input'
 
 // Formulário de localização (GPS + fallback hierárquico) partilhado entre a tela de
 // perfil (onde é opcional editar de novo) e o onboarding obrigatório
@@ -16,6 +18,8 @@ export function LocationForm({ profile, onSaved }: { profile: UserProfile; onSav
   const [province, setProvince] = useState('')
   const [district, setDistrict] = useState('')
   const [neighborhood, setNeighborhood] = useState('')
+  // useId e não um id fixo: o componente é partilhado (perfil e onboarding)
+  const provinciaId = useId()
 
   // Traduz as coordenadas do GPS recém-obtido (antes de confirmar) para um nome de
   // lugar — só ativa quando o GPS já respondeu com sucesso.
@@ -73,101 +77,119 @@ export function LocationForm({ profile, onSaved }: { profile: UserProfile; onSav
       : 'Ainda não definida'
 
   return (
-    <div className="flex flex-col gap-3">
-      <p className="text-sm text-gray-600">Localização atual: {currentLocationLabel}</p>
+    <div className="flex flex-col gap-4">
+      <div className="bg-piquete-blue/5 border border-piquete-blue/10 rounded-xl p-3 flex flex-col items-center justify-center text-center">
+        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Localização Atual</p>
+        <p className="text-sm font-bold text-piquete-blue">
+          {currentLocationLabel}
+        </p>
+      </div>
 
-      <button
+      <Button
         type="button"
         onClick={handleUseGps}
         disabled={geolocation.state.status === 'locating'}
-        className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+        isLoading={geolocation.state.status === 'locating'}
+        className="w-full"
       >
-        {geolocation.state.status === 'locating' ? 'A localizar...' : 'Usar minha localização'}
-      </button>
+        {geolocation.state.status === 'locating' ? 'A localizar...' : 'Usar a minha localização (GPS)'}
+      </Button>
 
       {geolocation.state.status === 'error' && (
-        <p className="text-sm text-red-600">{geolocation.state.message}</p>
+        <p className="text-sm font-medium text-red-600 text-center">{geolocation.state.message}</p>
       )}
 
       {geolocation.state.status === 'success' && (
-        <div className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
-          <p className="text-sm text-gray-700">
+        <div className="flex flex-col gap-3 rounded-xl border-2 border-piquete-yellow bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-gray-700 text-center">
             Localização encontrada:{' '}
-            {pendingPlace.data?.placeName ??
-              (pendingPlace.isError
-                ? `${geolocation.state.coordinates.latitude.toFixed(4)}, ${geolocation.state.coordinates.longitude.toFixed(4)}`
-                : 'a identificar o lugar...')}
+            <span className="text-piquete-blue block mt-1 text-base">
+              {pendingPlace.data?.placeName ??
+                (pendingPlace.isError
+                  ? `${geolocation.state.coordinates.latitude.toFixed(4)}, ${geolocation.state.coordinates.longitude.toFixed(4)}`
+                  : 'A identificar o lugar...')}
+            </span>
           </p>
-          <button
+          <Button
             type="button"
+            variant="secondary"
             onClick={handleConfirmGps}
             disabled={updateLocation.isPending}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            isLoading={updateLocation.isPending}
+            className="w-full"
           >
             Confirmar esta localização
-          </button>
+          </Button>
         </div>
       )}
 
-      <div className="flex items-center gap-2 text-xs text-gray-400">
+      <div className="flex items-center gap-3 my-2">
         <span className="h-px flex-1 bg-gray-200" />
-        ou escolhe manualmente
+        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">ou manual</span>
         <span className="h-px flex-1 bg-gray-200" />
       </div>
 
-      <form onSubmit={handleSubmitHierarchy} className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1 text-sm text-gray-700">
-          Província
-          <select
-            value={province}
-            onChange={(event) => setProvince(event.target.value)}
-            required
-            className="rounded-lg border border-gray-300 px-3 py-2"
-          >
-            <option value="" disabled>
-              Seleciona a província
-            </option>
-            {MOZAMBIQUE_PROVINCES.map((name) => (
-              <option key={name} value={name}>
-                {name}
-              </option>
-            ))}
-          </select>
-        </label>
+      <form onSubmit={handleSubmitHierarchy} className="flex flex-col gap-4">
+        <div className="flex flex-col w-full">
+          <label htmlFor={provinciaId} className="mb-1.5 text-sm font-semibold text-piquete-blue-dark">
+            Província
+          </label>
+          <div className="relative">
+            <select
+              id={provinciaId}
+              value={province}
+              onChange={(event) => setProvince(event.target.value)}
+              required
+              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-piquete-blue/20 focus:border-piquete-blue shadow-sm appearance-none"
+            >
+              <option value="" disabled>Seleciona a província</option>
+              {MOZAMBIQUE_PROVINCES.map((name) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+              <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
 
-        <label className="flex flex-col gap-1 text-sm text-gray-700">
-          Distrito (opcional)
-          <input
-            type="text"
-            value={district}
-            onChange={(event) => setDistrict(event.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2"
-          />
-        </label>
+        <Input
+          label="Distrito (opcional)"
+          type="text"
+          value={district}
+          onChange={(event) => setDistrict(event.target.value)}
+        />
 
-        <label className="flex flex-col gap-1 text-sm text-gray-700">
-          Bairro (opcional)
-          <input
-            type="text"
-            value={neighborhood}
-            onChange={(event) => setNeighborhood(event.target.value)}
-            className="rounded-lg border border-gray-300 px-3 py-2"
-          />
-        </label>
+        <Input
+          label="Bairro (opcional)"
+          type="text"
+          value={neighborhood}
+          onChange={(event) => setNeighborhood(event.target.value)}
+        />
 
-        <button
+        <Button
           type="submit"
+          variant="outline"
           disabled={!province || updateLocation.isPending}
-          className="rounded-lg border border-gray-900 px-4 py-2 text-sm font-medium text-gray-900 disabled:opacity-50"
+          isLoading={updateLocation.isPending}
+          className="w-full mt-2"
         >
           Guardar localização manual
-        </button>
+        </Button>
       </form>
 
       {updateLocation.isError && (
-        <p className="text-sm text-red-600">Não foi possível guardar a localização. Tenta novamente.</p>
+        <p className="text-sm font-medium text-red-600 text-center bg-red-50 p-2 rounded-lg mt-2">
+          Não foi possível guardar a localização. Tenta novamente.
+        </p>
       )}
-      {updateLocation.isSuccess && <p className="text-sm text-green-700">Localização atualizada.</p>}
+      {updateLocation.isSuccess && (
+        <p className="text-sm font-medium text-green-700 text-center bg-green-50 p-2 rounded-lg mt-2">
+          Localização atualizada com sucesso!
+        </p>
+      )}
     </div>
   )
 }

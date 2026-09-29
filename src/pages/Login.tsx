@@ -5,6 +5,9 @@ import { useAuth } from '../store/AuthContext'
 import { sendWelcomeNotification } from '../services/notifications'
 import { requestPasswordRecovery } from '../services/passwordRecovery'
 import { describeAuthError } from '../lib/authErrors'
+import { Button } from '../components/ui/Button'
+import { Input } from '../components/ui/Input'
+import { Card } from '../components/ui/Card'
 
 type Mode = 'sign-in' | 'sign-up'
 // Backend Fase 2: registo/login suporta email ou telefone (decisão registada no
@@ -187,290 +190,303 @@ export function Login() {
 
   if (showRecovery) {
     return (
-      <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-6">
-        <header>
-          <h1 className="text-2xl font-semibold text-gray-900">Recuperar password</h1>
-          <p className="text-sm text-gray-600">Indica o teu email para receberes um link de recuperação.</p>
-        </header>
+      <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center p-6">
+        <Card className="p-6 md:p-8">
+          <header className="mb-6 text-center">
+            <h1 className="text-2xl mb-2 text-piquete-blue">Recuperar password</h1>
+            <p className="text-sm text-gray-500">Indica o teu email para receberes um link de recuperação.</p>
+          </header>
 
-        <form onSubmit={(event) => void handleRecoverySubmit(event)} className="flex flex-col gap-3">
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Email
-            <input
+          <form onSubmit={(event) => void handleRecoverySubmit(event)} className="flex flex-col gap-4">
+            <Input
+              label="Email"
               type="email"
               value={recoveryEmail}
               onChange={(event) => setRecoveryEmail(event.target.value)}
               required
-              className="rounded-lg border border-gray-300 px-3 py-2"
             />
-          </label>
 
-          {recoveryError && (
-            <p role="alert" className="text-sm text-red-600">
-              {recoveryError}
-            </p>
-          )}
-          {recoveryMessage && (
-            <p role="status" className="text-sm text-green-700">
-              {recoveryMessage}
-            </p>
-          )}
+            {recoveryError && (
+              <p role="alert" className="text-sm text-red-600 font-medium text-center">
+                {recoveryError}
+              </p>
+            )}
+            {recoveryMessage && (
+              <p role="status" className="text-sm text-green-700 font-medium text-center">
+                {recoveryMessage}
+              </p>
+            )}
 
-          <button
-            type="submit"
-            disabled={isSubmittingRecovery}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isSubmittingRecovery ? 'A enviar...' : 'Enviar link de recuperação'}
-          </button>
-        </form>
+            <Button type="submit" isLoading={isSubmittingRecovery} className="w-full mt-2">
+              {isSubmittingRecovery ? 'A enviar...' : 'Enviar link'}
+            </Button>
+          </form>
 
-        <button
-          type="button"
-          onClick={() => {
-            setShowRecovery(false)
-            setRecoveryError(null)
-            setRecoveryMessage(null)
-          }}
-          className="text-sm text-gray-600 underline"
-        >
-          Voltar a entrar
-        </button>
+          <div className="mt-6 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setShowRecovery(false)
+                setRecoveryError(null)
+                setRecoveryMessage(null)
+              }}
+              className="text-sm text-piquete-blue hover:underline font-semibold"
+            >
+              Voltar a entrar
+            </button>
+          </div>
+        </Card>
       </main>
     )
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-gray-900">PiquetePro24</h1>
-        <p className="text-sm text-gray-600">
-          {mode === 'sign-in' ? 'Entra na tua conta' : 'Cria a tua conta'}
-        </p>
-      </header>
-
-      {mode === 'sign-up' && (
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-medium text-gray-700">Como vais usar o PiquetePro24?</legend>
-          <div className="flex gap-2 text-sm">
-            <label
-              className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center ${
-                intendedRole === 'CLIENT'
-                  ? 'border-gray-900 bg-gray-900 text-white'
-                  : 'border-gray-300 text-gray-700'
-              }`}
-            >
-              <input
-                type="radio"
-                name="intended-role"
-                value="CLIENT"
-                checked={intendedRole === 'CLIENT'}
-                onChange={() => setIntendedRole('CLIENT')}
-                className="sr-only"
-              />
-              Sou cliente
-            </label>
-            <label
-              className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center ${
-                intendedRole === 'PROFESSIONAL'
-                  ? 'border-gray-900 bg-gray-900 text-white'
-                  : 'border-gray-300 text-gray-700'
-              }`}
-            >
-              <input
-                type="radio"
-                name="intended-role"
-                value="PROFESSIONAL"
-                checked={intendedRole === 'PROFESSIONAL'}
-                onChange={() => setIntendedRole('PROFESSIONAL')}
-                className="sr-only"
-              />
-              Sou profissional
-            </label>
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center p-6">
+      <Card className="p-6 md:p-8">
+        <header className="mb-8 text-center">
+          <div className="flex justify-center mb-4">
+            {/* Placeholder logótipo */}
+            <div className="w-16 h-16 bg-piquete-blue rounded-2xl flex items-center justify-center shadow-lg">
+              <span className="text-piquete-yellow text-2xl font-bold font-heading">P24</span>
+            </div>
           </div>
-        </fieldset>
-      )}
+          <h1 className="text-2xl mb-1 text-piquete-blue">PiquetePro24</h1>
+          <p className="text-sm text-gray-500">
+            {mode === 'sign-in' ? 'Bem-vindo de volta!' : 'Cria a tua conta e junta-te a nós'}
+          </p>
+        </header>
 
-      {mode === 'sign-up' && intendedRole === 'PROFESSIONAL' && (
-        <fieldset className="flex flex-col gap-2">
-          <legend className="text-sm font-medium text-gray-700">
-            És profissional singular ou empresa?
-          </legend>
-          <div className="flex gap-2 text-sm">
-            <label
-              className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center ${
-                intendedProfessionalType === 'SINGULAR'
-                  ? 'border-gray-900 bg-gray-900 text-white'
-                  : 'border-gray-300 text-gray-700'
-              }`}
-            >
-              <input
-                type="radio"
-                name="intended-professional-type"
-                value="SINGULAR"
-                checked={intendedProfessionalType === 'SINGULAR'}
-                onChange={() => setIntendedProfessionalType('SINGULAR')}
-                className="sr-only"
-              />
-              Singular
-            </label>
-            <label
-              className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-center ${
-                intendedProfessionalType === 'COMPANY'
-                  ? 'border-gray-900 bg-gray-900 text-white'
-                  : 'border-gray-300 text-gray-700'
-              }`}
-            >
-              <input
-                type="radio"
-                name="intended-professional-type"
-                value="COMPANY"
-                checked={intendedProfessionalType === 'COMPANY'}
-                onChange={() => setIntendedProfessionalType('COMPANY')}
-                className="sr-only"
-              />
-              Empresa
-            </label>
-          </div>
-        </fieldset>
-      )}
-
-      <button
-        type="button"
-        onClick={() => void handleGoogleSignIn()}
-        disabled={isRedirectingToGoogle}
-        className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
-      >
-        {isRedirectingToGoogle ? 'A abrir o Google...' : 'Continuar com Google'}
-      </button>
-
-      <div className="flex items-center gap-2 text-xs text-gray-400">
-        <span className="h-px flex-1 bg-gray-200" />
-        ou
-        <span className="h-px flex-1 bg-gray-200" />
-      </div>
-
-      <div className="flex gap-2 text-sm">
-        <button
-          type="button"
-          onClick={() => {
-            setChannel('email')
-            resetFeedback()
-          }}
-          className={`rounded-lg px-3 py-1.5 ${channel === 'email' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}`}
-        >
-          Email
-        </button>
-        <button
-          type="button"
-          onClick={() => {
-            setChannel('phone')
-            resetFeedback()
-          }}
-          className={`rounded-lg px-3 py-1.5 ${channel === 'phone' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}`}
-        >
-          Telefone
-        </button>
-      </div>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
         {mode === 'sign-up' && (
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Nome completo
-            <input
+          <fieldset className="flex flex-col gap-2 mb-4">
+            <legend className="text-sm font-semibold text-piquete-blue-dark mb-1">Como vais usar o PiquetePro24?</legend>
+            <div className="grid grid-cols-2 gap-3">
+              <label
+                className={`cursor-pointer rounded-xl border-2 px-3 py-3 text-center transition-all ${
+                  intendedRole === 'CLIENT'
+                    ? 'border-piquete-blue bg-piquete-blue/5 text-piquete-blue font-semibold'
+                    : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="intended-role"
+                  value="CLIENT"
+                  checked={intendedRole === 'CLIENT'}
+                  onChange={() => setIntendedRole('CLIENT')}
+                  className="sr-only"
+                />
+                Sou cliente
+              </label>
+              <label
+                className={`cursor-pointer rounded-xl border-2 px-3 py-3 text-center transition-all ${
+                  intendedRole === 'PROFESSIONAL'
+                    ? 'border-piquete-yellow bg-piquete-yellow/10 text-piquete-blue font-semibold'
+                    : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="intended-role"
+                  value="PROFESSIONAL"
+                  checked={intendedRole === 'PROFESSIONAL'}
+                  onChange={() => setIntendedRole('PROFESSIONAL')}
+                  className="sr-only"
+                />
+                Sou profissional
+              </label>
+            </div>
+          </fieldset>
+        )}
+
+        {mode === 'sign-up' && intendedRole === 'PROFESSIONAL' && (
+          <fieldset className="flex flex-col gap-2 mb-4">
+            <legend className="text-sm font-semibold text-piquete-blue-dark mb-1">
+              És profissional singular ou empresa?
+            </legend>
+            <div className="grid grid-cols-2 gap-3">
+              <label
+                className={`cursor-pointer rounded-xl border-2 px-3 py-2 text-center text-sm transition-all ${
+                  intendedProfessionalType === 'SINGULAR'
+                    ? 'border-piquete-blue bg-piquete-blue/5 text-piquete-blue font-semibold'
+                    : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="intended-professional-type"
+                  value="SINGULAR"
+                  checked={intendedProfessionalType === 'SINGULAR'}
+                  onChange={() => setIntendedProfessionalType('SINGULAR')}
+                  className="sr-only"
+                />
+                Singular
+              </label>
+              <label
+                className={`cursor-pointer rounded-xl border-2 px-3 py-2 text-center text-sm transition-all ${
+                  intendedProfessionalType === 'COMPANY'
+                    ? 'border-piquete-blue bg-piquete-blue/5 text-piquete-blue font-semibold'
+                    : 'border-gray-100 bg-white text-gray-600 hover:border-gray-200'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="intended-professional-type"
+                  value="COMPANY"
+                  checked={intendedProfessionalType === 'COMPANY'}
+                  onChange={() => setIntendedProfessionalType('COMPANY')}
+                  className="sr-only"
+                />
+                Empresa
+              </label>
+            </div>
+          </fieldset>
+        )}
+
+        <Button
+          variant="outline"
+          onClick={() => void handleGoogleSignIn()}
+          disabled={isRedirectingToGoogle}
+          className="w-full mb-6"
+        >
+          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+            <path
+              fill="currentColor"
+              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+            />
+            <path
+              fill="#EA4335"
+              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+            />
+            <path fill="none" d="M1 1h22v22H1z" />
+          </svg>
+          {isRedirectingToGoogle ? 'A abrir...' : 'Continuar com Google'}
+        </Button>
+
+        <div className="flex items-center gap-4 mb-6">
+          <span className="h-px flex-1 bg-gray-200" />
+          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">ou continua com</span>
+          <span className="h-px flex-1 bg-gray-200" />
+        </div>
+
+        <div className="flex bg-gray-100 p-1 rounded-xl mb-6">
+          <button
+            type="button"
+            onClick={() => {
+              setChannel('email')
+              resetFeedback()
+            }}
+            className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
+              channel === 'email' ? 'bg-white text-piquete-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Email
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setChannel('phone')
+              resetFeedback()
+            }}
+            className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-all ${
+              channel === 'phone' ? 'bg-white text-piquete-blue shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Telefone
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          {mode === 'sign-up' && (
+            <Input
+              label="Nome completo"
               type="text"
               value={fullName}
               onChange={(event) => setFullName(event.target.value)}
               required
-              className="rounded-lg border border-gray-300 px-3 py-2"
             />
-          </label>
-        )}
+          )}
 
-        <label className="flex flex-col gap-1 text-sm text-gray-700">
-          {channel === 'email' ? 'Email' : 'Telefone'}
-          <input
+          <Input
+            label={channel === 'email' ? 'Email' : 'Telefone'}
             type={channel === 'email' ? 'email' : 'tel'}
             value={identifier}
             onChange={(event) => setIdentifier(event.target.value)}
-            placeholder={channel === 'phone' ? '+258840000000' : undefined}
+            placeholder={channel === 'phone' ? '+258 84 000 0000' : undefined}
             required
-            className="rounded-lg border border-gray-300 px-3 py-2"
           />
-        </label>
 
-        {mode === 'sign-up' && channel === 'email' && (
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Telefone
-            <input
+          {mode === 'sign-up' && channel === 'email' && (
+            <Input
+              label="Telefone"
               type="tel"
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
-              placeholder="+258840000000"
+              placeholder="+258 84 000 0000"
               required
-              className="rounded-lg border border-gray-300 px-3 py-2"
             />
-          </label>
-        )}
+          )}
 
-        <label className="flex flex-col gap-1 text-sm text-gray-700">
-          Palavra-passe
-          <input
-            type="password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-            required
-            minLength={6}
-            className="rounded-lg border border-gray-300 px-3 py-2"
-          />
-        </label>
+          <div className="flex flex-col gap-1.5">
+            <Input
+              label="Palavra-passe"
+              type="password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              minLength={6}
+            />
+            {mode === 'sign-in' && channel === 'email' && (
+              <button
+                type="button"
+                onClick={() => setShowRecovery(true)}
+                className="self-end text-xs font-medium text-piquete-blue hover:underline"
+              >
+                Esqueceste-te?
+              </button>
+            )}
+          </div>
 
-        {mode === 'sign-in' && channel === 'email' && (
+          {error && (
+            <p role="alert" className="text-sm font-medium text-red-600 text-center bg-red-50 p-2 rounded-lg">
+              {error}
+            </p>
+          )}
+          {successMessage && (
+            <p role="status" className="text-sm font-medium text-green-700 text-center bg-green-50 p-2 rounded-lg">
+              {successMessage}
+            </p>
+          )}
+
+          <Button type="submit" isLoading={isSubmitting} className="w-full mt-2">
+            {mode === 'sign-in' ? 'Entrar' : 'Criar conta'}
+          </Button>
+        </form>
+
+        <div className="mt-8 text-center">
           <button
             type="button"
-            onClick={() => setShowRecovery(true)}
-            className="self-end text-xs text-gray-600 underline"
+            onClick={() => {
+              setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')
+              resetFeedback()
+            }}
+            className="text-sm font-medium text-gray-500 hover:text-piquete-blue transition-colors"
           >
-            Esqueci a password
+            {mode === 'sign-in' ? (
+              <>Ainda não tens conta? <span className="font-semibold text-piquete-blue">Cria uma agora</span></>
+            ) : (
+              <>Já tens conta? <span className="font-semibold text-piquete-blue">Entrar</span></>
+            )}
           </button>
-        )}
-
-        {error && (
-          <p role="alert" className="text-sm text-red-600">
-            {error}
-          </p>
-        )}
-        {successMessage && (
-          <p role="status" className="text-sm text-green-700">
-            {successMessage}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {isSubmitting
-            ? mode === 'sign-in'
-              ? 'A entrar...'
-              : 'A criar conta...'
-            : mode === 'sign-in'
-              ? 'Entrar'
-              : 'Criar conta'}
-        </button>
-      </form>
-
-      <button
-        type="button"
-        onClick={() => {
-          setMode(mode === 'sign-in' ? 'sign-up' : 'sign-in')
-          resetFeedback()
-        }}
-        className="text-sm text-gray-600 underline"
-      >
-        {mode === 'sign-in' ? 'Ainda não tens conta? Cria uma' : 'Já tens conta? Entra'}
-      </button>
+        </div>
+      </Card>
     </main>
   )
 }
