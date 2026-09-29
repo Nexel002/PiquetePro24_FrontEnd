@@ -469,3 +469,20 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 **Fora do âmbito:** testes automatizados de UI (o repositório continua sem test runner); histórico de pagamentos para o profissional; qualquer pagamento real.
 
 **Critérios de entrega correspondentes:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 4.
+
+## Adendo v1.13
+
+### A. Redesign de UI com a identidade visual da marca — pedido do utilizador, sem componente no backend
+
+**Contexto:** a UI da Fase 1–4 usava o cinzento neutro do template (`gray-900`). O utilizador pediu um redesign com a identidade da marca (branch `feat/redesign-ui-premium`), antecipando parte do polimento visual previsto na Fase 6.
+
+**Decisões:**
+- **Paleta e tipografia no `tailwind.config.js`:** cores `piquete-*` (azul `#031F4B`, amarelo `#FFC700`, cinza `#8A8D91` e variantes), `font-sans` Inter e `font-heading` Outfit, sombra `shadow-card`. `theme_color` do manifest e do `index.html` passam a `#031F4B`.
+- **Componentes partilhados em `src/components/ui/`:** `Button` (variantes `primary`/`secondary`/`outline`/`danger`, `isLoading` com spinner e botão desactivado), `Input` (label ligada ao campo por `htmlFor`/`useId`, `aria-invalid`, texto a 16 px para evitar o zoom automático do iOS ao focar) e `Card`. Migrados: `Login`, `Home`, `FindProfessionals`, `LocationForm` e os dois passos do onboarding. Os ecrãs vindos da Fase 4 (subscrição, trabalhos aceites, KYC) e o painel de admin ainda usam o estilo antigo.
+- **Fontes alojadas no bundle (`@fontsource/inter`, `@fontsource/outfit`), e não via Google Fonts:** a CSP do Adendo v1.11 (`style-src`/`font-src 'self'`) bloquearia `fonts.googleapis.com`/`fonts.gstatic.com` sem erro visível, e offline a PWA perderia a tipografia. Só o subconjunto `latin` e os pesos usados (Inter 400–700, Outfit 500–800), importados em `src/main.tsx`; `woff2` acrescentado ao `globPatterns` do Workbox para entrar no precache. Duas dependências novas, sem custo de runtime além dos ficheiros de fonte.
+- **Ícones PWA:** o logótipo fornecido (`public/pwa-icon.png`) é horizontal (1024×343) e não serve de ícone — declarado como 192/512, o Chrome rejeita-o. Gerados a partir do escudo do logótipo: `pwa-192x192.png`, `pwa-512x512.png` (transparentes), `pwa-maskable-512x512.png` (escudo dentro da zona segura de 80 %, fundo branco) e `apple-touch-icon.png` (180 px, fundo opaco — o iOS pinta a transparência de preto). Manifest único, gerado pelo `vite-plugin-pwa`.
+- **Viewport sem `user-scalable=no`/`maximum-scale`:** bloquear o zoom falha WCAG 1.4.4 (Secção 5 do `CLAUDE.md`).
+
+**Verificado:** `tsc --noEmit`, `eslint` e `npm run build` limpos. **Não verificado:** Lighthouse PWA/Accessibility, e validação visual em dispositivo real.
+
+**Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6.

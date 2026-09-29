@@ -5,6 +5,9 @@ import { useNearbyProfessionals } from '../hooks/useNearbyProfessionals'
 import { useCreateServiceRequest } from '../hooks/useServiceRequests'
 import { useProfile } from '../hooks/useProfile'
 import { BackButton } from '../components/BackButton'
+import { Card } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
+import { Input } from '../components/ui/Input'
 
 const PROFESSIONAL_TYPE_LABELS = { SINGULAR: 'Singular', COMPANY: 'Empresa' } as const
 
@@ -52,122 +55,150 @@ export function FindProfessionals() {
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
       <header className="flex items-center gap-3">
         <BackButton />
-        <h1 className="flex-1 text-2xl font-semibold text-gray-900">Profissionais perto de ti</h1>
-        <Link to="/perfil" className="text-sm text-gray-600 underline">
+        <h1 className="flex-1 text-xl font-bold text-piquete-blue">Profissionais perto de ti</h1>
+        <Link to="/perfil" className="text-sm font-medium text-piquete-blue hover:underline">
           Perfil
         </Link>
       </header>
 
-      <div className="flex flex-col gap-3">
-        <button
+      <Card className="p-5 flex flex-col gap-4">
+        <Button
           type="button"
           onClick={handleLocate}
           disabled={geolocation.state.status === 'locating'}
-          className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          isLoading={geolocation.state.status === 'locating'}
+          className="w-full"
         >
           {geolocation.state.status === 'locating' ? 'A localizar...' : 'Usar minha localização'}
-        </button>
+        </Button>
 
         {geolocation.state.status === 'error' && (
-          <p className="text-sm text-red-600">{geolocation.state.message}</p>
+          <p className="text-sm font-medium text-red-600 text-center">{geolocation.state.message}</p>
         )}
 
         {coordinates && (
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Raio de busca: {radiusKm} km
+          <div className="flex flex-col gap-2 mt-2">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-semibold text-piquete-blue-dark">Raio de busca</span>
+              <span className="text-sm font-bold text-piquete-blue">{radiusKm} km</span>
+            </div>
             <input
               type="range"
               min={1}
               max={50}
               value={radiusKm}
               onChange={(event) => setRadiusKm(Number(event.target.value))}
+              className="w-full accent-piquete-blue"
             />
-          </label>
+          </div>
         )}
-      </div>
+      </Card>
 
       {coordinates && nearby.isLoading && (
-        <div className="flex flex-col gap-2">
-          <div className="h-16 animate-pulse rounded-lg bg-gray-200" />
-          <div className="h-16 animate-pulse rounded-lg bg-gray-200" />
+        <div className="flex flex-col gap-3">
+          <Card className="p-4 flex gap-4 items-center">
+            <div className="h-12 w-12 animate-pulse rounded-full bg-gray-200" />
+            <div className="flex flex-col gap-2 flex-1">
+              <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200" />
+              <div className="h-3 w-1/3 animate-pulse rounded bg-gray-200" />
+            </div>
+          </Card>
+          <Card className="p-4 flex gap-4 items-center">
+            <div className="h-12 w-12 animate-pulse rounded-full bg-gray-200" />
+            <div className="flex flex-col gap-2 flex-1">
+              <div className="h-4 w-1/2 animate-pulse rounded bg-gray-200" />
+              <div className="h-3 w-1/3 animate-pulse rounded bg-gray-200" />
+            </div>
+          </Card>
         </div>
       )}
 
       {coordinates && nearby.isError && (
-        <p className="text-sm text-gray-600">
-          Não foi possível procurar profissionais agora. Verifica a tua ligação e tenta novamente.
-        </p>
+        <Card className="p-4 text-center border-red-100 bg-red-50">
+          <p className="text-sm font-medium text-red-600">
+            Não foi possível procurar profissionais agora. Verifica a tua ligação e tenta novamente.
+          </p>
+        </Card>
       )}
 
       {coordinates && nearby.data && nearby.data.length === 0 && (
-        <p className="text-sm text-gray-600">Nenhum profissional encontrado neste raio. Tenta aumentar o raio.</p>
+        <Card className="p-8 text-center flex flex-col items-center gap-3">
+          <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+            <svg className="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <p className="text-sm font-medium text-gray-500">Nenhum profissional encontrado neste raio. Tenta aumentar a distância.</p>
+        </Card>
       )}
 
       {coordinates && nearby.data && nearby.data.length > 0 && (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-4">
           {nearby.data.map((professional) => (
-            <li key={professional.id} className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
-              <div className="flex items-center gap-3">
-                {professional.avatar_url ? (
-                  <img src={professional.avatar_url} alt="" className="h-10 w-10 rounded-full object-cover" />
-                ) : (
-                  <div
-                    aria-hidden
-                    className="flex h-10 w-10 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-500"
-                  >
-                    {professional.full_name.charAt(0).toUpperCase()}
+            <li key={professional.id}>
+              <Card className="p-4">
+                <div className="flex items-center gap-4">
+                  {professional.avatar_url ? (
+                    <img src={professional.avatar_url} alt="" className="h-12 w-12 rounded-full object-cover shadow-sm border border-gray-100" />
+                  ) : (
+                    <div
+                      aria-hidden
+                      className="flex h-12 w-12 items-center justify-center rounded-full bg-piquete-blue/10 text-lg font-bold text-piquete-blue"
+                    >
+                      {professional.full_name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <p className="text-base font-bold text-gray-900">{professional.full_name}</p>
+                    <p className="text-xs font-medium text-piquete-gray">
+                      {professional.professional_type ? PROFESSIONAL_TYPE_LABELS[professional.professional_type] : ''}
+                      <span className="mx-1">•</span>
+                      <span className="text-piquete-blue font-semibold">{(professional.distance_m / 1000).toFixed(1)} km</span>
+                    </p>
                   </div>
-                )}
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-gray-900">{professional.full_name}</p>
-                  <p className="text-xs text-gray-500">
-                    {professional.professional_type ? PROFESSIONAL_TYPE_LABELS[professional.professional_type] : ''}
-                    {' · '}
-                    {(professional.distance_m / 1000).toFixed(1)} km
-                  </p>
+                  {creatingForId !== professional.id && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCreatingForId(professional.id)}
+                    >
+                      Pedir
+                    </Button>
+                  )}
                 </div>
-                {creatingForId !== professional.id && (
-                  <button
-                    type="button"
-                    onClick={() => setCreatingForId(professional.id)}
-                    className="rounded-lg border border-gray-900 px-3 py-1.5 text-sm font-medium text-gray-900"
-                  >
-                    Pedir serviço
-                  </button>
-                )}
-              </div>
 
-              {creatingForId === professional.id && (
-                <form onSubmit={handleSubmitRequest} className="flex flex-col gap-2 border-t border-gray-200 pt-2">
-                  <label className="flex flex-col gap-1 text-sm text-gray-700">
-                    O que precisas?
-                    <input
+                {creatingForId === professional.id && (
+                  <form onSubmit={handleSubmitRequest} className="flex flex-col gap-3 mt-4 pt-4 border-t border-gray-100">
+                    <Input
+                      label="O que precisas?"
                       type="text"
                       value={title}
                       onChange={(event) => setTitle(event.target.value)}
                       required
                       placeholder="Ex: Reparar torneira"
-                      className="rounded-lg border border-gray-300 px-3 py-2"
                     />
-                  </label>
-                  <div className="flex gap-2">
-                    <button
-                      type="submit"
-                      disabled={createRequest.isPending}
-                      className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                    >
-                      {createRequest.isPending ? 'A enviar...' : 'Enviar pedido'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setCreatingForId(null)}
-                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </form>
-              )}
+                    <div className="flex gap-2 mt-1">
+                      <Button
+                        type="submit"
+                        disabled={createRequest.isPending}
+                        isLoading={createRequest.isPending}
+                        className="flex-1"
+                      >
+                        Enviar
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={() => setCreatingForId(null)}
+                        className="flex-1"
+                      >
+                        Cancelar
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </Card>
             </li>
           ))}
         </ul>

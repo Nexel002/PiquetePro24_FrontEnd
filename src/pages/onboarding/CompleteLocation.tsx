@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom'
 import { useProfile } from '../../hooks/useProfile'
 import { getOnboardingStep } from '../../services/profile'
 import { LocationForm } from '../../components/LocationForm'
+import { Card } from '../../components/ui/Card'
 
 // Passo 2 (último) do onboarding obrigatório (ver OnboardingGate). Reaproveita
 // LocationForm — o mesmo GPS + fallback hierárquico da tela de perfil — sem opção de
@@ -15,7 +16,7 @@ export function CompleteLocation() {
   if (isLoading) {
     return (
       <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-6 w-6 animate-pulse rounded-full bg-gray-300" />
+        <div className="h-6 w-6 animate-spin rounded-full border-4 border-piquete-gray border-t-piquete-blue" />
       </main>
     )
   }
@@ -39,15 +40,17 @@ export function CompleteLocation() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-6">
-      <header>
-        <h1 className="text-2xl font-semibold text-gray-900">Onde estás?</h1>
-        <p className="text-sm text-gray-600">
-          Precisamos da tua localização para te mostrar profissionais e pedidos perto de ti.
-        </p>
-      </header>
+    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center p-6">
+      <Card className="p-6 md:p-8">
+        <header className="mb-6 text-center">
+          <h1 className="text-2xl font-bold text-piquete-blue mb-2">Onde estás?</h1>
+          <p className="text-sm text-gray-500">
+            Precisamos da tua localização para te mostrar profissionais e pedidos perto de ti.
+          </p>
+        </header>
 
-      <LocationForm profile={profile} />
+        <LocationForm profile={profile} />
+      </Card>
     </main>
   )
 }

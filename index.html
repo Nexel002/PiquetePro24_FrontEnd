@@ -2,9 +2,16 @@
 <html lang="pt-MZ">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" href="/pwa-192x192.png" />
+    <!-- Sem maximum-scale/user-scalable=no: bloquear o zoom falha WCAG 1.4.4. O zoom
+         automático do iOS ao focar um campo evita-se com inputs de font-size >= 16px. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0f172a" />
+    <meta name="theme-color" content="#031F4B" />
+    <!-- A ligação ao manifest é injectada pelo vite-plugin-pwa (vite.config.ts); um
+         manifest escrito à mão aqui criava dois manifests em conflito. -->
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>PiquetePro24</title>
   </head>
   <body>

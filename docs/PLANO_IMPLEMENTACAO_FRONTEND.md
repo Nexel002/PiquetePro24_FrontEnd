@@ -19,7 +19,7 @@ Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo 
 
 **Critérios de Entrega:**
 - [x] `npm run dev` inicia a aplicação localmente sem erros.
-- [ ] PWA instalável (manifest válido, ícones presentes) — validado via Lighthouse PWA audit. **Pendente:** manifest usa `favicon.svg` (placeholder do template Vite) como ícone único; faltam PNGs 192x192/512x512 (e maskable) antes de correr o audit — ver TODO em `vite.config.ts`.
+- [ ] PWA instalável (manifest válido, ícones presentes) — validado via Lighthouse PWA audit. **Pendente só o audit:** manifest único em `vite.config.ts` (o `vite-plugin-pwa` injecta o `<link>`) com ícones quadrados `pwa-192x192.png`, `pwa-512x512.png` e `pwa-maskable-512x512.png`, mais `apple-touch-icon.png` (180, fundo opaco) — gerados a partir do escudo do logótipo, porque o `pwa-icon.png` é horizontal (1024x343) e não serve de ícone. Falta correr o Lighthouse sobre `npm run build && npm run preview` e marcar aqui.
 - [ ] Deploy "hello world" bem-sucedido na Vercel, com preview automático em PRs. **Em curso:** projeto Vercel já criado; primeira tentativa falhou por o repositório ainda não ter `package.json` (framework não detectado). Deve resolver-se automaticamente no próximo deploy, agora que o esqueleto Vite existe — confirmar após merge desta branch.
 - [x] Variáveis de ambiente documentadas em `.env.example`, segredos reais fora do controlo de versão (`.gitignore` cobre `.env`/`.env.local`/`.env.*.local`).
 - [x] CI executa lint/build em cada push/PR (`.github/workflows/ci.yml`, mesmo padrão do backend).
@@ -222,6 +222,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - [ ] Lighthouse Performance score > 80 em simulação de rede 4G/dispositivo médio.
 - [ ] Nenhuma tela crítica (login, busca, criação de pedido) sem estado de carregamento/erro tratado.
 - [ ] Revisão manual em pelo menos 3 tamanhos de viewport (mobile pequeno, mobile grande, desktop).
+- [x] **(Adiantado no Adendo v1.13, pedido do utilizador)** Identidade visual da marca aplicada — paleta `piquete-*`, fontes Inter/Outfit alojadas no bundle (compatível com a CSP e offline), componentes `Button`/`Input`/`Card` em `src/components/ui/`, ícones PWA quadrados. **Pendente:** migrar para os componentes novos os ecrãs que ainda usam o estilo antigo (subscrição, trabalhos aceites, KYC, perfil, painel de admin).
 
 ---
 
