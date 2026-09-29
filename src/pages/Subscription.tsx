@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useInitiateSubscription, useMySubscription } from '../hooks/useSubscription'
 import { BackButton } from '../components/BackButton'
-import { PHONE_PREFIX } from '../lib/phone'
+import { formatInternationalPhone, PHONE_PREFIX } from '../lib/phone'
 import type { InitiateSubscriptionPayload, SubscriptionStatus, SubscriptionSummary } from '../services/subscriptions'
 
 type GatewayPagavel = InitiateSubscriptionPayload['gateway']
@@ -126,7 +126,7 @@ function ConteudoSubscricao({ summary }: { summary: SubscriptionSummary }) {
             <p className="text-sm font-medium text-amber-800">A aguardar confirmação do pagamento</p>
           </div>
           <p className="text-sm text-amber-800">
-            Confirma o pagamento no telemóvel {transacao.payer_phone ? `+${transacao.payer_phone}` : ''} (introduz o PIN
+            Confirma o pagamento no telemóvel {transacao.payer_phone ? formatInternationalPhone(transacao.payer_phone) : ''} (introduz o PIN
             quando o pedido aparecer). Esta página atualiza sozinha.
           </p>
         </section>

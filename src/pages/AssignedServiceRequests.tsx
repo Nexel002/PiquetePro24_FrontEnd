@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAssignedServiceRequests, useServiceRequestContact } from '../hooks/useServiceRequests'
 import { BackButton } from '../components/BackButton'
+import { formatInternationalPhone } from '../lib/phone'
 import type { RequestStatus, ServiceRequest } from '../services/serviceRequests'
 
 const STATUS_LABELS: Record<RequestStatus, string> = {
@@ -137,8 +138,8 @@ function ContactoCliente({ requestId }: { requestId: string }) {
     <div className="flex flex-col gap-2 rounded-lg bg-gray-50 p-3 text-sm">
       <p className="font-medium text-gray-900">{contact.client_name}</p>
       {contact.client_phone ? (
-        <a href={`tel:+${contact.client_phone}`} className="self-start text-gray-900 underline">
-          Ligar: +{contact.client_phone}
+        <a href={`tel:${formatInternationalPhone(contact.client_phone)}`} className="self-start text-gray-900 underline">
+          Ligar: {formatInternationalPhone(contact.client_phone)}
         </a>
       ) : (
         <p className="text-gray-600">O cliente ainda não registou um número de telefone.</p>
