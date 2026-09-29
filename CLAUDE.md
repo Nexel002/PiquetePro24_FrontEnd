@@ -97,6 +97,15 @@ A definir na Fase 0, quando o projeto Vite for inicializado. Previsão:
 - As fases deste repositório dependem das do backend: Fase 1 ↔ Backend Fase 2, Fases 2-3 ↔ Backend Fase 3, Fase 4 ↔ Backend Fases 4-5, Fase 7 ↔ Backend Fase 7.
 - Regras de negócio com impacto visível no frontend (ver TRD Secção 5): o contacto e endereço exato de um cliente só são visíveis a profissionais com subscrição `ACTIVE` **e** KYC `APPROVED`. Quando faltar uma das condições, a UI explica **o que falta**, em vez de um botão desativado sem contexto.
 
+## 9. "Qual é o próximo passo?" — ler a documentação antes de responder
+
+- **Sempre que o utilizador perguntar qual é o próximo passo** (ou equivalente: "o que falta", "o que fazemos a seguir", "por onde continuamos"), é **obrigatório** ler primeiro a documentação existente, **antes** de dar qualquer resposta:
+  1. `docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md` — incluindo todos os Adendos, que têm precedência sobre o corpo original.
+  2. `docs/PLANO_IMPLEMENTACAO_FRONTEND.md` — fase em curso, critérios de entrega por marcar (`- [ ]`) e itens pendentes (⚠️).
+  3. `../PiquePro24_Backend/Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` — as fases deste repositório dependem das do backend (Secção 8). Um próximo passo que exija um endpoint ainda não entregue tem de o dizer, em vez de o assumir.
+- Depois da leitura, confirmar o estado real com o grafo de conhecimento (`graphify query`) e com o código — o documento diz o que foi planeado, o código diz o que existe. Uma divergência entre os dois é, ela própria, um próximo passo a reportar.
+- A resposta indica **de onde vem** cada passo proposto (documento e secção/fase), para o utilizador poder verificar. Não responder de memória, a partir do histórico da conversa, nem a partir da linha **Estado atual** no topo deste ficheiro — é só um resumo e desactualiza-se; os planos são a fonte de verdade.
+
 ---
 
 ## Convenções de Git
