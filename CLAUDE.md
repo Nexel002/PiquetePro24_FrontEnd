@@ -107,6 +107,16 @@ A definir na Fase 0, quando o projeto Vite for inicializado. Previsão:
 - Depois da leitura, confirmar o estado real com o grafo de conhecimento (`graphify query`) e com o código — o documento diz o que foi planeado, o código diz o que existe. Uma divergência entre os dois é, ela própria, um próximo passo a reportar.
 - A resposta indica **de onde vem** cada passo proposto (documento e secção/fase), para o utilizador poder verificar. Não responder de memória, a partir do histórico da conversa, nem a partir da linha **Estado atual** no topo deste ficheiro — é só um resumo e desactualiza-se; os planos são a fonte de verdade.
 
+## 10. Início de fase — responder a quatro perguntas antes de implementar
+
+- **Sempre que o utilizador pedir para avançar com uma fase do plano de implementação**, antes de tocar em qualquer ficheiro responder primeiro, **obrigatoriamente e por esta ordem**, a estas quatro perguntas:
+  1. **Qual é a próxima fase?** — o nome e o repositório, e porquê essa (ordem do plano, dependências do backend — Secção 8).
+  2. **Qual é o objetivo da fase?** — tal como está no plano.
+  3. **O que será feito?** — o escopo e os critérios de entrega do plano, separando o que já está feito (adiantado noutras fases) do que falta.
+  4. **Como será feito?** — a abordagem técnica: ficheiros/componentes a tocar, decisões a tomar (e quais precisam do utilizador), e como cada critério vai ser verificado.
+- A fonte é `docs/PLANO_IMPLEMENTACAO_FRONTEND.md` (e, se a fase depender dele, o plano do backend), lido na hora (Secção 9), não de memória. Não é preciso o utilizador pedir isto explicitamente em cada vez.
+- Só depois de responder a isto avançar para a implementação (o que inclui criar a branch — ver Convenções de Git).
+
 ---
 
 ## Convenções de Git
