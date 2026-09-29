@@ -100,3 +100,32 @@ export async function cancelServiceRequest(requestId: string): Promise<ServiceRe
   const response = await api.post<ServiceRequest>(`/service_requests/${requestId}/cancel`)
   return response.data
 }
+
+// GET /service_requests/assigned (Backend TRD Adendo v1.12, item G) — os pedidos que o
+// profissional autenticado aceitou, qualquer estado. É o caminho de volta a um pedido
+// aceite e ao contacto do cliente.
+export async function fetchAssignedServiceRequests(): Promise<ServiceRequest[]> {
+  const response = await api.get<ServiceRequest[]>('/service_requests/assigned')
+  return response.data
+}
+
+export interface ServiceRequestContact {
+  request_id: string
+  client_name: string
+  // null quando o cliente se registou via Google e ainda não completou o telefone.
+  client_phone: string | null
+  province: string
+  district: string | null
+  neighborhood: string | null
+  // null quando o pedido foi criado com a hierarquia manual (sem GPS).
+  latitude: number | null
+  longitude: number | null
+}
+
+// GET /service_requests/:id/contact (Backend TRD Adendo v1.12, item B) — só para o
+// profissional atribuído, com o pedido ASSIGNED, KYC APPROVED e subscrição em vigor.
+// Qualquer falha dessas condições chega como Error com a mensagem do backend (403/409).
+export async function fetchServiceRequestContact(requestId: string): Promise<ServiceRequestContact> {
+  const response = await api.get<ServiceRequestContact>(`/service_requests/${requestId}/contact`)
+  return response.data
+}

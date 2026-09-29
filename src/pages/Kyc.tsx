@@ -97,7 +97,16 @@ export function Kyc() {
           )}
 
           {kyc.status === 'APPROVED' && (
-            <p className="text-sm text-gray-600">A tua identidade foi verificada. Já podes aceitar pedidos de clientes.</p>
+            // Aceitar pedidos exige também subscrição ativa (Backend TRD Adendo v1.12,
+            // item C) — dizer "já podes aceitar pedidos" aqui seria falso.
+            <div className="flex flex-col gap-1">
+              <p className="text-sm text-gray-600">
+                A tua identidade foi verificada. O passo seguinte é ativar a subscrição para aceitares pedidos.
+              </p>
+              <Link to="/subscricao" className="self-start text-sm text-gray-900 underline">
+                Ver subscrição
+              </Link>
+            </div>
           )}
 
           {kyc.status === 'REJECTED' && (

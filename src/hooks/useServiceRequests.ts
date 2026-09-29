@@ -5,8 +5,10 @@ import {
   cancelServiceRequest,
   completeServiceRequest,
   createServiceRequest,
+  fetchAssignedServiceRequests,
   fetchMyServiceRequests,
   fetchNearbyServiceRequests,
+  fetchServiceRequestContact,
   type CreateServiceRequestPayload,
   type NearbyServiceRequestsParams,
 } from '../services/serviceRequests'
@@ -19,6 +21,28 @@ function errorMessage(error: unknown, fallback: string): string {
 }
 
 const myServiceRequestsKey = ['service_requests', 'mine'] as const
+const assignedServiceRequestsKey = ['service_requests', 'assigned'] as const
+
+// Pedidos que o profissional aceitou (Backend TRD Adendo v1.12, item G).
+export function useAssignedServiceRequests() {
+  return useQuery({
+    queryKey: assignedServiceRequestsKey,
+    queryFn: fetchAssignedServiceRequests,
+  })
+}
+
+// Sem retry: os erros daqui são regras de negócio (403 sem KYC/subscrição, 409 pedido
+// já concluído), não falhas transitórias — repetir três vezes só atrasa a mensagem.
+// `enabled` para só pedir quando o profissional abre o contacto, não para todos os
+// pedidos da lista de uma vez.
+export function useServiceRequestContact(requestId: string, options: { enabled: boolean }) {
+  return useQuery({
+    queryKey: ['service_requests', 'contact', requestId],
+    queryFn: () => fetchServiceRequestContact(requestId),
+    enabled: options.enabled,
+    retry: false,
+  })
+}
 
 export function useMyServiceRequests() {
   return useQuery({
@@ -75,6 +99,7 @@ export function useAssignServiceRequest() {
     mutationFn: (requestId: string) => assignServiceRequest(requestId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['service_requests', 'nearby'] })
+      queryClient.invalidateQueries({ queryKey: assignedServiceRequestsKey })
       toast.success('Pedido aceite com sucesso.')
     },
     onError: (error) => {
