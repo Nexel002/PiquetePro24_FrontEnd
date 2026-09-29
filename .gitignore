@@ -34,3 +34,6 @@ Thumbs.db
 
 # PWA generated
 dev-dist/
+
+# graphify (derived; rebuild with `graphify update .`)
+graphify-out/
