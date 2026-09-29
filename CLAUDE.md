@@ -13,7 +13,7 @@ Documentos de referência, nesta ordem de precedência:
 1. [`docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md`](./docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md) — requisitos técnicos, **incluindo Adendos v1.2 e v1.3, que têm precedência sobre o corpo original do TRD**
 2. [`docs/PLANO_IMPLEMENTACAO_FRONTEND.md`](./docs/PLANO_IMPLEMENTACAO_FRONTEND.md) — fases, escopo e critérios de entrega
 
-> **Estado atual:** Fase 0 (esqueleto Vite + PWA) implementada — ver critérios de entrega em `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`. Deploy Vercel e ícones PWA reais ainda pendentes.
+> **Estado atual:** Fases 0–4 e 8 (painel de administração) implementadas no essencial; redesign com a identidade da marca aplicado (Adendo v1.13 do TRD, componentes em `src/components/ui/`). Fases 5 (offline), 6 (acessibilidade/performance) e 7 (deploy de produção) por fazer. O estado fino — critérios por marcar, como o Lighthouse PWA e a validação da CSP no deploy — está em `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, que é a fonte de verdade; esta linha é só o resumo.
 
 ---
 
