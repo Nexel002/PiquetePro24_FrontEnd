@@ -7,6 +7,10 @@
 | Autor | Engenheiro de Software Lead |
 | Estado | Aprovado para Desenvolvimento (Sprint 0) — Adendo v1.2 em revisão de engenharia |
 
+> **Documento único, sincronizado nos dois repositórios** (`PiquePro24_Backend/Doc's/` e `PiquetePro24_FrontEnd/docs/`): as duas cópias são idênticas e qualquer alteração faz-se nas duas. Caminhos de ficheiro dentro de um bloco **«Perspetiva do frontend»** referem-se ao repositório `PiquetePro24_FrontEnd`; os restantes, ao `PiquePro24_Backend`, salvo indicação em contrário.
+
+---
+
 ## 1. Visão Geral da Arquitetura & Stack Tecnológica
 
 | Camada | Tecnologia Escolhida | Justificação Técnica |
@@ -17,6 +21,8 @@
 | Alojamento & CDN | Vercel (Frontend) + Supabase Cloud (Cape Town af-south-1) | Latência de banco < 15ms para o backend no Fly.io e CDN com PoPs na África Austral. |
 | Armazenamento | Supabase Storage (Buckets Privados/Públicos) | Gestão segura para documentos KYC (BI/NUIT) e galeria pública de portfólios. |
 | Cache | Upstash Redis via Fly.io (`fra`, mesma região do backend), ver [Adendo v1.3, item C](#adendo-v13) | Cache de resultados de queries geoespaciais frequentes (`GET /professionals/nearby`, Fase 3), reduzindo carga repetida no Supabase. |
+
+---
 
 ## 2. Módulo de Geolocalização & Dados Geoespaciais (NOVO)
 
@@ -32,7 +38,10 @@ Para lidar com a realidade de mapeamento em Moçambique (onde existem coordenada
 - **Tipo de Dado**: Coluna `GEOGRAPHY(POINT, 4326)` para armazenar as coordenadas cartográficas.
 - **Cálculo de Proximidade**: O Backend (Fly.io) executa buscas geoespaciais utilizando a função `ST_DWithin` para cruzar pedidos de clientes com profissionais num raio específico em metros (ex: 10 km).
 
+---
+
 ## 3. Esquema do Banco de Dados (PostgreSQL / Supabase)
+
 
 ### Extensões e Enums
 
@@ -97,6 +106,8 @@ CREATE TYPE payment_gateway AS ENUM ('MPESA_MOCK', 'EMOLA_MOCK', 'MANUAL');
 - `assigned_at` (TIMESTAMPTZ, NULL) — ver [Adendo v1.2](#adendo-v12)
 - `completed_at` (TIMESTAMPTZ, NULL) — ver [Adendo v1.2](#adendo-v12)
 
+---
+
 ## 4. Abstração de Pagamentos & Arquitetura Sandbox (M-Pesa / e-Mola)
 
 A camada de pagamentos utiliza o padrão Strategy Design Pattern para isolar as chamadas externas.
@@ -112,6 +123,8 @@ A camada de pagamentos utiliza o padrão Strategy Design Pattern para isolar as 
 1. O profissional seleciona a subscrição mensal de 800 MZN e insere o contacto Vodacom/Movitel.
 2. A API (Fly.io) aciona o `MockPaymentService`, registando a transação pendente no Supabase.
 3. O simulador de Webhook aprova automaticamente em ambiente sandbox, atualizando o estado da subscrição para `ACTIVE` por 30 dias.
+
+---
 
 ## 5. Controlo de Acesso, Segurança & Queries Espaciais
 
@@ -132,12 +145,45 @@ LIMIT $page_size OFFSET $page_offset;
 - **Row Level Security (RLS)**: O número de contacto e endereço exato dos clientes só são visíveis para profissionais com `subscriptions.status = 'ACTIVE'` e KYC em estado `APPROVED`.
 - **Proteção de Documentos**: Ficheiros no Supabase Storage (`bi_document_url`) apenas podem ser lidos por utilizadores com perfil `ADMIN`.
 
+---
+
 ## 6. Estratégia de PWA & Cache
 
 - **Service Worker**: Configurado via `vite-plugin-pwa` com estratégia Stale-While-Revalidate para o shell da aplicação e Network-First para requisições à API de serviços.
 - **Geolocalização Offline**: Armazenamento temporário das últimas coordenadas conhecidas em localStorage / IndexedDB caso a ligação 4G oscile.
 
-## 7. Perfil ADMIN (espelha o backend)
+---
+
+## 7. Perfil ADMIN
+
+O `user_role` `ADMIN` (Secção 3) existe desde o schema inicial, mas nunca teve uma secção própria — ficava disperso entre a definição do enum, a regra de acesso a documentos (Secção 5) e o Adendo que introduziu o painel (Adendo v1.6). Esta secção consolida o que o papel cobre, hoje e no que está previsto.
+
+**Como se chega a ADMIN:** nunca por signup — a trigger de criação de perfil só aceita `CLIENT`/`PROFESSIONAL` vindos do formulário (Adendo v1.4, item C); qualquer valor `'ADMIN'` enviado é ignorado e cai no default `CLIENT`. A promoção é sempre manual, via `UPDATE users_profile SET role = 'ADMIN'` com a `service_role` key — não existe (ainda) um fluxo de convite/promoção dentro da própria aplicação.
+
+**Funcionalidades disponíveis hoje** (implementadas na Fase 4 do backend + Adendos v1.6 e v1.8):
+
+| Funcionalidade | Endpoint / Superfície | Onde na app |
+|---|---|---|
+| Listar submissões de KYC, com filtro por estado (`PENDING`/`APPROVED`/`REJECTED`) | `GET /admin/kyc?status=` | Frontend: `/admin/kyc` |
+| Aprovar uma submissão de KYC | `PATCH /admin/kyc/:id` (`status: APPROVED`) | Frontend: `/admin/kyc`, botão "Aprovar" |
+| Rejeitar uma submissão de KYC com motivo obrigatório | `PATCH /admin/kyc/:id` (`status: REJECTED`, `review_notes` obrigatório) | Frontend: `/admin/kyc`, botão "Rejeitar" |
+| Ler o documento de identidade (`bi_document_url`) de qualquer profissional | RLS de `storage.objects` no bucket `kyc-documents` (Secção 5) | Sem UI própria — leitura direta do Storage, hoje sem visualizador de imagem na tela de admin |
+| Consultar o histórico detalhado de ações dos utilizadores, com filtros e paginação (Adendo v1.8) | `GET /admin/audit-log` | Frontend: `/admin/audit-log` |
+
+Todas restritas por `requireRole(supabase, 'ADMIN')` no backend (consulta `users_profile.role`, nunca confia num claim do JWT) — o link no frontend (`Home.tsx`, visível só para `profile.role === 'ADMIN'`) é conveniência de navegação, não a fronteira de segurança real.
+
+**Ainda fora do escopo, extensão natural do papel (não implementado, não pedido ainda):**
+- ~~Ativar manualmente a subscrição de um profissional~~ — **implementado no Adendo v1.12** (`POST /admin/users/:id/subscription`, gateway `MANUAL`), sem UI ainda. Continuam fora do escopo: desativar/encurtar uma subscrição paga, ver o histórico de pagamentos no painel, MRR/receita.
+- Visualizador de imagem do documento KYC dentro da própria tela de admin (hoje o backend só expõe o path/URL assinado; não há `<img>` na UI a mostrá-lo).
+- Reverter uma decisão de KYC já tomada (`APPROVED`/`REJECTED` → o estado oposto) — ver Adendo v1.9, item G, para o porquê de não ter sido desenhado ainda.
+
+Estes itens só entram no plano de implementação (backend e/ou frontend) quando forem pedidos e desenhados explicitamente — listados aqui apenas para não ficarem invisíveis enquanto extensão óbvia do papel.
+
+**Segunda funcionalidade exclusiva de `ADMIN` (Adendo v1.8, Fase 8):** consultar o histórico detalhado de ações dos utilizadores (audit log) — `GET /admin/audit-log`, frontend em `/admin/audit-log`. Implementado e validado contra o Supabase real (login/logout via Google confirmados; ver Adendo v1.8 para o detalhe e as duas pendências não bloqueantes que restam).
+
+**Planeado, ainda não implementado (Adendo v1.9, Fase 9):** painel de administração avançado — diretório de utilizadores com ficha individual e histórico ligado ao audit log, visão administrativa de pedidos de serviço (lista global + timeline por pedido), métricas agregadas (utilizadores, KYC, pedidos — sem componente financeiro), alertas de segurança sobre o audit log, ferramentas operacionais (reenvio manual de email, log de entrega consultável) e moderação de contas (banir/revogar sessões/mudar `role` entre `CLIENT`/`PROFESSIONAL`, nunca promover a `ADMIN` pela API). Ver Adendo v1.9 para o desenho completo de cada área.
+
+**Perspetiva do frontend:**
 
 **Contexto:** ver TRD do backend, Secção 7, para o texto completo (como se chega a `ADMIN`, tabela de funcionalidades, itens fora do escopo atual). Esta secção resume só a perspetiva do frontend.
 
@@ -263,6 +309,34 @@ Ou seja: a decisão **resolve** o problema original descrito na v1.2 deste Adend
 
 **Ação de acompanhamento:** implementar e validar na Fase 3 do [Plano de Implementação](./PLANO_IMPLEMENTACAO_BACKEND.md); medir taxa de acerto do cache em staging antes de decidir o TTL final.
 
+### D. App "suspensa" em produção — causa raiz era `GOOGLE_MAPS_API_KEY` em falta como `fly secret`, não o auto-stop
+
+**Sintoma (2026-09-17):** com o frontend já em produção e a receber utilizadores reais, a app apareceu como "suspended" — `flyctl status` mostrava a única máquina (`fra`) em `stopped`, e o domínio `piquetepro24-backend.fly.dev` sem registo DNS A/AAAA.
+
+**Hipótese inicial (descartada):** `fly.toml` tinha `min_machines_running = 0` com `auto_stop_machines`/`auto_start_machines` ativos, o que parece explicar uma máquina parada por inatividade. `min_machines_running` foi alterado para `1` (mantém sempre uma máquina viva em `fra`; `auto_stop_machines`/`auto_start_machines` mantidos para escalar acima de 1 sob carga) — correção válida por si só (elimina cold start/DNS vazio no primeiro pedido após inatividade), mas **não era a causa deste incidente**: mesmo depois de forçar `flyctl machine start`, a máquina voltava a `stopped` em segundos.
+
+**Causa raiz real, encontrada em `flyctl logs`:** `Invalid environment configuration: { GOOGLE_MAPS_API_KEY: [ 'Required' ] }`. A variável `GOOGLE_MAPS_API_KEY` (validada em `src/config/env.ts`, usada em `src/controllers/geocodingController.ts` para geocodificação reversa) existia em `.env` local e nos mocks de teste, mas nunca tinha sido definida como `fly secret` em produção. A validação Zod de arranque (comportamento correto — "falhar cedo e ruidosamente", Secção 4 deste TRD) rejeitava o processo a cada tentativa; a Fly.io reiniciou automaticamente até ao limite de 10 tentativas (`machine has reached its max restart count of 10`) e desistiu, deixando a máquina presa em `stopped` — visualmente indistinguível de um auto-stop por inatividade sem inspecionar os logs.
+
+**Correção:** `flyctl secrets set GOOGLE_MAPS_API_KEY=<chave>` — definir o secret em falta reiniciou a máquina automaticamente, arranque confirmado nos logs (`PiquetePro24 backend listening on port 3000 (production)`, health check `servicecheck-00-http-3000` a passar).
+
+**Lição para diagnóstico futuro:** um estado `stopped`/"suspended" na Fly.io não implica auto-stop por inatividade — `flyctl logs` (histórico, não streaming) é o primeiro passo obrigatório para distinguir "máquina parada de propósito" de "crash-loop no arranque por configuração em falta", antes de mexer em `min_machines_running` ou outras definições de scaling.
+
+### E. Perda de IP público na app + `CORS_ORIGIN` com o domínio Vercel errado (dois incidentes distintos, mesmo dia)
+
+**Sintoma 1 (2026-09-17):** `piquetepro24-backend.fly.dev` deixou de resolver (`ERR_NAME_NOT_RESOLVED`, tanto no browser do utilizador como via `curl`/`nslookup` a partir de outra máquina). A app estava `started` e saudável (`flyctl status`), mas `flyctl ips list` devolvia vazio — sem nenhum IP público (v4 nem v6) alocado. O domínio Fly não tinha para onde apontar.
+
+**Correção:** `flyctl ips allocate-v4 --shared` + `flyctl ips allocate-v6`. Confirmado o registo A/AAAA no nameserver autoritativo do Fly (`ns1.flydns.net`) imediatamente após a alocação; a propagação para resolvers públicos (`8.8.8.8`) demorou alguns minutos — durante esse intervalo, `curl --resolve <host>:443:<ip>` confirmou que o servidor já respondia normalmente, isolando o atraso como puramente de propagação DNS, não de disponibilidade do serviço.
+
+**Sintoma 2 (mesmo dia, imediatamente a seguir):** com o DNS já resolvido, o frontend em produção falhava a autenticar (`GET /profile`) com erro de CORS no browser: `Access-Control-Allow-Origin` devolvia `https://piquetepro24-frontend.vercel.app` (sem hífens), mas o domínio real do deploy Vercel é `https://piquete-pro24-front-end.vercel.app` (com hífens) — uma string diferente, rejeitada pelo preflight do browser.
+
+**Causa raiz:** o `fly secret` `CORS_ORIGIN` tinha sido configurado nalgum momento anterior com o domínio Vercel escrito de forma ligeiramente errada (sem os hífens do nome real do projeto) — nunca chegou a ser notado porque o erro de DNS (Sintoma 1) já impedia qualquer pedido de chegar ao backend, mascarando o problema de CORS por baixo.
+
+**Correção:** `flyctl secrets set CORS_ORIGIN=https://piquete-pro24-front-end.vercel.app` — aplicado imediatamente (não staged), por já estar a bloquear produção. Confirmado com `curl -X OPTIONS` simulando o preflight do browser (`Origin: https://piquete-pro24-front-end.vercel.app` → resposta com o mesmo valor em `Access-Control-Allow-Origin`).
+
+**Lição para diagnóstico futuro:** quando múltiplos sintomas aparecem em sequência no mesmo incidente de produção, corrigir o primeiro pode só então revelar o segundo (aqui, corrigir o DNS foi o que permitiu o erro de CORS aparecer). Validar cada camada isoladamente (DNS → conectividade de rede → CORS → aplicação) em vez de assumir que corrigir um sintoma resolve tudo.
+
+---
+
 ## Adendo v1.4
 
 Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autenticação & Perfis) que não estavam previstas no corpo original do TRD nem nos Adendos anteriores — registadas aqui como requisito formal, não apenas como decisão de implementação.
@@ -338,6 +412,16 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 ### G. Geocodificação reversa também preenche `province`/`district`/`neighborhood` quando a localização é definida por GPS
 
+**Contexto:** identificado pelo próprio utilizador ao inspecionar a tabela `users_profile` no Supabase — todo perfil com localização definida por GPS (`location` preenchido) tinha `province`/`district`/`neighborhood` sempre `NULL`. Não era um bug de gravação: a Secção 2A original já desenhava `location` (GEOGRAPHY) e a hierarquia `province`/`district`/`neighborhood` como duas representações mutuamente exclusivas de localização (`updateLocation()`, item B do Adendo v1.4), e cada branch limpa explicitamente os campos da outra ao gravar. O que faltava é que `GET /geocode/reverse` (usado só para mostrar um nome de lugar legível ao utilizador antes de confirmar o GPS) já recebe da Google Geocoding API os `address_components` estruturados (província, distrito, bairro) para o mesmo ponto, e esses dados eram descartados — só `formatted_address` chegava a ser usado.
+
+**Decisão:** `reverseGeocode()` (`src/services/geocodingService.ts`) passa a extrair também `province`/`district`/`neighborhood` de `address_components` do resultado mais detalhado (`results[0]`), mapeando por tipo do Google: `administrative_area_level_1` → província; `administrative_area_level_2`, com fallback para `locality` → distrito (cidades como Maputo são o próprio nível 2, sem `level_2` distinto); `sublocality`, com fallback para `neighborhood` → bairro. `GET /geocode/reverse` passa a devolver esses três campos junto com `placeName`.
+
+`PATCH /profile/location` com coordenadas GPS aceita agora `province`/`district`/`neighborhood` opcionais no corpo — o frontend envia-os quando a geocodificação reversa já respondeu no momento de confirmar o GPS (ver Adendo v1.5, item A no TRD do frontend). `updateLocation()` deixa de limpar estes três campos a `null` no branch de coordenadas; grava-os junto com `location` quando fornecidos, ou `null` quando não (geocodificação falhou, ou pedido antigo sem os campos) — nunca mantém um valor anterior desatualizado.
+
+**Não é uma segunda fonte de verdade:** `province`/`district`/`neighborhood` continuam a ser só uma cache legível para mostrar ao utilizador (ex. "Baixa, Maputo" em vez de coordenadas) quando a localização foi definida por GPS. Qualquer busca por raio/proximidade (Fase 3, `ST_DWithin`) continua a usar exclusivamente `location`/PostGIS — nunca estes campos de texto, que o Google pode não devolver para todo ponto (áreas rurais sem `sublocality`, por exemplo).
+
+**Perspetiva do frontend:**
+
 **Contexto:** identificado pelo próprio utilizador ao inspecionar a tabela `users_profile` no Supabase — todo perfil com localização definida por GPS (`location` preenchido) tinha `province`/`district`/`neighborhood` sempre `NULL`. Não era um bug de gravação: a Secção 2A original já desenhava `location` (GEOGRAPHY) e a hierarquia `province`/`district`/`neighborhood` como duas representações mutuamente exclusivas de localização, e cada branch de `updateLocation()` (backend) limpa explicitamente os campos da outra ao gravar. O que faltava é que `LocationForm.tsx` já chama `GET /geocode/reverse` ao obter o GPS — só para mostrar um nome de lugar legível antes do utilizador confirmar — e a resposta (que já inclui os `address_components` estruturados do Google: província, distrito, bairro) era usada só para essa string, nunca enviada ao `PATCH /profile/location`.
 
 **Decisão:** `reverseGeocode()` (`src/services/geocoding.ts`) passa a devolver um objeto (`{ placeName, province, district, neighborhood }`) em vez de só a string do nome do lugar — espelhando os três campos novos que `GET /geocode/reverse` (backend, ver TRD do backend, Adendo v1.4 item G) agora expõe. `LocationForm.tsx`, ao confirmar a localização por GPS (`handleConfirmGps`), passa a enviar `province`/`district`/`neighborhood` (já obtidos da geocodificação reversa que a tela já tinha chamado para a pré-visualização) junto com `latitude`/`longitude` no `PATCH /profile/location` — sem chamada de rede extra, sem pedir nada novo ao utilizador. Se a geocodificação reversa ainda não respondeu ou falhou no momento da confirmação, os três campos seguem `undefined` e o backend grava `null`, sem bloquear a confirmação do GPS por isso.
@@ -346,15 +430,30 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 **Validado:** build e lint (`tsc -b`, `eslint`) limpos. Sem suite de testes automatizados no frontend nesta fase (o repositório não tem Vitest/testing-library configurado) — validação end-to-end da tela feita manualmente (ver Plano de Implementação do Frontend).
 
+---
+
 ## Adendo v1.5
 
-### A. `GET /service_requests` — listagem dos próprios pedidos do cliente (espelha o backend)
+
+### A. `GET /service_requests` — listagem dos próprios pedidos do cliente
+
+**Contexto:** a Fase 3 original (Secção 5, ver escopo em `PLANO_IMPLEMENTACAO_BACKEND.md`) definia `POST /service_requests` (criação) e `GET /service_requests/nearby` (para profissionais encontrarem pedidos `OPEN` próximos), mas nenhum endpoint para o **cliente** listar os próprios pedidos depois de os criar. Identificado ao construir o consumo no frontend (regra do CLAUDE.md — nenhum endpoint fica sem consumo real na mesma entrega): sem esta listagem, o cliente não tem como voltar a ver um pedido já criado para o concluir (`POST /service_requests/:id/complete`) ou cancelar (`POST /service_requests/:id/cancel`) depois de sair do ecrã de criação — os dois endpoints ficariam sem qualquer UI possível.
+
+**Decisão:** `GET /service_requests` (autenticado, sem `requireRole` — qualquer utilizador vê só os próprios pedidos) devolve todos os pedidos do `client_id` autenticado, em qualquer estado (`OPEN`/`ASSIGNED`/`COMPLETED`/`CANCELLED`), ordenados por `created_at` decrescente (mais recente primeiro). `listServiceRequestsByClient()` (`src/services/serviceRequestService.ts`) — filtro simples `eq('client_id', ...)`, sem paginação (o volume esperado por cliente é baixo, ao contrário de `nearby`, que pode atravessar toda a base). Reaproveita `SERVICE_REQUEST_COLUMNS` e o mesmo `ServiceRequest` já definidos para os outros endpoints do ciclo de vida.
+
+**Frontend:** consumido por uma nova tela "Os meus pedidos" (`FindProfessionals.tsx`/rota dedicada, ver TRD do frontend) que lista os pedidos do cliente e mostra `complete`/`cancel` conforme o `status` atual — só pedidos `ASSIGNED` mostram "Concluir", só `OPEN`/`ASSIGNED` mostram "Cancelar" (espelha as mesmas transições que o backend já valida).
+
+**Validado:** suite Vitest atualizada e verde nos dois repositórios (`geocodingService.test.ts` cobre a extração por tipo de componente e o fallback `locality`; `profileService.test.ts` cobre a gravação da hierarquia junto do `POINT`; `geocoding.test.ts` e `profile.test.ts` cobrem os endpoints HTTP). Build e lint limpos em ambos os repositórios.
+
+**Perspetiva do frontend:**
 
 **Contexto:** ver TRD do backend, Adendo v1.5, item A — a Fase 3 original do backend só previa `POST /service_requests` (criação) e `GET /service_requests/nearby` (para profissionais). Ao construir o consumo destes endpoints nas Fases 2/3 do frontend (regra do CLAUDE.md: nenhum endpoint fica sem consumo real na mesma entrega), ficou claro que sem uma listagem "os meus pedidos" o cliente não tinha como voltar a um pedido já criado para o concluir ou cancelar.
 
 **Decisão:** backend passou a expor `GET /service_requests` (pedidos do cliente autenticado, qualquer estado, sem paginação); frontend consome via `fetchMyServiceRequests()`/`useMyServiceRequests()` (`src/services/serviceRequests.ts`, `src/hooks/useServiceRequests.ts`) numa nova tela `MyServiceRequests.tsx` (`/os-meus-pedidos`), que mostra o estado de cada pedido e as ações `Concluir`/`Cancelar` só quando o estado atual as permite (espelhando exatamente as transições que o backend já valida — `ASSIGNED` para concluir, `OPEN`/`ASSIGNED` para cancelar).
 
 ### B. Consumo completo da Fase 3 do backend (proximidade + ciclo de vida de pedidos)
+
+*(Só com componente de frontend.)*
 
 **Contexto:** os 6 endpoints originais da Fase 3 do backend (`GET /professionals/nearby`, `POST /service_requests`, `GET /service_requests/nearby`, `assign`/`complete`/`cancel`) tinham ficado sem nenhum consumo no frontend depois de o backend os implementar — identificado ao auditar explicitamente a cadeia endpoint → api → hook → UI (regra do CLAUDE.md).
 
@@ -371,7 +470,18 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 ## Adendo v1.6
 
-### A. Painel de administração para revisão de KYC (espelha o backend)
+
+### A. Painel de administração para revisão de KYC
+
+**Contexto:** a Fase 4 (KYC de Profissionais) implementou os endpoints administrativos (`GET /admin/kyc`, `PATCH /admin/kyc/:id`, protegidos por `requireRole('ADMIN')`) e a policy de RLS que restringe `bi_document_url` a utilizadores `ADMIN` (Secção 5). Nem o TRD original nem o plano de implementação do frontend definiam, no entanto, nenhuma interface para um `ADMIN` de facto listar submissões pendentes e aprovar/rejeitar — os endpoints só podiam ser exercidos diretamente via API (curl/Postman), sem nenhuma tela na aplicação. Identificado depois de promover a primeira conta real a `ADMIN` em produção e constatar que não existia forma de a usar dentro da própria app.
+
+**Decisão:** adicionar uma tela de administração no frontend, acessível só a utilizadores com `profile.role === 'ADMIN'`, que lista submissões KYC (com filtro por estado) e permite aprovar ou rejeitar cada uma (rejeição exige motivo, espelhando a obrigatoriedade de `review_notes` já validada no backend). Não é um "painel" no sentido de múltiplas telas/métricas — é a superfície mínima para exercer os dois endpoints administrativos já existentes. Nenhuma alteração de schema ou de endpoint no backend é necessária; o backend já suporta este consumo desde a Fase 4.
+
+**Frontend:** nova rota protegida (ex. `/admin/kyc`), visível só quando `profile.role === 'ADMIN'` (mesma convenção de visibilidade condicional por role já usada para "Pedidos perto de ti"/"Verificação de identidade" em `Home.tsx` — sem guard de rota dedicado no backend, a restrição real continua a vir do `requireRole` da API).
+
+**Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, novo item na Fase 4.
+
+**Perspetiva do frontend:**
 
 **Contexto:** ver TRD do backend, Adendo v1.6, item A. A Fase 4 implementou os endpoints administrativos (`GET /admin/kyc`, `PATCH /admin/kyc/:id`) e a policy de RLS que restringe `bi_document_url` a `ADMIN`, mas nem o TRD original nem o plano do frontend previam nenhuma tela para os exercer — só eram acessíveis diretamente via API. Identificado depois de promover a primeira conta real a `ADMIN` em produção e constatar que não havia forma de a usar dentro da app.
 
@@ -381,9 +491,33 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, novo item na Fase 4.
 
+---
+
 ## Adendo v1.7
 
-### A. Infraestrutura de email transacional (espelha o backend)
+
+### A. Infraestrutura de email transacional (SMTP)
+
+**Contexto:** o projeto não tinha nenhuma capacidade de enviar email próprio — nem o TRD nem o plano de implementação previam isto como item explícito. A mudança de estado do KYC (Fase 4) era notificada só por um mock em log (`notifyKycStatusChange`, comentário original: "sem serviço de email/push implementado ainda"), e não existe hoje nenhum ecrã de "esqueci a password" no frontend (a recuperação de password do Supabase Auth nunca foi exercida por este produto). Pedido explícito do utilizador: ligar o que já existe (KYC) a um email real, dar um endpoint para o email de boas-vindas e um para recuperação de password, e preparar os templates dos fluxos que ainda não existem (pagamento/subscrição, Fase 5) para não haver dois ciclos de revisão de template quando essa fase for implementada.
+
+**Decisão:** nodemailer com SMTP (conta Gmail com App Password em desenvolvimento — variáveis `SMTP_*`/`EMAIL_FROM_*` em `.env`, nunca hardcoded; ver `.env.example`). Duas peças reutilizáveis, novas em `src/services/email/`:
+
+- `CatalogoTemplatesEmail` (`templates.ts`) — um método estático por template (`boasVindas`, `recuperacaoPassword`, `passwordAlterada`, `kycAprovado`, `kycRejeitado`, `pagamentoConfirmado`, `subscricaoAExpirar`), cada um documentado com objetivo e o fluxo que o dispara. Layout único partilhado (tabelas HTML, sem ícones/emoji, paleta alinhada com o Tailwind do frontend — cinza-escuro de marca, verde/âmbar/vermelho para sucesso/aviso/erro), para que uma alteração de marca se faça num único sítio. Texto livre vindo de um admin (`review_notes`) ou do próprio utilizador (`full_name`) é escapado antes de entrar no HTML.
+- `EmailService` (`emailService.ts`) — única classe que chama `nodemailer.sendMail`; nunca lança (SMTP em baixo não pode bloquear um fluxo de negócio, mesmo princípio do Redis opcional da Fase 3), resolve sempre com `{ enviado, motivo? }`. Sem `SMTP_USER`/`SMTP_PASSWORD` no ambiente (dev/test/CI), o transporter é `null` e o envio fica "desligado" — só regista em log, nunca falha o pedido.
+
+**Ligado hoje** (âmbito desta entrega):
+- `reviewKyc` (Fase 4) — o mock em log foi substituído por `enviarKycAprovado`/`enviarKycRejeitado` reais, com o `full_name` do perfil e o email obtido via `auth.admin.getUserById` (Admin API — `users_profile` não guarda email).
+- `POST /notifications/welcome` (endpoint novo, autenticado) — o frontend deve chamá-lo logo a seguir a um `supabase.auth.signUp()` bem-sucedido. **Limitação conhecida, não resolvida nesta entrega:** se o projeto Supabase exigir confirmação de email antes de emitir sessão, `signUp()` devolve sucesso sem sessão e o frontend não tem token para chamar este endpoint nesse instante — nesse caso o email de boas-vindas só pode ser disparado depois do primeiro login pós-confirmação. Decisão de wiring do frontend, ainda por fazer (ver plano de implementação do frontend).
+- `POST /auth/password-recovery` (endpoint novo, público) — gera o link com `supabase.auth.admin.generateLink({ type: 'recovery' })` (Admin API) em vez de deixar o Supabase Auth enviar o email dele próprio, precisamente para poder usar o template próprio em vez do template genérico do painel Supabase. Resposta sempre genérica (200, mesma mensagem), mesmo quando o email não corresponde a nenhuma conta — defesa contra enumeração de contas. O link redireciona para `${FRONTEND_URL}/definir-nova-password`, uma tela que **ainda não existe no frontend** — falta criá-la (chama `supabase.auth.updateUser({ password })` diretamente com a sessão de recuperação, sem passar pelo backend; fluxo padrão do Supabase Auth).
+- **Rate limiting neste endpoint (`src/middlewares/rateLimit.ts`, novo):** `admin.generateLink` corre com a `service_role` key, por isso não passa pelo rate limiting nativo do Supabase Auth que protegeria o fluxo normal de recuperação (esse só existe para chamadas com a anon key). Sem limite próprio, o endpoint permitia "email-bombing" a um alvo à escolha, ou martelar o endpoint sem custo — ambos arriscando sinalizar a conta SMTP como spam e derrubar os outros emails do sistema (boas-vindas, KYC) que a partilham. Dois limites independentes, por janela fixa de 15 minutos: 5 pedidos por IP, 3 pedidos por email de destino (mais apertado de propósito — protege um alvo específico mesmo de um atacante distribuído por vários IPs). Usa Redis (`INCR`/`EXPIRE`) quando `REDIS_URL` está configurado — partilhado e exato entre instâncias — com fallback em memória por processo quando não está (dev/test, ou Redis indisponível); nunca bloqueia o pedido se o Redis falhar (fail-open, mesmo princípio do cache de `professionals/nearby`). Exige `app.set('trust proxy', 1)` em `app.ts` — sem isto, `req.ip` seria sempre o IP interno do proxy do Fly, não o do cliente, e o limite por IP contaria todos os clientes como um só. Middleware genérico, pensado para ser reaproveitado pela Fase 6 ("Rate limiting nos endpoints públicos") noutros endpoints, não só neste.
+
+**Preparado, ainda não ligado a nenhum fluxo:**
+- `passwordAlterada` — falta o handler que confirma a alteração de password (a tela `/definir-nova-password` acima).
+- `pagamentoConfirmado` / `subscricaoAExpirar` — dependem da Fase 5 (Subscrições & Pagamentos), que ainda não existe.
+
+**Critérios de entrega correspondentes:** ver `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, novo item na Fase 4 e nota na Fase 5.
+
+**Perspetiva do frontend — Infraestrutura de email transacional:**
 
 **Contexto:** ver TRD do backend, Adendo v1.7. O backend passou a ter `EmailService`/`CatalogoTemplatesEmail` (nodemailer/SMTP) e dois endpoints novos — identificado como consumo em falta ao perguntar explicitamente "o que falta no frontend" depois da entrega do backend, não durante a implementação em si (desvio à regra do CLAUDE.md Secção 1 deste repositório, corrigido nesta mesma entrega).
 
@@ -400,6 +534,8 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 ### B. Mudar password estando autenticado — pedido do utilizador, sem componente no backend
 
+*(Só com componente de frontend.)*
+
 **Contexto:** pedido explícito do utilizador ao testar a recuperação de password (item A) — reparou que não havia forma de mudar a password estando já com sessão iniciada, só o fluxo de "esqueci a password" para quem não está autenticado. Diferente do item A: **não existe endpoint novo no backend nem alteração ao TRD do backend** — usa a mesma chamada `supabase.auth.updateUser({ password })` que `DefinirNovaPassword.tsx` já usa, só que com a sessão normal do utilizador em vez da sessão especial de recuperação.
 
 **Implementado em `pages/Profile.tsx`:** nova secção "Segurança", mesma convenção de toggle "Editar"/"Fechar" já usada na secção "Os meus dados" — botão "Mudar password" revela um formulário (nova password + confirmação), sem pedir a password atual. **Decisão consciente, não uma omissão:** o Supabase Auth não exige a password atual para `updateUser()` com uma sessão já válida — reautenticação adicional (pedir a password atual antes de aceitar a nova) fica como extensão futura, só se vier a ser pedida. `describeAuthError` (já extraída para `lib/authErrors.ts` no item A) é reutilizada para traduzir um eventual erro do Supabase Auth.
@@ -408,9 +544,57 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, novo item na Fase 1.
 
+---
+
 ## Adendo v1.8
 
-### A. Audit log — histórico de ações (espelha o backend)
+
+### A. Audit Log — histórico detalhado de ações dos utilizadores (acesso exclusivo a ADMIN)
+
+**Contexto:** pedido explícito do utilizador — nenhuma ação de um utilizador fica hoje registada de forma pesquisável; o mais próximo que existe é `professional_kyc.reviewed_by`/`review_notes` (auditoria pontual de um único fluxo) e logs estruturados soltos em `console.info`/`console.error` (`notifyKycStatusChange`, `rate-limit:redis-falha`, etc.), que não são consultáveis pela aplicação nem persistem de forma pesquisável em produção. Requisito: todas as ações que mudam estado ficam registadas — o quê, quando (data e hora) e quem —, com acesso de leitura exclusivo a `ADMIN`.
+
+**Âmbito confirmado com o utilizador:**
+- Regista ações que mudam estado (`POST`/`PATCH`/`DELETE` no backend) — não leituras (`GET`). Ver perfil ou pesquisar profissionais não é uma "ação" no sentido de responsabilização, e o volume não traria valor de auditoria.
+- Regista também tentativas negadas ou falhadas (`401`/`403`) — não só sucessos. Uma tentativa de acesso negado é frequentemente o dado mais importante de um audit log (indício de abuso ou conta comprometida).
+- Cobre também login, logout, signup e o ciclo completo de recuperação de password — mesmo os que **nunca passam pelo Express** (ver arquitetura, fonte 2, abaixo).
+- Leitura exclusiva a `ADMIN`, incluindo o próprio dono da ação — não há vista "a minha atividade" para o utilizador comum nesta entrega (extensão natural, não pedida).
+
+**Arquitetura — duas fontes, uma tabela (`public.audit_log`):**
+
+1. **Ações da aplicação (Express).** Middleware novo (`src/middlewares/auditLog.ts`), registado antes de qualquer rota — precisa de correr mesmo quando `requireAuth`/`requireRole` bloqueiam o pedido, para poder capturar o `401`/`403`. Filtra por método (`POST`/`PATCH`/`DELETE`/`PUT`; ignora `GET`/`OPTIONS` sem custo) e grava em `res.on('finish')`, depois da resposta já ter sido enviada ao cliente — nunca atrasa nem falha o pedido de negócio (mesmo princípio do `EmailService`: uma falha ao escrever no audit log fica só em log, não propaga). Lê `req.user?.id` (pode ser `undefined` num `401`, antes de `requireAuth` identificar alguém) e `res.statusCode`.
+   - **Enriquecimento semântico:** o middleware sozinho só sabe método + caminho + estado — não chega a "bem detalhado". Cada controller/service preenche `req.auditContext` (`action`, `description`, `entityType`, `entityId`, `metadata`) antes de responder (ex. `reviewKyc` grava `action: 'KYC_REVIEW_REJECTED'`, `description: 'Rejeitou o KYC de <user_id> — motivo: ...'`, `entityType: 'professional_kyc'`). Sem esse contexto, o middleware ainda grava uma linha (baseline genérico a partir do método+caminho) — nenhuma ação mutável fica de fora só porque um developer se esqueceu de enriquecer, mas fica menos detalhada até alguém acrescentar o contexto.
+   - Endpoints a enriquecer nesta entrega (mutáveis já existentes): `POST /kyc`, `PATCH /admin/kyc/:id`, `PATCH /profile`, `PATCH /profile/location`, `POST /profile/become-professional`, `DELETE /profile`, `POST /service_requests`, `POST /service_requests/:id/assign`, `POST /service_requests/:id/cancel`, `POST /service_requests/:id/complete`, `POST /auth/password-recovery` (incluindo a tentativa para um email sem conta — âmbito confirmado acima).
+
+2. **Eventos de identidade/sessão (Supabase Auth).** Login, logout e signup são feitos pelo frontend diretamente contra o Supabase Auth (`supabase.auth.signInWithPassword`/`signInWithOAuth`/`signOut`/`signUp`) — **nunca chegam ao Express**, por isso o middleware do ponto 1 não os vê. O Supabase Auth (GoTrue) já mantém o seu próprio histórico interno destes eventos em `auth.audit_log_entries` (schema `auth`, gerido pelo Supabase, não pela aplicação). Em vez de reinventar a captura de login/logout, uma trigger SQL (`AFTER INSERT ON auth.audit_log_entries`) espelha os eventos relevantes (login, logout, signup, pedido de recuperação de password, password alterada, conta apagada — **não** `token_refreshed`, que dispara a cada renovação de sessão e não tem valor de auditoria) para `public.audit_log`, unificando as duas fontes numa tabela só. Mesmo padrão já usado para `handle_new_user` (Fase 2) — trigger sobre uma tabela do Supabase, não polling nem duplicação de lógica no backend.
+   - **Validado contra o projeto Supabase real:** os valores de `payload.action` são `login`/`logout` em minúsculas (a trigger aplica `upper()`, por isso ficam `LOGIN`/`LOGOUT` em `public.audit_log`) — confirmado com um login e logout reais, incluindo via **Google (OAuth)**, que grava o mesmo valor `login` que o login por password/telefone (não precisou de valor adicional no filtro da trigger).
+   - **Descoberta ao validar (não estava prevista):** `auth.audit_log_entries` apareceu vazia mesmo depois de logins/logouts reais de teste, antes de se perceber a causa. Desde a atualização do Supabase de setembro/2026, os audit logs de Auth passaram a ser guardados **externamente por omissão** — escrever também em `auth.audit_log_entries` é uma opção que tem de ser ligada manualmente, projeto a projeto, em **Dashboard → Authentication → Configuration → Audit Logs → "Write audit logs to the database"**. Sem isto ligado, a trigger deste Adendo nunca dispara (a tabela de origem nunca recebe linhas), independentemente de a trigger em si estar correta. **Ativar este toggle é um passo de configuração fora do Git**, não coberto por nenhuma migration — tem de ser repetido manualmente em cada ambiente Supabase novo (staging, ou se o projeto for recriado), e fica registado aqui para não ser esquecido. Ativar o toggle só afeta eventos a partir desse momento, sem backfill do que já aconteceu antes. **Já ativado e validado no projeto de desenvolvimento.**
+   - **Observação não bloqueante, a investigar:** o teste de logout via Google produziu duas linhas `LOGOUT` a poucos milissegundos de diferença (`auth.audit_log_entries` recebeu dois eventos reais, não é um artefacto da trigger). Possível duplo disparo de `supabase.auth.signOut()` no frontend (ex. React StrictMode em desenvolvimento a duplicar um efeito, ou um listener a par de uma chamada explícita) — a investigar no frontend quando houver oportunidade; não bloqueia nada, só polui ligeiramente o histórico com uma linha a mais por logout.
+
+**Esquema de `audit_log` (proposto):**
+
+| Coluna | Tipo | Nota |
+|---|---|---|
+| `id` | `uuid PK` | `gen_random_uuid()` |
+| `user_id` | `uuid FK -> auth.users`, nullable | `null` quando a identidade não foi estabelecida (ex. token ausente/inválido num `401`) |
+| `action` | `text` | Código curto (`KYC_REVIEW_APPROVED`, `LOGIN`, `SERVICE_REQUEST_CANCEL`, ...). **Texto livre, não enum** — ao contrário de `user_role`/`kyc_status`/`request_status`: o conjunto de ações cresce a cada endpoint mutável novo, e um enum exigiria uma migration (`ALTER TYPE ... ADD VALUE`) por cada ação nova — fricção desproporcional para um campo que só serve para filtrar/ler, nunca para uma constraint de estado. |
+| `description` | `text` | Detalhe legível por humano — o "bem detalhado" do pedido. |
+| `entity_type` / `entity_id` | `text` / `uuid`, nullable | Para correlacionar (ex. "todas as ações sobre este pedido de serviço"). |
+| `method` / `path` | `text` | Baseline do middleware, sempre presente. |
+| `status_code` | `integer` | Resposta HTTP real. |
+| `success` | `boolean` | `status_code < 400` — coluna explícita para filtrar sem repetir a lógica em cada query. |
+| `ip_address` | `text`, nullable | De `req.ip` (já correto via `trust proxy`, Adendo v1.7). |
+| `metadata` | `jsonb`, nullable | Detalhe estruturado por ação (ex. valores antigo/novo de um `PATCH /profile`), sem precisar de coluna nova por caso. |
+| `created_at` | `timestamptz` | UTC, mesma convenção das outras tabelas — conversão para hora de Moçambique (UTC+2, sem DST) é responsabilidade de quem exibe (frontend/admin), não do backend. |
+
+**Segurança e imutabilidade:**
+- RLS: só `ADMIN` tem `SELECT` (mesma policy usada para `bi_document_url`, Secção 5) — nenhuma role tem `INSERT`/`UPDATE`/`DELETE` via API; só o backend (`service_role`, que ignora RLS) escreve, e só por `INSERT`. Um audit log que pode ser editado ou apagado por quem quer que seja deixa de servir de prova — **imutável mesmo para `ADMIN`** através da API; uma correção só seria possível por SQL direto (Supabase Studio), fora do fluxo normal, e é uma decisão consciente, não um esquecimento.
+- `GET /admin/audit-log` (novo): paginado, filtros por `user_id`/`action`/`entity_type`/intervalo de datas/`success`, atrás de `requireRole(supabase, 'ADMIN')` — mesma dupla proteção (RLS + `requireRole`) já usada em `GET /admin/kyc`.
+
+**Risco não bloqueante, a decidir mais tarde:** a tabela cresce sem limite (uma linha por ação mutável, mais os eventos de sessão do Supabase). Sem política de retenção/arquivo definida nesta entrega — não impede o lançamento inicial, mas fica registado para não ser esquecido quando o volume começar a importar.
+
+**Critérios de entrega correspondentes:** ver `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, nova Fase 8.
+
+**Perspetiva do frontend — Audit log — histórico de ações:**
 
 **Contexto:** ver TRD do backend, Adendo v1.8. `GET /admin/audit-log` existe no backend, protegido por `ADMIN` — estava na mesma situação em que `GET /admin/kyc` esteve antes do Adendo v1.6 deste TRD: endpoint pronto, sem nenhuma tela a consumi-lo, até esta entrega.
 
@@ -418,9 +602,18 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 **Validado:** `tsc -b` (strict) e `vite build` de produção limpos; `eslint` sem erros novos. **Não validado interativamente num browser** (mesma limitação de ferramenta descrita no Adendo v1.7) nem contra o backend real com dados de audit log de verdade — a migration do backend (`supabase/migrations/20260919180000_audit_log.sql`) ainda não tinha sido aplicada ao Supabase real no momento desta entrega (ver TRD do backend, Adendo v1.8).
 
+---
+
 ## Adendo v1.9
 
-### A. Painel de Administração Avançado (espelha o backend)
+
+### A. Painel de Administração Avançado
+
+**Contexto:** depois de KYC (Adendo v1.6) e audit log (Adendo v1.8), sessão de brainstorm explícita com o utilizador sobre que outras capacidades um `ADMIN` deste marketplace precisa — não um pedido pontual, mas uma ronda deliberada para consolidar o que falta antes de continuar a crescer o papel um pedido de cada vez. Cobre cinco áreas; uma sexta (financeiro/subscrições) fica deliberadamente fora, ver nota no fim.
+
+**Ponto de partida já existente e reaproveitado por várias das áreas abaixo:** `GET /admin/audit-log` (Adendo v1.8) já aceita `user_id` e `entity_type`+`entity_id` como filtros no backend — a Secção B (ficha de utilizador) e a Secção C (timeline de pedido) não precisam de endpoint novo nenhum para a parte de histórico, só de o frontend passar esses filtros, que hoje não expõe.
+
+**Perspetiva do frontend:**
 
 **Contexto:** ver TRD do backend, Adendo v1.9 — sessão de brainstorm explícita com o utilizador sobre capacidades de `ADMIN` para além de KYC e audit log. Seis áreas (item B a G, mesma numeração do TRD do backend); implementadas incrementalmente, uma de cada vez, não numa entrega só — cada item abaixo diz o estado real.
 
@@ -438,9 +631,98 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 8.
 
+### B. Diretório de utilizadores e ficha individual
+
+**Problema:** não existe hoje nenhum endpoint nem tela que liste todos os utilizadores da plataforma — `GET /admin/kyc` só devolve quem submeteu KYC, não é um diretório geral.
+
+**Decisão:**
+- `GET /admin/users` (novo) — paginado, filtros por `role`, pesquisa por `full_name`/`phone` (`ilike`), `province`. Devolve os mesmos campos de `PROFILE_COLUMNS` (sem `bi_document_url`, que não é campo de `users_profile`).
+- `GET /admin/users/:id` (novo) — ficha individual: perfil completo + estado do KYC mais recente (join com `professional_kyc`) + contagem de pedidos de serviço como cliente e como profissional. Subscrição fica de fora (Adendo, nota final).
+- Frontend: `pages/AdminUsers.tsx` (lista + pesquisa) e `pages/AdminUserDetail.tsx`, com um link "Ver histórico" que abre `/admin/audit-log?user_id=<id>` — exige estender `services/auditLog.ts` do frontend para aceitar `user_id` (o backend já aceita, só o frontend restringiu a `action`/`success` na Fase 4 original, por decisão de âmbito, não de limitação técnica).
+
+### C. Visão administrativa de pedidos de serviço
+
+**Problema:** um `CLIENT` só vê os próprios pedidos, um `PROFESSIONAL` só vê os `OPEN` perto de si — não há nenhuma visão "todos os pedidos da plataforma", necessária para detetar abuso (spam de pedidos, cancelamentos repetidos) ou resolver uma disputa.
+
+**Decisão:**
+- `GET /admin/service-requests` (novo) — paginado, filtros por `status`/`province`/intervalo de datas, sem o âmbito de `client_id ilha` que os endpoints existentes têm.
+- Timeline de um pedido específico: reaproveita `GET /admin/audit-log?entity_type=service_requests&entity_id=<id>` (já suportado, ver nota do topo) — sem endpoint novo, só a tela.
+- `POST /admin/service-requests/:id/cancel` (novo, override de admin) — cancela um pedido preso ou abusivo independentemente de quem é o dono. Reaproveita `cancelServiceRequest` do service (já genérico); a verificação de "só o dono cancela" que existe em `serviceRequestController.ts` fica só no controller do endpoint do cliente, não se aplica a este.
+
+### D. Métricas agregadas (sem componente financeiro)
+
+**Decisão:** `GET /admin/metrics` (novo, um único endpoint) devolvendo:
+- Utilizadores por `role`, signups nos últimos 30 dias agregados por dia.
+- Funil de KYC: contagem por `status`, tempo médio entre `created_at`... **nota:** `professional_kyc` não tem `created_at` própria hoje (só `verified_at`, preenchido só na revisão) — calcular "tempo médio até decisão" exige ou adicionar essa coluna (migration) ou aceitar que só se mede a partir de quando existe outra referência temporal. Decisão a tomar ao desenhar o endpoint, não assumida aqui.
+- Profissionais ativos por `province` (conta profissionais com `role = 'PROFESSIONAL'` agrupados por província — cobertura geográfica, relevante para um marketplace hiperlocal).
+- Pedidos de serviço por `status`, tempo médio `created_at` → `assigned_at` e `assigned_at` → `completed_at`.
+
+**Fora desta fase, deliberadamente:** MRR, receita, qualquer métrica de `subscriptions` — a tabela não existe (Fase 5).
+
+### E. Alertas de segurança sobre o audit log
+
+**Decisão:** `GET /admin/security-alerts` (novo) — agrega `audit_log` onde `success = false`, agrupado por `user_id`/`ip_address`, numa janela (ex. últimas 24h), com um limiar (ex. 5+ tentativas) para aparecer como alerta. Reaproveita a tabela existente, sem schema novo.
+
+### F. Ferramentas operacionais
+
+**Decisão:**
+- `POST /admin/users/:id/resend-email` (novo) — body `{ template: 'welcome' | 'kyc_aprovado' | 'kyc_rejeitado' }`, reaproveita `EmailService`/`CatalogoTemplatesEmail` já existentes (Adendo v1.7). Para `kyc_rejeitado`, vai buscar o `review_notes` mais recente de `professional_kyc`.
+- **Log de entrega de email consultável:** hoje só existe `console.info`/`console.error` (`[email:enviado]`/`[email:falha]`), que não é pesquisável em produção. Decisão: `EmailService.enviar` (privado) passa a chamar também `writeAuditLog` (Adendo v1.8) com `action: 'EMAIL_SENT'`/`'EMAIL_FAILED'` e `metadata: { template, destinatario }` — reaproveita a tabela já existente em vez de criar uma nova só para isto. Acopla `services/email/` a `services/auditLogService.ts`, uma dependência nova entre os dois módulos, deliberada e pequena.
+
+### G. Moderação de contas
+
+**Decisão:**
+- `POST /admin/users/:id/ban` / `POST /admin/users/:id/unban` (novos) — usam a capacidade nativa do Supabase Auth (`auth.admin.updateUserById(id, { ban_duration })`; `unban` usa `ban_duration: 'none'`, valor documentado no próprio SDK para levantar o banimento), sem campo novo em `users_profile`.
+- **`POST /admin/users/:id/sign-out` não foi implementado — removido do escopo desta entrega.** O desenho original assumia `auth.admin.signOut(id, 'global')`, mas a assinatura real do SDK instalado (`@supabase/auth-js`, `GoTrueAdminApi.signOut(jwt: string, scope?)`) exige o **JWT da sessão a terminar**, não o ID do utilizador — o backend nunca tem esse JWT em mãos numa acção de moderação disparada pelo admin sobre outra conta. Não existe, nesta versão do SDK, um método para revogar sessões por ID de utilizador. Na prática, `ban` já cobre o caso de uso de segurança: um utilizador banido falha em qualquer novo login e em qualquer renovação de refresh token, pelo que uma sessão activa deixa de conseguir renovar o `access_token` (validade curta, configurada no projecto Supabase) assim que expirar. Revogação imediata do `access_token` já emitido fica deliberadamente fora do escopo — exigiria denylist própria de tokens, não suportada nativamente. Reavaliar se um incidente real exigir revogação instantânea.
+- `PATCH /admin/users/:id/role` (novo) — **restrito a `CLIENT ↔ PROFESSIONAL`, nunca aceita `'ADMIN'` como valor de entrada.** Promover a `ADMIN` continua deliberadamente fora da API, só por `UPDATE` direto com a `service_role` key (TRD Secção 7) — um endpoint que aceitasse promover a `ADMIN` seria uma escalação de privilégio alcançável por qualquer `ADMIN` comprometido; manter esse caminho fechado é a mesma lógica já aplicada à trigger de signup (Adendo v1.4, item E: nunca aceita `'ADMIN'` vindo do próprio utilizador).
+- **Reversão de decisão de KYC (`APPROVED`/`REJECTED` → o estado oposto) — não desenhada nesta entrega.** `reviewKyc` faz hoje um update condicional `WHERE status = 'PENDING'`, por desenho (Adendo, Fase 4): permitir reverter uma decisão já tomada tem consequências em cascata que não foram pensadas (um profissional já aprovado pode ter subscrição ativa e pedidos aceites) — fica registado como extensão futura, a desenhar com uma regra de negócio explícita antes de implementar, não uma simples remoção da condição do `WHERE`.
+
+**Fora desta fase, deliberadamente (depende da Fase 5, que ainda não existe):** gerir subscrições (ativar/desativar/prolongar manualmente), histórico de transações, receita. Quando a Fase 5 for implementada, isto entra como extensão a este Adendo ou um Adendo próprio — decisão nessa altura, não agora.
+
+**Critérios de entrega correspondentes:** ver `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, nova Fase 9.
+
+---
+
+## Adendo v1.10
+
+
+### A. Middleware de validação Zod centralizado
+
+**Contexto:** pedido explícito do utilizador durante revisão de código do `adminUserController.ts` — cada controller fazia `schema.safeParse(req.body|req.query)` seguido de `if (!parsed.success) { res.status(400)... }` inline, repetido em 9 ficheiros (`adminUserController`, `adminSecurityAlertController`, `auditLogController`, `authController`, `geocodingController`, `kycController`, `professionalController`, `profileController`, `serviceRequestController`). Não era um desvio isolado — era a convenção estabelecida em todo o projeto (Secção 1 deste documento: "Validação de entrada com Zod, na fronteira (controller), nunca no service") — mas o próprio padrão repetido justificava extrair a mecânica de `safeParse` + resposta 400 para um único ponto, sem sair da fronteira do controller (o schema continua definido e exportado pelo controller; só a aplicação do `safeParse` sai dele).
+
+**Decisão:** middleware `validate(schema, source, message)` (`src/middlewares/validate.ts`), aplicado nas rotas entre `requireAuth`/`requireRole` e o controller — não dentro do controller. Populamento em `req.validated.body` / `req.validated.query` (novo campo, `declare module 'express-serve-static-core'`, mesmo padrão de `req.user` em `auth.ts` e `req.auditContext` em `middlewares/auditLog.ts`), nunca sobrescrevendo `req.body`/`req.query` diretamente — decisão explícita para não mascarar defaults/coerções do Zod (ex. `limit` vira `number`) como se fossem o corpo bruto do pedido, o que confundiria quem lê o handler sem saber que passou por um middleware.
+
+`message` aceita uma string fixa (14 dos 15 pontos de validação migrados) ou uma função `(error: ZodError) => string` — necessário para preservar o único outlier identificado: `kycController.makeReviewKyc` expunha `parsed.error.errors[0]?.message` para devolver a mensagem custom do `.refine()` de `reviewKycSchema` ("review_notes é obrigatório ao rejeitar uma submissão KYC.") em vez de uma string genérica. Sem este modo função, a migração teria regredido esse comportamento observável pela API.
+
+**Fora do âmbito do middleware, deliberadamente:** validações que dependem de mais do que o corpo/query do pedido (ex. `kycController.makeSubmitKyc` verifica que `bi_document_path` começa por `${req.user.id}/`, o que depende de `req.user`, preenchido por `requireAuth`) e verificações de ownership pós-parse (ex. `serviceRequestController` — só o `client_id` do pedido pode completá-lo/cancelá-lo) continuam no controller, porque não são validação de forma do payload — são regras de autorização/negócio.
+
+**Critérios de entrega correspondentes:** ver `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, secção "Manutenção Transversal".
+
+---
+
 ## Adendo v1.11
 
-### A. CSP e headers de segurança no `vercel.json` (espelha o backend)
+
+### A. Hardening de segurança adiantado da Fase 6 (auditoria `appsec-health-audit`)
+
+**Contexto:** pedido explícito do utilizador para correr uma auditoria de segurança fullstack completa (backend + frontend), fora do ciclo normal de revisão de PR — não uma revisão de diff, um raio-X do estado actual do codebase. A auditoria confirmou que a base de autenticação/autorização (JWT via JWKS/ES256, role lido de `users_profile`, verificação de ownership em KYC e service requests, update condicional atómico na atribuição de pedidos) já estava sólida, mas identificou quatro lacunas de configuração e dependências, corrigidas de imediato em vez de ficarem só registadas como pendência — o utilizador pediu explicitamente a correção de todos os achados, não só o diagnóstico.
+
+**Decisão — quatro correções, cada uma commitada isoladamente na branch `fix/appsec-audit-hardening`:**
+
+1. **`CORS_ORIGIN='*'` sem guarda de produção.** `loadEnv()` já recusava arrancar com `ENABLE_PAYMENT_MOCK=true` em produção, mas não tinha guarda equivalente para CORS aberto. Adicionada a mesma lógica: falha o arranque se `NODE_ENV=production` e `CORS_ORIGIN==='*'` (`src/config/env.ts`). Confirmado via `flyctl secrets list` que o valor já configurado em produção não é `*` (mesmo digest de `FRONTEND_URL`) — a guarda nova não bloqueia o próximo deploy.
+2. **`nodemailer@6.10.1` com CVE de severidade high** (SMTP command injection via `envelope.size`, CRLF injection em headers, bypass de `disableFileAccess`/`disableUrlAccess` habilitando SSRF). Actualizado para `^10.0.10`. O uso em `src/lib/mailer.ts` é a API `createTransport` simples, sem `raw`/`jsonTransport` — sem alterações de código necessárias, `npm audit` limpo.
+3. **Ausência de headers HTTP de segurança básicos.** Adicionado `helmet` em `src/app.ts`, com `contentSecurityPolicy: false` deliberado — esta API só devolve JSON, não renderiza HTML, por isso CSP (pensada para carregamento de recursos numa página) não se aplica; os restantes headers (`X-Content-Type-Options`, `X-Frame-Options`, HSTS) ficam activos.
+4. **Rate limiting só existia em `/auth/password-recovery`**, já sinalizado no próprio código-fonte como dívida da Fase 6 (ver Critério de Entrega da Fase 6, adiantado no Adendo v1.7). Reutilizado `createRateLimitMiddleware` (`src/middlewares/rateLimit.ts`, genérico desde o v1.7) em `POST /service_requests` (20 pedidos/hora por utilizador autenticado) e `POST /kyc` + `/kyc/upload-url` (10 pedidos/hora por utilizador autenticado) — limite por `req.user.id`, não por IP, porque estas rotas já exigem `requireAuth`.
+
+**Confirmado sem necessidade de correção:** `REDIS_URL` já está configurado e implantado em produção (`flyctl secrets list`), portanto o rate limiting acima já é partilhado entre instâncias Fly desde o primeiro deploy, não apenas em memória por processo.
+
+**Frontend (repositório irmão, mesmo achado da auditoria):** CSP e headers de segurança (`X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`) adicionados a `vercel.json` na branch `fix/appsec-audit-csp-hardening` — ver Adendo v1.11 equivalente em `docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md` desse repositório.
+
+**Fora do âmbito desta ronda, deliberadamente:** o restante checklist da Fase 6 (auditoria de RLS tabela a tabela, logging estruturado/Sentry, checklist OWASP API Top 10 completo) — a auditoria cobriu o que a skill `appsec-health-audit` varre (auth, RLS aplicável, tokens, rate limiting, CORS, segredos, dependências), não substitui a Fase 6 completa quando ela for atacada a sério.
+
+**Critérios de entrega correspondentes:** ver `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 6.
+
+**Perspetiva do frontend — CSP e headers de segurança no `vercel.json`:**
 
 **Contexto:** ver TRD do backend, Adendo v1.11 — auditoria de segurança fullstack (`appsec-health-audit`) pedida explicitamente pelo utilizador, cobrindo backend e frontend na mesma ronda. Identificou ausência de Content-Security-Policy e de headers HTTP básicos (`X-Frame-Options`, `X-Content-Type-Options`) neste repositório.
 
@@ -454,7 +736,11 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 7 (novo critério de entrega adicionado nesta ronda — a Fase 7 original já cobria validação de CORS/autenticação contra produção, mas não CSP/headers).
 
+---
+
 ## Adendo v1.12
+
+**Perspetiva do frontend:**
 
 **Contexto:** ver TRD do backend, Adendo v1.12 — Fase 5 (subscrições e abstração de pagamentos). Esta secção resume só a perspetiva do frontend.
 
@@ -470,7 +756,55 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 **Critérios de entrega correspondentes:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 4.
 
+### A. Subscrições e abstração de pagamentos (Fase 5)
+
+**Contexto:** implementação da Fase 5 do plano (TRD Secção 4, Adendo v1.2 itens D e F). Três decisões de produto que o TRD não fechava foram tomadas explicitamente pelo utilizador antes da implementação (29/09/2026), registadas nos itens B a D abaixo.
+
+**Decisão — arquitetura:**
+
+- **`PaymentProvider`** (`src/services/payments/paymentProvider.ts`): `initiateSubscription`, `handleWebhook`, `checkStatus`, mais `gateways` (os gateways que o provider sabe cobrar). `initiateSubscription` recebe um objeto (`transactionId`, `userId`, `phone`, `amount`, `gateway`) em vez dos três argumentos posicionais da Secção 4: o gateway precisa do id da transação para o devolver no webhook, e a escolha M-Pesa/e-Mola faz parte do pedido. `handleWebhook` só traduz o payload do gateway para um evento normalizado (e, num gateway real, verifica a assinatura); a regra de negócio vive em `subscriptionService.ts` e não muda quando o gateway muda. `createPaymentProvider()` é o único sítio que decide o gateway ativo.
+- **`MockPaymentService`**: gateways `MPESA_MOCK`/`EMOLA_MOCK`. Aprovação automática (Secção 4, "Fluxo de Mocks", passo 3) ao fim de `MOCK_PAYMENT_AUTO_APPROVE_MS` (5 s por omissão; 0 desliga), entregue pelo mesmo caminho do `POST /webhooks/payment` — não um atalho só do mock.
+- **Tabela nova `payment_transactions`** (ver `Doc's/ESQUEMA_BASE_DADOS.md`): o "registo da transação pendente no Supabase" da Secção 4 não tinha onde viver no schema inicial.
+- **Confirmação atómica** numa função SQL (`confirm_payment_transaction`): marcar a transação e ativar a subscrição acontecem juntas, e um webhook repetido (retry do gateway) é idempotente — `ALREADY_PROCESSED`, sem segundo período nem segundo email. **Renovação antecipada** soma ao período atual em vez de começar agora.
+- **Preço** vem de `SUBSCRIPTION_PRICE_MZN` (Adendo v1.2, item F), 800 por omissão; duração fixa de 30 dias (Secção 4) em código.
+- **Estado efetivo calculado por datas.** `GET /subscriptions` e a verificação de elegibilidade comparam `starts_at`/`expires_at` com a hora atual — uma subscrição vencida perde o acesso no segundo em que vence, não quando o job de expiração passar. **Tolerância de 5 minutos no início do período** (correção de 29/09/2026): o `starts_at` é o `now()` da BD e é comparado com a hora do processo; com o relógio do processo atrás do da BD, um pagamento acabado de confirmar vinha como `EXPIRED` e sem elegibilidade até o desvio passar. O resumo e a elegibilidade aceitam um `starts_at` até 5 minutos no futuro — a mesma regra nos dois. Uma renovação antecipada (início no fim do período atual) não é afetada, porque só existe enquanto há um período em vigor.
+- **Job de expiração** (`src/jobs/subscriptionJobs.ts`, `setInterval` de hora a hora, arrancado em `index.ts`): `ACTIVE` → `EXPIRED` e aviso por email 3 dias antes (`enviarSubscricaoAExpirar`, preparado no Adendo v1.7). Idempotente com várias máquinas Fly. O email `enviarPagamentoConfirmado` sai de cada confirmação (webhook ou ativação manual).
+- **Webhook sem autenticação de utilizador** (quem chama é o gateway) e **só registado com `ENABLE_PAYMENT_MOCK=true`** — sem a flag, `POST /webhooks/payment` é 404 (Adendo v1.2, item D). Um gateway real vai precisar de outra condição de registo e de verificação de assinatura dentro do seu `handleWebhook`.
+- **Gate de CI:** `npm test` passou a correr em `ci.yml` e `deploy.yml` (antes só lint + build). Inclui um teste que falha se `fly.toml` ligar `ENABLE_PAYMENT_MOCK` ou deixar de definir `NODE_ENV=production` — o critério "teste automatizado falha o build/deploy" da Fase 5 não era cumprível enquanto os testes não corriam no pipeline.
+- **Validação do telefone pagador:** número móvel moçambicano, normalizado para `258XXXXXXXXX`, e coerente com o gateway (Vodacom 84/85 → M-Pesa; Movitel 86/87 → e-Mola). Rate limit de 5 inícios/hora por utilizador (cada pedido dispara uma cobrança no telemóvel do pagador) e 409 se já houver um pagamento `PENDING` dos últimos 15 minutos.
+
+### B. Contacto do cliente só para o profissional atribuído
+
+`GET /service_requests/:id/contact` devolve nome, telefone e coordenadas exatas do cliente (TRD Secção 5) só se: quem pede é o `professional_id` do pedido; o pedido está `ASSIGNED`; e o profissional tem, **no momento do pedido**, KYC `APPROVED` e subscrição em vigor. **Decisão do utilizador:** não basta ser um profissional elegível qualquer — o cliente só expõe o contacto a quem aceitou o pedido. Até aqui nenhum endpoint devolvia o telefone ou as coordenadas do cliente a um profissional, por isso a regra da Secção 5 não tinha onde ser aplicada.
+
+### C. Aceitar pedidos exige KYC e subscrição
+
+`POST /service_requests/:id/assign` passa a devolver 403 (com a lista do que falta) a quem não tenha KYC `APPROVED` e subscrição em vigor. **Decisão do utilizador**, alinhada com o que a Fase 4 do plano do frontend já esperava. **Consequência em produção:** até existir um gateway real, só profissionais ativados manualmente (item D) conseguem aceitar pedidos.
+
+### D. Ativação manual pelo ADMIN
+
+`POST /admin/users/:id/subscription` (corpo: `note`, obrigatória — é a única prova do pagamento recebido por fora, e fica no audit log como `SUBSCRIPTION_ACTIVATE_MANUAL`). Gateway `MANUAL` (já existia no enum), sem telefone pagador, mesmo preço configurado, mesma confirmação atómica e mesmo email de um pagamento online. **Decisão do utilizador:** em produção não há gateway (`ENABLE_PAYMENT_MOCK` não pode estar ligada e não existe ainda integração M-Pesa/e-Mola), e sem isto nenhum profissional conseguiria aceitar pedidos (item C). Em produção, `POST /subscriptions` responde 503 e `GET /subscriptions` devolve `payments_available: false`, para o frontend explicar que a ativação é feita pela equipa.
+
+### E. RLS de `service_requests` corrigida
+
+A policy "profissional le pedidos abertos" (schema inicial) concedia `SELECT` sobre todos os pedidos `OPEN` — com a `location` exata — a qualquer role, incluindo a `anon` key sem sessão, o que contradizia a Secção 5. Removida na migration desta fase; o frontend não lê a tabela diretamente, não há fluxo afetado. As duas RPC novas têm `EXECUTE` revogado a `anon`/`authenticated`.
+
+### F. Pagamento só depois do KYC aprovado
+
+**Contexto:** na primeira versão desta fase, um profissional podia pagar a subscrição antes de o KYC estar decidido — e ver a identidade rejeitada a seguir, com o dinheiro já recebido por um serviço que não pode usar. **Decisão do utilizador (29/09/2026):** primeiro a verificação, depois o pagamento. `POST /subscriptions` devolve 403 a quem não tenha KYC `APPROVED` (sem submissão, `PENDING` ou `REJECTED`), **antes** do 503 de "sem gateway" — em produção, quem ainda não foi verificado tem de saber isso primeiro. A ativação manual pelo ADMIN (item D) aplica a mesma regra (409): aceitar um pagamento por fora também é aceitar um pagamento. `GET /subscriptions` passa a incluir `kyc_approved`, para o ecrã de subscrição decidir o que mostrar sem uma segunda chamada.
+
+### G. Endpoints de leitura para o frontend
+
+Surgidos ao implementar o consumo desta fase no frontend: `GET /service_requests/assigned` (pedidos aceites pelo profissional autenticado, qualquer estado, mais recentes primeiro — o único caminho de volta a um pedido aceite, e portanto ao contacto do item B) e `GET /admin/users/:id/subscription` (o resumo de `GET /subscriptions` para qualquer profissional, só `ADMIN` — o admin precisa de ver o estado antes de ativar manualmente).
+
+**Fora do âmbito, deliberadamente:** integração real com M-Pesa/e-Mola; reconciliação periódica via `checkStatus` (existe na interface, nada a chama ainda); desativar ou reembolsar uma subscrição paga; UI de ativação manual no painel de admin.
+
+**Critérios de entrega correspondentes:** ver `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 5.
+
+---
+
 ## Adendo v1.13
+
 
 ### A. Redesign de UI com a identidade visual da marca — pedido do utilizador, sem componente no backend
 
