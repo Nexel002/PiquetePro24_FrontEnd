@@ -88,6 +88,7 @@ A definir na Fase 0, quando o projeto Vite for inicializado. Previsão:
 - `npm run build` — compilação TypeScript + build de produção
 - `npm run preview` — servir o build localmente (necessário para testar o Service Worker, que não corre igual em `dev`)
 - `npm run lint` — ESLint + Prettier
+- `npm test` — Vitest (Testing Library + jsdom, `vitest.config.ts`); corre no CI entre lint e build (TRD Adendo v1.14)
 
 **Nota sobre portas:** o backend local corre em `PORT=3000` (ou `3050`, se 3000 estiver ocupada por outro projeto nesta máquina). O `CORS_ORIGIN` do backend tem de corresponder à porta do Vite (`5173`).
 

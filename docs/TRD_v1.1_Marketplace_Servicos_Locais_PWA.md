@@ -752,7 +752,7 @@ Seis funcionalidades adicionadas durante a implementação da Fase 2 (Autentica�
 
 **Pagamento assíncrono:** `POST /subscriptions` devolve `202` (pedido enviado ao telemóvel, não pago). O frontend faz polling a `GET /subscriptions` a cada 3 s só enquanto a última transação está `PENDING` — nunca fora disso, para não gastar dados numa rede móvel.
 
-**Fora do âmbito:** testes automatizados de UI (o repositório continua sem test runner); histórico de pagamentos para o profissional; qualquer pagamento real.
+**Fora do âmbito:** testes automatizados de UI (o repositório continuava sem test runner — introduzido depois, ver Adendo v1.14); histórico de pagamentos para o profissional; qualquer pagamento real.
 
 **Critérios de entrega correspondentes:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 4.
 
@@ -820,3 +820,22 @@ Surgidos ao implementar o consumo desta fase no frontend: `GET /service_requests
 **Verificado:** `tsc --noEmit`, `eslint` e `npm run build` limpos. **Não verificado:** Lighthouse PWA/Accessibility, e validação visual em dispositivo real.
 
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6.
+
+---
+
+## Adendo v1.14
+
+### A. Testes automatizados no frontend — pedido do utilizador, sem componente no backend
+
+**Contexto:** até 29/09/2026 o frontend não tinha test runner — decisão explícita de não o introduzir na entrega da Fase 4, que deixou por cumprir o critério "testes cobrem os três estados de KYC e os três estados de subscrição" (ver também Adendo v1.12, perspetiva do frontend, "Fora do âmbito"). O utilizador pediu para o fechar.
+
+**Decisões:**
+- **Vitest + Testing Library + jsdom** (`vitest`, `@testing-library/react`, `@testing-library/dom`, `jsdom`), só em `devDependencies` — não entram no bundle da PWA (confirmado: nenhum código de teste em `dist/`). Vitest é o mesmo runner do backend e reutiliza a transformação do Vite.
+- **`vitest.config.ts` separado de `vite.config.ts`**, sem o `vite-plugin-pwa` (geraria service worker e manifest a cada arranque da suite). Define valores falsos para `VITE_API_URL`/`VITE_SUPABASE_URL`/`VITE_SUPABASE_ANON_KEY`: `src/lib/supabase.ts` cria o cliente no import e rebenta sem URL; os testes nunca fazem pedidos de rede.
+- **Os hooks do TanStack Query são simulados** (`vi.mock('../hooks/...')`): os testes cobrem o que cada ecrã mostra e o que envia para cada estado devolvido pela API, não o transporte — esse fica para validações contra o backend real (ver validação no browser da Fase 4, no plano do frontend).
+- **Sem `@testing-library/jest-dom`** nem `user-event`: as asserções usam só `vitest` e `fireEvent`, uma dependência a menos para o que os testes atuais precisam.
+- **`npm test` no CI** (`.github/workflows/ci.yml`, entre lint e build), mesmo padrão do backend (Adendo v1.12, item A, "Gate de CI").
+
+**Cobertura inicial:** `src/pages/Kyc.test.tsx` (5 testes) e `src/pages/Subscription.test.tsx` (10 testes). Os restantes ecrãs continuam sem testes automatizados.
+
+**Critérios de entrega correspondentes:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 4 (e a nota na Fase 1).
