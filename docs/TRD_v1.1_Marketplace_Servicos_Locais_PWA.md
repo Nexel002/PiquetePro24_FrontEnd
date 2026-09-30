@@ -839,3 +839,66 @@ Surgidos ao implementar o consumo desta fase no frontend: `GET /service_requests
 **Cobertura inicial:** `src/pages/Kyc.test.tsx` (5 testes) e `src/pages/Subscription.test.tsx` (10 testes). Os restantes ecrãs continuam sem testes automatizados.
 
 **Critérios de entrega correspondentes:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 4 (e a nota na Fase 1).
+
+---
+
+## Adendo v1.15
+
+**Contexto:** Fase 6 do plano do backend (Segurança, RLS completo e hardening), 29–30/09/2026. Uma revisão dos endpoints contra a Secção 5 e uma verificação da RLS contra a produção encontraram uma falha crítica (item A) e várias exposições de dados (itens C e D). Decisão do utilizador para os logs: JSON no stdout lido pelos logs do Fly, sem serviço externo (item B).
+
+### A. RLS: escritas diretas fechadas e verificação por role
+
+**Falha crítica, confirmada em produção a 29/09/2026 com uma conta descartável e corrigida no mesmo dia:** com a anon key (pública, vai no bundle do frontend) e a própria sessão, qualquer utilizador conseguia, pela API do PostgREST, **promover-se a ADMIN** (`UPDATE users_profile set role = 'ADMIN'` — a policy "utilizador atualiza o proprio perfil" não restringia colunas, e `requireRole` lê precisamente essa coluna), **auto-aprovar o KYC** (a policy de insert não limitava `status`) e **criar pedidos com estado arbitrário**. Sem sinais de exploração: à data havia uma só conta ADMIN (a real, de 17/09) e nenhum KYC nem pedido.
+
+**Decisão:** o frontend não escreve em tabelas diretamente (só no Storage) — todas as escritas de negócio passam pelo backend, com a service_role. Por isso as policies de escrita saíram em vez de serem corrigidas (`20260929150000_fecha_escritas_diretas_rls.sql`), com `REVOKE INSERT, UPDATE, DELETE` a `anon`/`authenticated` nas tabelas de negócio como segunda camada — uma policy de escrita acrescentada no futuro por engano não chega para reabrir a porta. Saiu também "profissional atribuido le o pedido", que dava a `location` exata do pedido ao profissional atribuído sem verificar KYC/subscrição e depois de o pedido estar concluído (a regra vive em `GET /service_requests/:id/contact`). As policies de leitura do próprio registo ficam.
+
+**RPC:** `EXECUTE` só para a service_role em todas as funções chamadas pelo backend (`find_nearby_*`, `admin_metrics`, `admin_security_alerts`, `get_profile_coordinates`, além das da Fase 5) — o Postgres dá-o a `PUBLIC` por omissão a uma função nova (`20260929160000`, `20260930090000`).
+
+**Verificação:** `npm run verificar:rls` (`scripts/verificar-rls.ts`) cria contas descartáveis (anon, CLIENT, PROFESSIONAL, ADMIN) e dados de terceiros, tenta com a anon key cada leitura, cada escrita direta, cada RPC e o Storage, compara com o esperado e apaga tudo. Não corre no CI (precisa do projeto real e das chaves); corre-se à mão depois de qualquer migration que mexa em policies, grants ou funções. Resultado a 30/09/2026, com as três migrations aplicadas: **64/64**.
+
+### B. Erros centralizados e logs estruturados
+
+- **Logger** (`src/lib/logger.ts`): uma linha JSON por evento (`nivel`, `mensagem`, `hora`, contexto) no stdout/stderr, lida com `flyctl logs`. Sem serviço externo — nenhum dado de erro sai para terceiros e não há custo; em troca, não há alertas automáticos. Não leva dados pessoais (item D). Todos os `console.*` do código passaram por ele.
+- **`contextoDoPedido`** (`src/middlewares/errorHandler.ts`, o primeiro middleware): id por pedido no header `X-Request-Id`, presente nas linhas de log sobre ele. Qualquer resposta **500** com o envelope de erro sai com uma mensagem genérica e a mensagem original vai só para o log — ~40 caminhos devolviam a mensagem crua do Postgres (ex. `invalid input syntax for type uuid`). A regra vive num só sítio em vez de nos 43 controllers. O 503 não é tocado: leva mensagens para o utilizador (ex. pagamentos indisponíveis).
+- **`rotaNaoEncontrada`** e **`tratarErro`** (os últimos): rota inexistente → 404 no envelope JSON (antes, a página HTML do Express); corpo JSON malformado → 400; demasiado grande → 413; exceção → 500 genérico, registada com o stack.
+- `GET /health` deixa de devolver o `detail` do Supabase (é público); vai para o log.
+- **Limite conhecido:** no Express 4, uma exceção dentro de um handler async não chega a `tratarErro`. Os handlers deste projeto devolvem os erros dos services em vez de os lançar, e `index.ts` regista `unhandledRejection` (e termina em `uncaughtException`, para o Fly arrancar uma máquina nova).
+
+### C. Buscas por proximidade sem a localização exata de terceiros
+
+`distance_m` saía em metros exatos a partir de uma origem escolhida por quem pede: com três origens (ou movendo a origem até o valor mudar) calculava-se a morada de um cliente — que a Secção 5 reserva ao profissional atribuído e elegível — ou a posição de um profissional. E `GET /service_requests/nearby` estava aberto a qualquer utilizador autenticado, incluindo CLIENT.
+
+**Decisão (três coisas juntas — cada uma sozinha não chega):** nas funções SQL, a origem é encaixada numa grelha de 0,005° (~500 m) e a distância sai arredondada para cima a múltiplos de 500 m (nunca 0); no controller, o raio só aceita km inteiros (um raio decimal permitia pesquisa binária sobre a fronteira do `ST_DWithin`). A ordenação continua pela distância real. Verificado a 30/09/2026: distâncias em múltiplos de 500 m, e deslocar a origem 100–150 m não muda o resultado.
+
+Além disso: `/service_requests/nearby` passa a exigir `PROFESSIONAL` e deixa de devolver `client_id` (não é preciso para aceitar e permitia correlacionar pedidos de um mesmo cliente); rate limit por utilizador nos dois `/nearby` (60/min em `/professionals/nearby`, 30/min em `/service_requests/nearby`) — por utilizador e não por IP, porque as rotas exigem sessão e muitos utilizadores partilham o IP atrás do NAT de um operador móvel.
+
+**Registo de contas:** passa pelo Supabase Auth, não pelo backend — o limite é o do painel do Supabase (Authentication → Rate Limits), não código deste repositório.
+
+### D. Dados pessoais fora das respostas e do audit log
+
+- `GET`/`POST /kyc` (o próprio profissional) deixam de devolver `bi_document_url` (documentos só para ADMIN) e `reviewed_by` (o UUID do admin revisor). Os endpoints `/admin/kyc` continuam completos.
+- O `audit_log` sobrevive à eliminação da conta (`user_id` sem FK, de propósito — Adendo v1.8), por isso passou a ser o único sítio onde dados pessoais ficariam depois dela, contra o Adendo v1.4 D. Deixa de guardar BI, NUIT, telefone, coordenadas e emails em claro: guarda os **nomes** dos campos alterados, o tipo de captura da localização, e uma **impressão** do email (`src/lib/impressaoEmail.ts`, 16 caracteres de SHA-256 do email normalizado) — chega para ver tentativas repetidas contra o mesmo endereço, e quem conhece o email confirma um envio calculando a impressão. O mesmo nos logs.
+
+### E. OWASP API Security Top 10 (2023) — revisão
+
+| Risco | Estado | Onde |
+|---|---|---|
+| API1 Autorização ao nível do objeto | Coberto | Ownership em `assign`/`complete`/`cancel`/`contact`; RLS verificada por role (item A) |
+| API2 Autenticação | Coberto, com limite | JWT ES256 via JWKS; rate limit na recuperação de password; ban. Limite: um access token emitido antes do ban vale até expirar (Adendo v1.9 G) |
+| API3 Autorização ao nível da propriedade | Coberto | Zod na fronteira (só os campos permitidos passam); `role` só por endpoints próprios; exposição de campos corrigida (itens C, D) |
+| API4 Consumo de recursos | Coberto | Rate limits (criação de pedidos, KYC, subscrições, recuperação, `/nearby`); `limit` ≤ 50; corpo JSON ≤ 100 kB |
+| API5 Autorização ao nível da função | Coberto | `requireRole` em todos os `/admin/*`, com teste de 403 |
+| API6 Fluxos de negócio sensíveis | Coberto | Aceitar pedidos exige KYC + subscrição; pagamento só com KYC; mock de pagamento impossível em produção (Adendo v1.2 D) |
+| API7 SSRF | Coberto | O backend só chama a Google Geocoding API com URL fixo; `avatar_url` validado contra o bucket do projeto |
+| API8 Configuração de segurança | Coberto | `helmet`; CORS explícito (`*` recusado em produção); erros genéricos (item B); escritas diretas fechadas (item A) |
+| API9 Inventário da API | **Em falta** | Sem documentação OpenAPI — critério da Fase 7 |
+| API10 Consumo inseguro de APIs | Coberto | Respostas do Google tratadas por `types` e com fallback; nenhuma falha externa bloqueia o fluxo principal |
+
+**Pendente, não bloqueante:**
+- Validar `:id` como UUID (hoje um id malformado dá 500 genérico, sem fuga — devia ser 400). Adiado: obriga a reescrever fixtures de teste que usam ids como `req-1`.
+- O webhook do mock de pagamento não tem autenticação por desenho: em qualquer ambiente com `ENABLE_PAYMENT_MOCK=true` um profissional pode confirmar o próprio pagamento. Aceitável em dev/staging; um gateway real tem de verificar a assinatura.
+- Política de retenção do `audit_log` (Adendo v1.8).
+
+**Perspetiva do frontend:** só tipos — `OwnKyc` (sem `bi_document_url`/`reviewed_by`) para `GET`/`POST /kyc`, e `NearbyServiceRequest` sem `client_id`. Nenhum ecrã usava os campos retirados; os sliders de raio já só enviavam inteiros. Um 500 passa a trazer sempre a mesma mensagem genérica, que o interceptor mostra tal como vem.
+
+**Critérios de entrega correspondentes:** ver `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 6.

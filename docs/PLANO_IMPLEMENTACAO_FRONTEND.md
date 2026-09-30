@@ -189,6 +189,8 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 **Nota (Adendo v1.6):** o papel `ADMIN` como um todo está consolidado no TRD, Secção 7 ("Perfil ADMIN"), não repetido aqui por fase.
 
+**Contrato ajustado à Fase 6 do backend (TRD Adendo v1.15), em `fix/contrato-fase-6-seguranca`:** `fetchOwnKyc`/`submitKyc` passam a devolver `OwnKyc` (sem `bi_document_url` nem `reviewed_by`, que o backend deixou de enviar ao próprio profissional) e `NearbyServiceRequest` perde `client_id`. Nenhum ecrã usava esses campos; `npm test` (15), lint e build limpos.
+
 ---
 
 ## Fase 5 — Experiência Offline & Resiliência de Rede
