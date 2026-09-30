@@ -2,67 +2,107 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../store/AuthContext'
 import { useProfile } from '../hooks/useProfile'
 import { Card } from '../components/ui/Card'
+import { Button } from '../components/ui/Button'
+import { Badge } from '../components/ui/Badge'
+import { Logo } from '../components/ui/Logo'
 
 export function Home() {
   const { session, signOut } = useAuth()
   const { data: profile } = useProfile()
 
-  const primaryButtonClass = "inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 px-6 py-3 text-base bg-piquete-yellow text-piquete-blue hover:bg-piquete-yellow-hover hover:shadow-lg hover:shadow-piquete-yellow/30 w-full";
-  const secondaryButtonClass = "inline-flex items-center justify-center font-semibold rounded-xl transition-all duration-300 px-6 py-3 text-base bg-piquete-blue/5 text-piquete-blue hover:bg-piquete-blue/10 w-full";
-
   return (
-    <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center p-6">
-      <Card className="p-6 md:p-8">
-        <header className="mb-8 text-center">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-piquete-blue rounded-2xl flex items-center justify-center shadow-lg">
-              <span className="text-piquete-yellow text-2xl font-bold font-heading">P24</span>
-            </div>
+    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center p-4 sm:p-6 animate-fade-in">
+      <Card variant="glass" className="p-6 sm:p-8 relative overflow-hidden border-white/15">
+        {/* Glow ambient background sphere */}
+        <div className="absolute -top-12 -right-12 w-40 h-40 bg-piquete-yellow/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-piquete-blue-bright/20 rounded-full blur-3xl pointer-events-none" />
+
+        <header className="mb-8 text-center relative z-10 flex flex-col items-center">
+          <div className="mb-3">
+            <Logo variant="stacked" size="lg" showSubtitle />
           </div>
-          <h1 className="text-2xl font-bold text-piquete-blue mb-1">PiquetePro24</h1>
-          <p className="text-sm text-gray-500">Marketplace de Serviços Locais</p>
+
+          {profile && (
+            <div className="mt-4 flex justify-center">
+              <Badge variant={profile.role === 'ADMIN' ? 'warning' : profile.role === 'PROFESSIONAL' ? 'approved' : 'info'}>
+                {profile.role === 'ADMIN' ? 'Administrador' : profile.role === 'PROFESSIONAL' ? 'Profissional' : 'Cliente'}
+              </Badge>
+            </div>
+          )}
         </header>
 
+
         {session ? (
-          <div className="flex flex-col gap-3">
-            {/* PROFESSIONAL vê pedidos disponíveis perto de si; CLIENT (ou perfil ainda
-                a carregar) vê a descoberta de profissionais — a mesma conta nunca
-                precisa das duas telas ao mesmo tempo (ver Fase 2/3 do frontend). */}
+          <div className="flex flex-col gap-3.5 relative z-10">
             {profile?.role === 'ADMIN' ? (
               <>
-                <Link to="/admin/kyc" className={primaryButtonClass}>Revisão de KYC</Link>
-                <Link to="/admin/utilizadores" className={secondaryButtonClass}>Utilizadores</Link>
-                <Link to="/admin/pedidos-servico" className={secondaryButtonClass}>Pedidos de serviço</Link>
-                <Link to="/admin/metricas" className={secondaryButtonClass}>Métricas</Link>
-                <Link to="/admin/audit-log" className={secondaryButtonClass}>Histórico de ações</Link>
+                <Link to="/admin/kyc" className="w-full">
+                  <Button variant="primary" className="w-full">Revisão de KYC</Button>
+                </Link>
+                <Link to="/admin/utilizadores" className="w-full">
+                  <Button variant="glass" className="w-full">Utilizadores</Button>
+                </Link>
+                <Link to="/admin/pedidos-servico" className="w-full">
+                  <Button variant="glass" className="w-full">Pedidos de serviço</Button>
+                </Link>
+                <Link to="/admin/metricas" className="w-full">
+                  <Button variant="glass" className="w-full">Métricas</Button>
+                </Link>
+                <Link to="/admin/audit-log" className="w-full">
+                  <Button variant="glass" className="w-full">Histórico de ações</Button>
+                </Link>
               </>
             ) : profile?.role === 'PROFESSIONAL' ? (
               <>
-                <Link to="/pedidos-proximos" className={primaryButtonClass}>Pedidos perto de ti</Link>
-                <Link to="/trabalhos-aceites" className={secondaryButtonClass}>Trabalhos aceites</Link>
-                <Link to="/verificacao-identidade" className={secondaryButtonClass}>Verificação de identidade</Link>
-                <Link to="/subscricao" className={secondaryButtonClass}>Subscrição</Link>
+                <Link to="/pedidos-proximos" className="w-full">
+                  <Button variant="primary" className="w-full">Pedidos perto de ti</Button>
+                </Link>
+                <Link to="/trabalhos-aceites" className="w-full">
+                  <Button variant="glass" className="w-full">Trabalhos aceites</Button>
+                </Link>
+                <Link to="/verificacao-identidade" className="w-full">
+                  <Button variant="glass" className="w-full">Verificação de identidade</Button>
+                </Link>
+                <Link to="/subscricao" className="w-full">
+                  <Button variant="glass" className="w-full">Subscrição</Button>
+                </Link>
               </>
             ) : (
               <>
-                <Link to="/profissionais" className={primaryButtonClass}>Procurar profissionais</Link>
-                <Link to="/os-meus-pedidos" className={secondaryButtonClass}>Os meus pedidos</Link>
+                <Link to="/profissionais" className="w-full">
+                  <Button variant="primary" className="w-full">Procurar profissionais</Button>
+                </Link>
+                <Link to="/os-meus-pedidos" className="w-full">
+                  <Button variant="glass" className="w-full">Os meus pedidos</Button>
+                </Link>
               </>
             )}
 
-            <div className="flex items-center gap-3 my-2">
-              <span className="h-px flex-1 bg-gray-200" />
+            <div className="flex items-center gap-3 my-1">
+              <span className="h-px flex-1 bg-white/10" />
             </div>
 
-            <Link to="/perfil" className={secondaryButtonClass}>O meu perfil</Link>
-            <button type="button" onClick={() => void signOut()} className="text-sm font-semibold text-red-500 hover:text-red-600 mt-2">
+            <Link to="/perfil" className="w-full">
+              <Button variant="ghost" className="w-full">O meu perfil</Button>
+            </Link>
+            
+            <button
+              type="button"
+              onClick={() => void signOut()}
+              className="text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors py-2 mt-1 text-center"
+            >
               Terminar sessão
             </button>
           </div>
         ) : (
-          <Link to="/entrar" className={primaryButtonClass}>Entrar</Link>
+          <div className="relative z-10">
+            <Link to="/entrar" className="w-full block">
+              <Button variant="primary" size="lg" className="w-full">Entrar na Aplicação</Button>
+            </Link>
+          </div>
         )}
       </Card>
     </main>
   )
 }
+

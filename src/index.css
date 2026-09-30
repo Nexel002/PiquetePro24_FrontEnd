@@ -3,11 +3,85 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --color-primary: 3 31 75;
+    --color-secondary: 255 199 0;
+  }
+
   body {
-    @apply bg-gray-50 text-gray-900 font-sans antialiased;
+    @apply bg-slate-900 text-slate-100 font-sans antialiased min-h-screen selection:bg-piquete-yellow selection:text-piquete-blue;
+    background-image: 
+      radial-gradient(circle at 15% 15%, rgba(10, 59, 130, 0.35) 0%, transparent 40%),
+      radial-gradient(circle at 85% 85%, rgba(255, 199, 0, 0.08) 0%, transparent 40%),
+      radial-gradient(circle at 50% 50%, rgba(2, 20, 49, 0.9) 0%, rgba(1, 11, 28, 1) 100%);
+    background-attachment: fixed;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading font-bold text-piquete-blue;
+    @apply font-heading font-bold text-white tracking-tight;
   }
 }
+
+@layer components {
+  /* Glassmorphism Cards */
+  .glass-card {
+    @apply bg-slate-900/70 backdrop-blur-xl border border-white/10 shadow-glass rounded-2xl transition-all duration-300;
+  }
+
+  .glass-card-interactive {
+    @apply glass-card hover:border-piquete-yellow/30 hover:shadow-card-hover hover:-translate-y-0.5 active:translate-y-0;
+  }
+
+  /* Ambient Mesh Backgrounds */
+  .bg-mesh-dark {
+    background: radial-gradient(circle at top left, rgba(29, 91, 216, 0.15), transparent 45%),
+                radial-gradient(circle at bottom right, rgba(255, 199, 0, 0.08), transparent 50%),
+                #021431;
+  }
+
+  .bg-mesh-card {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 100%);
+  }
+
+  /* Status Badges */
+  .badge-status {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md border;
+  }
+
+  .badge-pending {
+    @apply badge-status bg-amber-500/10 text-amber-300 border-amber-500/30;
+  }
+
+  .badge-approved {
+    @apply badge-status bg-emerald-500/10 text-emerald-300 border-emerald-500/30;
+  }
+
+  .badge-rejected {
+    @apply badge-status bg-rose-500/10 text-rose-300 border-rose-500/30;
+  }
+
+  .badge-info {
+    @apply badge-status bg-blue-500/10 text-blue-300 border-blue-500/30;
+  }
+
+  /* Custom Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(2, 20, 49, 0.5);
+    border-radius: 9999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 9999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 199, 0, 0.4);
+  }
+}
+
