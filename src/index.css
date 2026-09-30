@@ -9,18 +9,14 @@
   }
 
   body {
-    @apply bg-slate-900 text-slate-100 font-sans antialiased min-h-screen selection:bg-piquete-yellow selection:text-piquete-blue;
-    background-image: 
-      radial-gradient(circle at 15% 15%, rgba(10, 59, 130, 0.35) 0%, transparent 40%),
-      radial-gradient(circle at 85% 85%, rgba(255, 199, 0, 0.08) 0%, transparent 40%),
-      radial-gradient(circle at 50% 50%, rgba(2, 20, 49, 0.9) 0%, rgba(1, 11, 28, 1) 100%);
-    background-attachment: fixed;
+    @apply bg-gray-50 text-gray-900 font-sans antialiased min-h-screen selection:bg-piquete-yellow selection:text-piquete-blue;
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-heading font-bold text-white tracking-tight;
+    @apply font-heading font-bold text-piquete-blue tracking-tight;
   }
 }
+
 
 @layer components {
   /* Glassmorphism Cards */

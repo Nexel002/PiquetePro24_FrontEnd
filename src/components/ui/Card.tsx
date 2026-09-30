@@ -11,11 +11,12 @@ export function Card({
   ...props
 }: CardProps) {
   const variantStyles = {
-    glass: 'bg-slate-900/75 backdrop-blur-xl border border-white/10 shadow-glass text-slate-100',
-    solid: 'bg-slate-900 border border-slate-800 shadow-xl text-slate-100',
+    glass: 'bg-white rounded-3xl border border-gray-100 shadow-card text-gray-900',
+    solid: 'bg-white rounded-3xl border border-gray-100 shadow-card text-gray-900',
     interactive:
-      'bg-slate-900/75 backdrop-blur-xl border border-white/10 shadow-glass text-slate-100 hover:border-piquete-yellow/40 hover:shadow-card-hover hover:-translate-y-0.5 active:translate-y-0 transition-all duration-300',
+      'bg-white rounded-3xl border border-gray-100 shadow-card hover:shadow-card-hover hover:border-piquete-yellow/50 hover:-translate-y-0.5 active:translate-y-0 text-gray-900 transition-all duration-300',
   };
+
 
   return (
     <div

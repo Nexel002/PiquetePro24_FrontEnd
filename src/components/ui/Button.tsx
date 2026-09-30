@@ -28,14 +28,15 @@ export function Button({
     secondary:
       'bg-piquete-blue text-white hover:bg-piquete-blue-light hover:shadow-glow-blue border border-white/10',
     outline:
-      'border-2 border-piquete-yellow/70 text-piquete-yellow hover:bg-piquete-yellow hover:text-piquete-blue hover:shadow-glow-yellow',
+      'border-2 border-piquete-blue text-piquete-blue hover:bg-piquete-blue hover:text-white',
     ghost:
-      'bg-transparent text-slate-300 hover:text-white hover:bg-white/10 border border-transparent',
+      'bg-transparent text-gray-700 hover:text-piquete-blue hover:bg-gray-100 border border-transparent',
     glass:
-      'bg-slate-800/60 backdrop-blur-md text-white border border-white/15 hover:bg-slate-800/90 hover:border-piquete-yellow/40 hover:shadow-card-hover',
+      'bg-gray-100/90 text-piquete-blue border border-gray-200/80 hover:bg-gray-200 hover:border-piquete-yellow/40 hover:shadow-sm',
     danger:
-      'bg-gradient-to-r from-red-600 to-rose-600 text-white hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-600/25 border border-red-400/20',
+      'bg-gradient-to-r from-red-600 to-rose-600 text-white hover:from-red-500 hover:to-rose-500 shadow-md shadow-red-600/20',
   };
+
 
   const sizes = {
     sm: 'px-3.5 py-1.5 text-xs gap-1.5 shadow-sm',
