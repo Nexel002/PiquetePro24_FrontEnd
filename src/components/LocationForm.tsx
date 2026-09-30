@@ -11,9 +11,18 @@ import { Input } from './ui/Input'
 // perfil (onde é opcional editar de novo) e o onboarding obrigatório
 // (pages/onboarding/CompleteLocation.tsx, sem opção de saltar). onSaved é chamado só
 // depois de o backend confirmar a gravação — o onboarding usa isso para avançar.
-export function LocationForm({ profile, onSaved }: { profile: UserProfile; onSaved?: () => void }) {
+export function LocationForm({
+  profile,
+  onSaved,
+  allowManual = true,
+}: {
+  profile: UserProfile
+  onSaved?: () => void
+  allowManual?: boolean
+}) {
   const updateLocation = useUpdateLocation()
   const geolocation = useGeolocation()
+
 
   const [province, setProvince] = useState('')
   const [district, setDistrict] = useState('')
@@ -123,62 +132,66 @@ export function LocationForm({ profile, onSaved }: { profile: UserProfile; onSav
         </div>
       )}
 
-      <div className="flex items-center gap-3 my-2">
-        <span className="h-px flex-1 bg-gray-200" />
-        <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">ou manual</span>
-        <span className="h-px flex-1 bg-gray-200" />
-      </div>
-
-      <form onSubmit={handleSubmitHierarchy} className="flex flex-col gap-4">
-        <div className="flex flex-col w-full">
-          <label htmlFor={provinciaId} className="mb-1.5 text-sm font-semibold text-piquete-blue-dark">
-            Província
-          </label>
-          <div className="relative">
-            <select
-              id={provinciaId}
-              value={province}
-              onChange={(event) => setProvince(event.target.value)}
-              required
-              className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-piquete-blue/20 focus:border-piquete-blue shadow-sm appearance-none"
-            >
-              <option value="" disabled>Seleciona a província</option>
-              {MOZAMBIQUE_PROVINCES.map((name) => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
-              <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
-              </svg>
-            </div>
+      {allowManual && (
+        <>
+          <div className="flex items-center gap-3 my-2">
+            <span className="h-px flex-1 bg-gray-200" />
+            <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">ou manual</span>
+            <span className="h-px flex-1 bg-gray-200" />
           </div>
-        </div>
 
-        <Input
-          label="Distrito (opcional)"
-          type="text"
-          value={district}
-          onChange={(event) => setDistrict(event.target.value)}
-        />
+          <form onSubmit={handleSubmitHierarchy} className="flex flex-col gap-4">
+            <div className="flex flex-col w-full">
+              <label htmlFor={provinciaId} className="mb-1.5 text-sm font-semibold text-piquete-blue-dark">
+                Província
+              </label>
+              <div className="relative">
+                <select
+                  id={provinciaId}
+                  value={province}
+                  onChange={(event) => setProvince(event.target.value)}
+                  required
+                  className="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-gray-900 transition-shadow duration-200 focus:outline-none focus:ring-2 focus:ring-piquete-blue/20 focus:border-piquete-blue shadow-sm appearance-none"
+                >
+                  <option value="" disabled>Seleciona a província</option>
+                  {MOZAMBIQUE_PROVINCES.map((name) => (
+                    <option key={name} value={name}>{name}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-500">
+                  <svg className="h-4 w-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
 
-        <Input
-          label="Bairro (opcional)"
-          type="text"
-          value={neighborhood}
-          onChange={(event) => setNeighborhood(event.target.value)}
-        />
+            <Input
+              label="Distrito (opcional)"
+              type="text"
+              value={district}
+              onChange={(event) => setDistrict(event.target.value)}
+            />
 
-        <Button
-          type="submit"
-          variant="outline"
-          disabled={!province || updateLocation.isPending}
-          isLoading={updateLocation.isPending}
-          className="w-full mt-2"
-        >
-          Guardar localização manual
-        </Button>
-      </form>
+            <Input
+              label="Bairro (opcional)"
+              type="text"
+              value={neighborhood}
+              onChange={(event) => setNeighborhood(event.target.value)}
+            />
+
+            <Button
+              type="submit"
+              variant="outline"
+              disabled={!province || updateLocation.isPending}
+              isLoading={updateLocation.isPending}
+              className="w-full mt-2"
+            >
+              Guardar localização manual
+            </Button>
+          </form>
+        </>
+      )}
 
       {updateLocation.isError && (
         <p className="text-sm font-medium text-red-600 text-center bg-red-50 p-2 rounded-lg mt-2">

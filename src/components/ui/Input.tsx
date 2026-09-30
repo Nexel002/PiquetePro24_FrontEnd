@@ -16,13 +16,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="flex flex-col w-full group">
         {label && (
-          <label htmlFor={inputId} className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-300">
+          <label htmlFor={inputId} className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-piquete-blue-dark">
             {label}
           </label>
         )}
         <div className="relative flex items-center">
           {leftIcon && (
-            <div className="absolute left-3.5 pointer-events-none text-slate-400 group-focus-within:text-piquete-yellow transition-colors duration-200">
+            <div className="absolute left-3.5 pointer-events-none text-gray-400 group-focus-within:text-piquete-blue transition-colors duration-200">
               {leftIcon}
             </div>
           )}
@@ -30,17 +30,17 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             aria-invalid={error ? true : undefined}
-            className={`w-full bg-slate-800/80 backdrop-blur-md border ${
+            className={`w-full bg-white border ${
               error
-                ? 'border-red-500/80 focus:ring-red-500/30 focus:border-red-500'
-                : 'border-white/10 focus:ring-piquete-yellow/30 focus:border-piquete-yellow/80 hover:border-white/20'
-            } rounded-xl px-4 py-3 text-sm text-slate-100 placeholder:text-slate-500 transition-all duration-200 focus:outline-none focus:ring-2 shadow-inner ${
+                ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500'
+                : 'border-gray-200 focus:ring-piquete-blue/20 focus:border-piquete-blue hover:border-gray-300'
+            } rounded-xl px-4 py-3 text-sm text-gray-900 placeholder:text-gray-400 transition-all duration-200 focus:outline-none focus:ring-2 shadow-sm ${
               leftIcon ? 'pl-10' : ''
             } ${rightIcon ? 'pr-10' : ''} ${className}`}
             {...props}
           />
           {rightIcon && (
-            <div className="absolute right-3.5 pointer-events-none text-slate-400">
+            <div className="absolute right-3.5 pointer-events-none text-gray-400">
               {rightIcon}
             </div>
           )}
