@@ -17,15 +17,20 @@ export interface ProfessionalKyc {
   verified_at: string | null
 }
 
+// O que o próprio profissional recebe de GET/POST /kyc (backend Fase 6, TRD Adendo v1.15,
+// item D): sem o path do documento (só ADMIN, TRD Secção 5) nem o UUID do revisor. Os
+// endpoints /admin/kyc continuam a devolver ProfessionalKyc completo.
+export type OwnKyc = Omit<ProfessionalKyc, 'bi_document_url' | 'reviewed_by'>
+
 export interface SubmitKycPayload {
   bi_number: string
   nuit_number: string
   bi_document_path: string
 }
 
-export async function fetchOwnKyc(): Promise<ProfessionalKyc | null> {
+export async function fetchOwnKyc(): Promise<OwnKyc | null> {
   try {
-    const response = await api.get<ProfessionalKyc>('/kyc')
+    const response = await api.get<OwnKyc>('/kyc')
     return response.data
   } catch (err) {
     // 404 aqui significa "ainda não submeteste" (ver kycController.ts no backend),
@@ -37,8 +42,8 @@ export async function fetchOwnKyc(): Promise<ProfessionalKyc | null> {
   }
 }
 
-export async function submitKyc(payload: SubmitKycPayload): Promise<ProfessionalKyc> {
-  const response = await api.post<ProfessionalKyc>('/kyc', payload)
+export async function submitKyc(payload: SubmitKycPayload): Promise<OwnKyc> {
+  const response = await api.post<OwnKyc>('/kyc', payload)
   return response.data
 }
 

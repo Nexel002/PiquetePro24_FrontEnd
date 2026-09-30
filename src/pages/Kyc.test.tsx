@@ -1,14 +1,14 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { ProfessionalKyc } from '../services/kyc'
+import type { OwnKyc } from '../services/kyc'
 import { Kyc } from './Kyc'
 
 // Os hooks do TanStack Query são simulados: o que se testa aqui é o que o ecrã mostra
 // em cada estado da verificação, não o pedido de rede.
 const estadoKyc = vi.hoisted(() => ({
   atual: { data: undefined, isLoading: false, isError: false } as {
-    data: Partial<ProfessionalKyc> | null | undefined
+    data: Partial<OwnKyc> | null | undefined
     isLoading: boolean
     isError: boolean
   },
@@ -19,7 +19,7 @@ vi.mock('../hooks/useKyc', () => ({
   useSubmitKyc: () => ({ mutate: vi.fn(), isPending: false }),
 }))
 
-function mostrar(data: Partial<ProfessionalKyc> | null | undefined, extra: { isLoading?: boolean; isError?: boolean } = {}) {
+function mostrar(data: Partial<OwnKyc> | null | undefined, extra: { isLoading?: boolean; isError?: boolean } = {}) {
   estadoKyc.atual = { data, isLoading: false, isError: false, ...extra }
   render(
     <MemoryRouter>

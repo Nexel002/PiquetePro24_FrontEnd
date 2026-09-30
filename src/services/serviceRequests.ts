@@ -19,9 +19,11 @@ export interface ServiceRequest {
   completed_at: string | null
 }
 
+// Sem client_id desde a Fase 6 do backend (TRD Adendo v1.15, item C): não é preciso para
+// aceitar o pedido e permitia correlacionar os pedidos de um mesmo cliente. distance_m
+// vem arredondada para cima a múltiplos de 500 m.
 export interface NearbyServiceRequest {
   id: string
-  client_id: string
   title: string
   description: string | null
   province: string
