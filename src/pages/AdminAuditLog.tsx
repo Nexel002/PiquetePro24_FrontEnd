@@ -4,6 +4,9 @@ import { useProfile } from '../hooks/useProfile'
 import { useAuditLog } from '../hooks/useAuditLog'
 import { useAdminSecurityAlerts } from '../hooks/useAdminSecurityAlerts'
 import { BackButton } from '../components/BackButton'
+import { Button } from '../components/ui/Button'
+import { Badge } from '../components/ui/Badge'
+import { Card } from '../components/ui/Card'
 
 const PAGE_SIZE = 25
 
@@ -35,24 +38,24 @@ function SecurityAlertsPanel({ onFilterByUser }: { onFilterByUser: (userId: stri
   }
 
   return (
-    <section className="flex flex-col gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3">
-      <h2 className="text-sm font-semibold text-amber-800">Alertas de segurança (últimas 24h)</h2>
+    <Card variant="solid" className="border-amber-200 bg-amber-50 p-4 flex flex-col gap-2">
+      <h2 className="text-sm font-bold text-amber-800">Alertas de segurança (últimas 24h)</h2>
       <ul className="flex flex-col gap-1 text-sm text-amber-800">
         {alerts.map((alert) => (
           <li key={`${alert.groupType}-${alert.groupKey}`} className="flex items-center justify-between gap-2">
             <span>
               {alert.attempts} tentativas negadas · {alert.groupType === 'user_id' ? 'utilizador' : 'IP'}{' '}
-              <span className="font-medium">{alert.groupKey}</span>
+              <span className="font-semibold">{alert.groupKey}</span>
             </span>
             {alert.groupType === 'user_id' && (
-              <button type="button" onClick={() => onFilterByUser(alert.groupKey)} className="underline">
+              <button type="button" onClick={() => onFilterByUser(alert.groupKey)} className="font-semibold underline">
                 Ver histórico
               </button>
             )}
           </li>
         ))}
       </ul>
-    </section>
+    </Card>
   )
 }
 
@@ -110,7 +113,7 @@ export function AdminAuditLog() {
   if (isProfileLoading) {
     return (
       <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-6 w-6 animate-pulse rounded-full bg-gray-300" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
       </main>
     )
   }
@@ -128,35 +131,37 @@ export function AdminAuditLog() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-6">
+    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
       <header className="flex items-center gap-3">
         <BackButton />
-        <h1 className="flex-1 text-2xl font-semibold text-gray-900">Histórico de ações</h1>
+        <h1 className="flex-1 text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">
+          Histórico de ações
+        </h1>
       </header>
 
       <SecurityAlertsPanel onFilterByUser={handleFilterByUser} />
 
       {userIdFilter && (
-        <div className="flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700">
+        <div className="flex items-center justify-between rounded-xl bg-piquete-blue/5 border border-piquete-blue/10 px-3 py-2 text-sm text-piquete-blue">
           <span>
-            A mostrar só o histórico do utilizador <span className="font-medium">{userIdFilter}</span>
+            A mostrar só o histórico do utilizador <span className="font-semibold">{userIdFilter}</span>
           </span>
-          <button type="button" onClick={() => handleClearDeepLinkFilter(['user_id'])} className="text-gray-600 underline">
+          <button type="button" onClick={() => handleClearDeepLinkFilter(['user_id'])} className="font-semibold underline">
             Limpar
           </button>
         </div>
       )}
 
       {entityTypeFilter && entityIdFilter && (
-        <div className="flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-700">
+        <div className="flex items-center justify-between rounded-xl bg-piquete-blue/5 border border-piquete-blue/10 px-3 py-2 text-sm text-piquete-blue">
           <span>
-            A mostrar só a linha do tempo de <span className="font-medium">{entityTypeFilter}</span> /{' '}
-            <span className="font-medium">{entityIdFilter}</span>
+            A mostrar só a linha do tempo de <span className="font-semibold">{entityTypeFilter}</span> /{' '}
+            <span className="font-semibold">{entityIdFilter}</span>
           </span>
           <button
             type="button"
             onClick={() => handleClearDeepLinkFilter(['entity_type', 'entity_id'])}
-            className="text-gray-600 underline"
+            className="font-semibold underline"
           >
             Limpar
           </button>
@@ -169,12 +174,12 @@ export function AdminAuditLog() {
           value={actionFilter}
           onChange={(event) => handleFilterChange(() => setActionFilter(event.target.value))}
           placeholder="Filtrar por ação (ex. KYC_REVIEW_APPROVED)"
-          className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5"
+          className="flex-1 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-piquete-blue/20 focus:border-piquete-blue"
         />
         <select
           value={successFilter}
           onChange={(event) => handleFilterChange(() => setSuccessFilter(event.target.value as SuccessFilter))}
-          className="rounded-lg border border-gray-300 px-3 py-1.5"
+          className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-piquete-blue/20 focus:border-piquete-blue"
         >
           <option value="ALL">Todos</option>
           <option value="true">Sucesso</option>
@@ -184,9 +189,9 @@ export function AdminAuditLog() {
 
       {isLoading && (
         <div className="flex flex-col gap-2">
-          <div className="h-16 animate-pulse rounded-lg bg-gray-200" />
-          <div className="h-16 animate-pulse rounded-lg bg-gray-200" />
-          <div className="h-16 animate-pulse rounded-lg bg-gray-200" />
+          <div className="h-16 animate-pulse rounded-2xl bg-gray-200" />
+          <div className="h-16 animate-pulse rounded-2xl bg-gray-200" />
+          <div className="h-16 animate-pulse rounded-2xl bg-gray-200" />
         </div>
       )}
 
@@ -199,23 +204,19 @@ export function AdminAuditLog() {
       {entries && entries.length > 0 && (
         <ul className="flex flex-col gap-2">
           {entries.map((entry) => (
-            <li key={entry.id} className="flex flex-col gap-1 rounded-lg border border-gray-200 p-3">
-              <div className="flex items-start justify-between gap-2">
-                <span className="text-sm font-medium text-gray-900">{entry.action}</span>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
-                    entry.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                  }`}
-                >
-                  {entry.status_code}
-                </span>
-              </div>
-              {entry.description && <p className="text-sm text-gray-600">{entry.description}</p>}
-              <p className="text-xs text-gray-500">
-                {formatMaputoDateTime(entry.created_at)} · {entry.method} {entry.path}
-                {entry.user_id && ` · utilizador ${entry.user_id}`}
-                {entry.ip_address && ` · ${entry.ip_address}`}
-              </p>
+            <li key={entry.id}>
+              <Card variant="solid" className="flex flex-col gap-1 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-sm font-bold text-piquete-blue">{entry.action}</span>
+                  <Badge variant={entry.success ? 'approved' : 'rejected'}>{entry.status_code}</Badge>
+                </div>
+                {entry.description && <p className="text-sm text-gray-600">{entry.description}</p>}
+                <p className="text-xs text-gray-500">
+                  {formatMaputoDateTime(entry.created_at)} · {entry.method} {entry.path}
+                  {entry.user_id && ` · utilizador ${entry.user_id}`}
+                  {entry.ip_address && ` · ${entry.ip_address}`}
+                </p>
+              </Card>
             </li>
           ))}
         </ul>
@@ -223,22 +224,24 @@ export function AdminAuditLog() {
 
       {entries && (offset > 0 || entries.length === PAGE_SIZE) && (
         <div className="flex justify-between text-sm">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setOffset((current) => Math.max(0, current - PAGE_SIZE))}
             disabled={offset === 0}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-gray-700 disabled:opacity-50"
           >
             Anterior
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setOffset((current) => current + PAGE_SIZE)}
             disabled={entries.length < PAGE_SIZE}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-gray-700 disabled:opacity-50"
           >
             Seguinte
-          </button>
+          </Button>
         </div>
       )}
     </main>

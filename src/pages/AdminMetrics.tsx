@@ -2,6 +2,7 @@ import { Navigate } from 'react-router-dom'
 import { useProfile } from '../hooks/useProfile'
 import { useAdminMetrics } from '../hooks/useAdminMetrics'
 import { BackButton } from '../components/BackButton'
+import { Card } from '../components/ui/Card'
 
 const ROLE_LABELS: Record<string, string> = {
   CLIENT: 'Clientes',
@@ -34,10 +35,10 @@ function formatMinutes(minutes: number | null): string {
 
 function Tile({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="flex flex-col gap-1 rounded-lg border border-gray-200 p-4">
-      <span className="text-2xl font-semibold text-gray-900">{value}</span>
+    <Card variant="solid" className="p-4 flex flex-col gap-1">
+      <span className="text-2xl font-extrabold text-piquete-blue font-heading">{value}</span>
       <span className="text-sm text-gray-600">{label}</span>
-    </div>
+    </Card>
   )
 }
 
@@ -52,7 +53,7 @@ export function AdminMetrics() {
   if (isProfileLoading) {
     return (
       <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-6 w-6 animate-pulse rounded-full bg-gray-300" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
       </main>
     )
   }
@@ -64,18 +65,20 @@ export function AdminMetrics() {
   const signupsTotal = metrics?.signupsLast30Days.reduce((sum, day) => sum + day.count, 0) ?? 0
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-6">
+    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
       <header className="flex items-center gap-3">
         <BackButton />
-        <h1 className="flex-1 text-2xl font-semibold text-gray-900">Métricas</h1>
+        <h1 className="flex-1 text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">
+          Métricas
+        </h1>
       </header>
 
       {isLoading && (
         <div className="grid grid-cols-2 gap-3">
-          <div className="h-20 animate-pulse rounded-lg bg-gray-200" />
-          <div className="h-20 animate-pulse rounded-lg bg-gray-200" />
-          <div className="h-20 animate-pulse rounded-lg bg-gray-200" />
-          <div className="h-20 animate-pulse rounded-lg bg-gray-200" />
+          <div className="h-20 animate-pulse rounded-2xl bg-gray-200" />
+          <div className="h-20 animate-pulse rounded-2xl bg-gray-200" />
+          <div className="h-20 animate-pulse rounded-2xl bg-gray-200" />
+          <div className="h-20 animate-pulse rounded-2xl bg-gray-200" />
         </div>
       )}
 
@@ -86,7 +89,7 @@ export function AdminMetrics() {
       {metrics && (
         <>
           <section className="flex flex-col gap-2">
-            <h2 className="text-sm font-medium text-gray-500">Utilizadores</h2>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Utilizadores</h2>
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(metrics.usersByRole).map(([role, count]) => (
                 <Tile key={role} label={ROLE_LABELS[role] ?? role} value={count} />
@@ -96,7 +99,7 @@ export function AdminMetrics() {
           </section>
 
           <section className="flex flex-col gap-2">
-            <h2 className="text-sm font-medium text-gray-500">Verificação de identidade (KYC)</h2>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Verificação de identidade (KYC)</h2>
             {Object.keys(metrics.kycByStatus).length === 0 ? (
               <p className="text-sm text-gray-600">Ainda não há submissões de KYC.</p>
             ) : (
@@ -109,23 +112,25 @@ export function AdminMetrics() {
           </section>
 
           <section className="flex flex-col gap-2">
-            <h2 className="text-sm font-medium text-gray-500">Profissionais ativos por província</h2>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Profissionais ativos por província</h2>
             {metrics.activeProfessionalsByProvince.length === 0 ? (
               <p className="text-sm text-gray-600">Ainda não há profissionais com província definida.</p>
             ) : (
-              <ul className="flex flex-col gap-1 rounded-lg border border-gray-200 p-3 text-sm">
-                {metrics.activeProfessionalsByProvince.map((row) => (
-                  <li key={row.province} className="flex justify-between">
-                    <span className="text-gray-700">{row.province}</span>
-                    <span className="font-medium text-gray-900">{row.count}</span>
-                  </li>
-                ))}
-              </ul>
+              <Card variant="solid">
+                <ul className="flex flex-col divide-y divide-gray-100 p-3 text-sm">
+                  {metrics.activeProfessionalsByProvince.map((row) => (
+                    <li key={row.province} className="flex justify-between py-1.5">
+                      <span className="text-gray-700">{row.province}</span>
+                      <span className="font-bold text-piquete-blue">{row.count}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Card>
             )}
           </section>
 
           <section className="flex flex-col gap-2">
-            <h2 className="text-sm font-medium text-gray-500">Pedidos de serviço</h2>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Pedidos de serviço</h2>
             <div className="grid grid-cols-2 gap-3">
               {Object.entries(metrics.serviceRequestsByStatus).map(([status, count]) => (
                 <Tile key={status} label={REQUEST_STATUS_LABELS[status] ?? status} value={count} />

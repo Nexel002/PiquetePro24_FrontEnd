@@ -6,6 +6,9 @@ import { useAdminUserDetail, useBanUser, useChangeUserRole, useResendEmail, useU
 import { useActivateSubscriptionManually, useUserSubscription } from '../hooks/useSubscription'
 import type { SubscriptionStatus } from '../services/subscriptions'
 import { BackButton } from '../components/BackButton'
+import { Button } from '../components/ui/Button'
+import { Badge } from '../components/ui/Badge'
+import { Card, CardContent } from '../components/ui/Card'
 import type { ProfessionalType, UserRole } from '../services/profile'
 import type { AdminUserDetail as AdminUserDetailData, ResendEmailTemplate } from '../services/adminUsers'
 
@@ -62,7 +65,7 @@ export function AdminUserDetail() {
   if (isProfileLoading) {
     return (
       <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-6 w-6 animate-pulse rounded-full bg-gray-300" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
       </main>
     )
   }
@@ -135,16 +138,16 @@ export function AdminUserDetail() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
       <header className="flex items-center gap-3">
         <BackButton />
-        <h1 className="text-2xl font-semibold text-gray-900">Ficha de utilizador</h1>
+        <h1 className="text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">Ficha de utilizador</h1>
       </header>
 
       {isLoading && (
-        <div className="flex flex-col gap-2">
-          <div className="h-6 w-40 animate-pulse rounded bg-gray-200" />
-          <div className="h-24 animate-pulse rounded bg-gray-200" />
+        <div className="flex flex-col gap-3">
+          <div className="h-6 w-40 animate-pulse rounded-xl bg-gray-200" />
+          <div className="h-24 animate-pulse rounded-3xl bg-gray-200" />
         </div>
       )}
 
@@ -154,57 +157,56 @@ export function AdminUserDetail() {
 
       {user && (
         <>
-          <section className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              {user.avatar_url ? (
-                <img src={user.avatar_url} alt="" className="h-14 w-14 rounded-full object-cover" />
-              ) : (
-                <div
-                  aria-hidden
-                  className="flex h-14 w-14 items-center justify-center rounded-full bg-gray-200 text-lg font-medium text-gray-500"
-                >
-                  {user.full_name.charAt(0).toUpperCase()}
+          <Card variant="solid">
+            <CardContent className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                {user.avatar_url ? (
+                  <img src={user.avatar_url} alt="" className="h-14 w-14 rounded-full object-cover" />
+                ) : (
+                  <div
+                    aria-hidden
+                    className="flex h-14 w-14 items-center justify-center rounded-full bg-piquete-yellow/15 border border-piquete-yellow/30 text-lg font-bold text-piquete-blue"
+                  >
+                    {user.full_name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <p className="text-lg font-bold text-piquete-blue">{user.full_name}</p>
+                  <Badge variant="info">{ROLE_LABELS[user.role]}</Badge>
                 </div>
-              )}
-              <div>
-                <p className="text-lg font-medium text-gray-900">{user.full_name}</p>
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
-                  {ROLE_LABELS[user.role]}
-                </span>
               </div>
-            </div>
 
-            <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
-              <dt className="text-gray-500">Telefone</dt>
-              <dd className="text-gray-900">{user.phone ?? 'sem telefone'}</dd>
+              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm pt-1 border-t border-gray-100">
+                <dt className="text-gray-500 pt-1.5">Telefone</dt>
+                <dd className="text-gray-900 pt-1.5">{user.phone ?? 'sem telefone'}</dd>
 
-              <dt className="text-gray-500">Localização</dt>
-              <dd className="text-gray-900">
-                {[user.neighborhood, user.district, user.province].filter(Boolean).join(', ') || 'não definida'}
-              </dd>
+                <dt className="text-gray-500">Localização</dt>
+                <dd className="text-gray-900">
+                  {[user.neighborhood, user.district, user.province].filter(Boolean).join(', ') || 'não definida'}
+                </dd>
 
-              <dt className="text-gray-500">Estado do KYC</dt>
-              <dd className="text-gray-900">{user.kyc_status ? KYC_STATUS_LABELS[user.kyc_status] : 'sem submissão'}</dd>
+                <dt className="text-gray-500">Estado do KYC</dt>
+                <dd className="text-gray-900">{user.kyc_status ? KYC_STATUS_LABELS[user.kyc_status] : 'sem submissão'}</dd>
 
-              <dt className="text-gray-500">Pedidos como cliente</dt>
-              <dd className="text-gray-900">{user.service_requests_as_client}</dd>
+                <dt className="text-gray-500">Pedidos como cliente</dt>
+                <dd className="text-gray-900">{user.service_requests_as_client}</dd>
 
-              <dt className="text-gray-500">Pedidos como profissional</dt>
-              <dd className="text-gray-900">{user.service_requests_as_professional}</dd>
+                <dt className="text-gray-500">Pedidos como profissional</dt>
+                <dd className="text-gray-900">{user.service_requests_as_professional}</dd>
 
-              <dt className="text-gray-500">Membro desde</dt>
-              <dd className="text-gray-900">{memberSinceFormatter.format(new Date(user.created_at))}</dd>
-            </dl>
-          </section>
+                <dt className="text-gray-500">Membro desde</dt>
+                <dd className="text-gray-900">{memberSinceFormatter.format(new Date(user.created_at))}</dd>
+              </dl>
+            </CardContent>
+          </Card>
 
           {/* Adendo v1.9, item B: liga à mesma tela de audit log já existente
               (Adendo v1.8), filtrada por este utilizador — sem endpoint novo, o
               backend já aceita user_id como filtro desde a Fase 8. */}
-          <Link
-            to={`/admin/audit-log?user_id=${user.id}`}
-            className="self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700"
-          >
-            Ver histórico de ações
+          <Link to={`/admin/audit-log?user_id=${user.id}`} className="self-start">
+            <Button variant="outline" size="sm">
+              Ver histórico de ações
+            </Button>
           </Link>
 
           {user.role === 'PROFESSIONAL' && <SubscricaoDoProfissional userId={user.id} />}
@@ -214,139 +216,115 @@ export function AdminUserDetail() {
               os templates "relevantes" para este utilizador (ex. esconder KYC para
               um CLIENT sem submissão) — decisão consciente de simplicidade, o admin
               sabe o que está a fazer ao escolher. */}
-          <section className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4">
-            <h2 className="text-sm font-medium text-gray-500">Reenviar email</h2>
-            <div className="flex gap-2">
-              <select
-                value={resendTemplate}
-                onChange={(event) => setResendTemplate(event.target.value as ResendEmailTemplate)}
-                className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
-              >
-                {Object.entries(RESEND_EMAIL_LABELS).map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                onClick={handleResendEmail}
-                disabled={resendEmailMutation.isPending}
-                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700 disabled:opacity-50"
-              >
-                {resendEmailMutation.isPending ? 'A enviar...' : 'Reenviar'}
-              </button>
-            </div>
-          </section>
+          <Card variant="solid">
+            <CardContent className="flex flex-col gap-2">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Reenviar email</h2>
+              <div className="flex gap-2">
+                <select
+                  value={resendTemplate}
+                  onChange={(event) => setResendTemplate(event.target.value as ResendEmailTemplate)}
+                  className="flex-1 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-piquete-blue/20 focus:border-piquete-blue"
+                >
+                  {Object.entries(RESEND_EMAIL_LABELS).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+                <Button type="button" variant="outline" size="sm" onClick={handleResendEmail} disabled={resendEmailMutation.isPending} isLoading={resendEmailMutation.isPending}>
+                  Reenviar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Adendo v1.9, item G: moderação de contas. "sign-out" (revogar sessões
               por ID) não existe nesta entrega — o SDK instalado exige o JWT da
               sessão, não um ID de utilizador; ver TRD para o detalhe. Mudar role só
               aparece para CLIENT/PROFESSIONAL — nunca para ADMIN, o backend rejeita
               e a UI nem oferece a opção. */}
-          <section className="flex flex-col gap-3 rounded-lg border border-red-200 p-4">
-            <h2 className="text-sm font-medium text-red-700">Moderação de conta</h2>
+          <Card variant="solid" className="border-rose-200">
+            <CardContent className="flex flex-col gap-3">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-rose-600">Moderação de conta</h2>
 
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-gray-700">
-                {isBanned(user.banned_until)
-                  ? `Conta banida até ${banExpiryFormatter.format(new Date(user.banned_until as string))}.`
-                  : 'Conta sem banimento ativo.'}
-              </p>
-
-              {isBanned(user.banned_until) ? (
-                <button
-                  type="button"
-                  onClick={handleUnban}
-                  disabled={unbanMutation.isPending}
-                  className="self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
-                >
-                  {unbanMutation.isPending ? 'A levantar banimento...' : 'Levantar banimento'}
-                </button>
-              ) : isConfirmingBan ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleConfirmBan}
-                    disabled={banMutation.isPending}
-                    className="rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                  >
-                    {banMutation.isPending ? 'A banir...' : 'Sim, banir'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setIsConfirmingBan(false)}
-                    disabled={banMutation.isPending}
-                    className="text-sm text-gray-600 underline disabled:opacity-50"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => setIsConfirmingBan(true)}
-                  className="self-start rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700"
-                >
-                  Banir conta
-                </button>
-              )}
-            </div>
-
-            {user.role !== 'ADMIN' && (
-              <div className="flex flex-col gap-2 border-t border-red-100 pt-3">
+              <div className="flex flex-col gap-2">
                 <p className="text-sm text-gray-700">
-                  Role atual: <span className="font-medium">{ROLE_LABELS[user.role]}</span>
+                  {isBanned(user.banned_until)
+                    ? `Conta banida até ${banExpiryFormatter.format(new Date(user.banned_until as string))}.`
+                    : 'Conta sem banimento ativo.'}
                 </p>
 
-                {isConfirmingRoleChange ? (
-                  <div className="flex flex-col gap-2">
-                    {user.role === 'CLIENT' && (
-                      <select
-                        value={targetProfessionalType}
-                        onChange={(event) => setTargetProfessionalType(event.target.value as ProfessionalType)}
-                        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm"
-                      >
-                        {Object.entries(PROFESSIONAL_TYPE_LABELS).map(([value, label]) => (
-                          <option key={value} value={value}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={handleConfirmRoleChange}
-                        disabled={changeRoleMutation.isPending}
-                        className="rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                      >
-                        {changeRoleMutation.isPending
-                          ? 'A alterar...'
-                          : `Sim, mudar para ${user.role === 'CLIENT' ? 'Profissional' : 'Cliente'}`}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setIsConfirmingRoleChange(false)}
-                        disabled={changeRoleMutation.isPending}
-                        className="text-sm text-gray-600 underline disabled:opacity-50"
-                      >
-                        Cancelar
-                      </button>
-                    </div>
+                {isBanned(user.banned_until) ? (
+                  <Button type="button" variant="outline" size="sm" onClick={handleUnban} disabled={unbanMutation.isPending} isLoading={unbanMutation.isPending} className="self-start">
+                    Levantar banimento
+                  </Button>
+                ) : isConfirmingBan ? (
+                  <div className="flex items-center gap-2">
+                    <Button type="button" variant="danger" size="sm" onClick={handleConfirmBan} disabled={banMutation.isPending} isLoading={banMutation.isPending}>
+                      Sim, banir
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm" onClick={() => setIsConfirmingBan(false)} disabled={banMutation.isPending}>
+                      Cancelar
+                    </Button>
                   </div>
                 ) : (
-                  <button
+                  <Button
                     type="button"
-                    onClick={() => setIsConfirmingRoleChange(true)}
-                    className="self-start rounded-lg border border-red-300 px-4 py-2 text-sm font-medium text-red-700"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsConfirmingBan(true)}
+                    className="self-start border-rose-300 text-rose-600 hover:bg-rose-600 hover:text-white"
                   >
-                    Mudar para {user.role === 'CLIENT' ? 'Profissional' : 'Cliente'}
-                  </button>
+                    Banir conta
+                  </Button>
                 )}
               </div>
-            )}
-          </section>
+
+              {user.role !== 'ADMIN' && (
+                <div className="flex flex-col gap-2 border-t border-rose-100 pt-3">
+                  <p className="text-sm text-gray-700">
+                    Role atual: <span className="font-semibold">{ROLE_LABELS[user.role]}</span>
+                  </p>
+
+                  {isConfirmingRoleChange ? (
+                    <div className="flex flex-col gap-2">
+                      {user.role === 'CLIENT' && (
+                        <select
+                          value={targetProfessionalType}
+                          onChange={(event) => setTargetProfessionalType(event.target.value as ProfessionalType)}
+                          className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-piquete-blue/20 focus:border-piquete-blue"
+                        >
+                          {Object.entries(PROFESSIONAL_TYPE_LABELS).map(([value, label]) => (
+                            <option key={value} value={value}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                      <div className="flex items-center gap-2">
+                        <Button type="button" variant="danger" size="sm" onClick={handleConfirmRoleChange} disabled={changeRoleMutation.isPending} isLoading={changeRoleMutation.isPending}>
+                          {`Sim, mudar para ${user.role === 'CLIENT' ? 'Profissional' : 'Cliente'}`}
+                        </Button>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setIsConfirmingRoleChange(false)} disabled={changeRoleMutation.isPending}>
+                          Cancelar
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsConfirmingRoleChange(true)}
+                      className="self-start border-rose-300 text-rose-600 hover:bg-rose-600 hover:text-white"
+                    >
+                      Mudar para {user.role === 'CLIENT' ? 'Profissional' : 'Cliente'}
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </>
       )}
     </main>
@@ -391,84 +369,72 @@ function SubscricaoDoProfissional({ userId }: { userId: string }) {
   }
 
   return (
-    <section className="flex flex-col gap-3 rounded-lg border border-gray-200 p-4">
-      <h2 className="text-sm font-medium text-gray-500">Subscrição</h2>
+    <Card variant="solid">
+      <CardContent className="flex flex-col gap-3">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Subscrição</h2>
 
-      {isLoading && <div className="h-12 animate-pulse rounded bg-gray-200" />}
+        {isLoading && <div className="h-12 animate-pulse rounded-xl bg-gray-200" />}
 
-      {isError && <p className="text-sm text-gray-600">Não foi possível carregar a subscrição deste profissional.</p>}
+        {isError && <p className="text-sm text-gray-600">Não foi possível carregar a subscrição deste profissional.</p>}
 
-      {summary && (
-        <>
-          <p className="text-sm text-gray-700">
-            Estado: <span className="font-medium">{SUBSCRIPTION_STATUS_LABELS[summary.status]}</span>
-            {summary.valid_until && summary.status === 'ACTIVE' && (
-              <> — válida até {subscriptionDateFormatter.format(new Date(summary.valid_until))}</>
-            )}
-          </p>
-
-          {!summary.kyc_approved ? (
-            <p className="text-sm text-gray-600">
-              A ativação só fica disponível depois de o KYC deste profissional ser aprovado.
+        {summary && (
+          <>
+            <p className="text-sm text-gray-700">
+              Estado: <Badge variant={summary.status === 'ACTIVE' ? 'active' : summary.status === 'EXPIRED' ? 'rejected' : 'info'}>{SUBSCRIPTION_STATUS_LABELS[summary.status]}</Badge>
+              {summary.valid_until && summary.status === 'ACTIVE' && (
+                <span className="ml-2">— válida até {subscriptionDateFormatter.format(new Date(summary.valid_until))}</span>
+              )}
             </p>
-          ) : isConfirming ? (
-            <div className="flex flex-col gap-2">
-              <p className="text-sm text-gray-700">
-                Confirmas que recebeste {summary.plan.amount} {summary.plan.currency}? A subscrição fica ativa por{' '}
-                {summary.plan.duration_days} dias
-                {summary.status === 'ACTIVE' ? ', somados aos que ainda restam' : ''}.
+
+            {!summary.kyc_approved ? (
+              <p className="text-sm text-gray-600">
+                A ativação só fica disponível depois de o KYC deste profissional ser aprovado.
               </p>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleConfirm}
-                  disabled={activateMutation.isPending}
-                  className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-                >
-                  {activateMutation.isPending ? 'A ativar...' : 'Sim, ativar'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setIsConfirming(false)}
-                  disabled={activateMutation.isPending}
-                  className="text-sm text-gray-600 underline disabled:opacity-50"
-                >
-                  Cancelar
-                </button>
+            ) : isConfirming ? (
+              <div className="flex flex-col gap-2">
+                <p className="text-sm text-gray-700">
+                  Confirmas que recebeste {summary.plan.amount} {summary.plan.currency}? A subscrição fica ativa por{' '}
+                  {summary.plan.duration_days} dias
+                  {summary.status === 'ACTIVE' ? ', somados aos que ainda restam' : ''}.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="primary" size="sm" onClick={handleConfirm} disabled={activateMutation.isPending} isLoading={activateMutation.isPending}>
+                    Sim, ativar
+                  </Button>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setIsConfirming(false)} disabled={activateMutation.isPending}>
+                    Cancelar
+                  </Button>
+                </div>
               </div>
-            </div>
-          ) : (
-            <form
-              onSubmit={(event) => {
-                event.preventDefault()
-                setIsConfirming(true)
-              }}
-              className="flex flex-col gap-2"
-            >
-              <label className="flex flex-col gap-1 text-sm text-gray-700">
-                Nota sobre o pagamento recebido
-                {/* Fica no audit log — é a única prova de um pagamento feito por fora. */}
-                <textarea
-                  required
-                  maxLength={500}
-                  rows={2}
-                  value={note}
-                  onChange={(event) => setNote(event.target.value)}
-                  placeholder="ex. Pago em numerário, recibo 0042"
-                  className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                />
-              </label>
-              <button
-                type="submit"
-                disabled={note.trim().length === 0}
-                className="self-start rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 disabled:opacity-50"
+            ) : (
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault()
+                  setIsConfirming(true)
+                }}
+                className="flex flex-col gap-2"
               >
-                {summary.status === 'ACTIVE' ? 'Renovar manualmente' : 'Ativar subscrição'}
-              </button>
-            </form>
-          )}
-        </>
-      )}
-    </section>
+                <label className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-piquete-blue-dark">Nota sobre o pagamento recebido</span>
+                  {/* Fica no audit log — é a única prova de um pagamento feito por fora. */}
+                  <textarea
+                    required
+                    maxLength={500}
+                    rows={2}
+                    value={note}
+                    onChange={(event) => setNote(event.target.value)}
+                    placeholder="ex. Pago em numerário, recibo 0042"
+                    className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-piquete-blue/20 focus:border-piquete-blue"
+                  />
+                </label>
+                <Button type="submit" variant="outline" size="sm" disabled={note.trim().length === 0} className="self-start">
+                  {summary.status === 'ACTIVE' ? 'Renovar manualmente' : 'Ativar subscrição'}
+                </Button>
+              </form>
+            )}
+          </>
+        )}
+      </CardContent>
+    </Card>
   )
 }
