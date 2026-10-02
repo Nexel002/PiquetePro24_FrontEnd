@@ -5,6 +5,10 @@ import { useOwnKyc, useSubmitKyc } from '../hooks/useKyc'
 import { KycUploadError } from '../services/kyc'
 import type { KycStatus } from '../services/kyc'
 import { BackButton } from '../components/BackButton'
+import { Button } from '../components/ui/Button'
+import { Badge } from '../components/ui/Badge'
+import { Card, CardContent } from '../components/ui/Card'
+import { Input } from '../components/ui/Input'
 
 const STATUS_LABELS: Record<KycStatus, string> = {
   PENDING: 'Em análise',
@@ -12,10 +16,10 @@ const STATUS_LABELS: Record<KycStatus, string> = {
   REJECTED: 'Rejeitado',
 }
 
-const STATUS_STYLES: Record<KycStatus, string> = {
-  PENDING: 'bg-amber-100 text-amber-700',
-  APPROVED: 'bg-green-100 text-green-700',
-  REJECTED: 'bg-red-100 text-red-700',
+const STATUS_BADGE_VARIANT: Record<KycStatus, 'pending' | 'approved' | 'rejected'> = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
 }
 
 // Tela única que cobre os dois momentos do fluxo (TRD Adendo v1.2 / Fase 4): sem
@@ -59,19 +63,21 @@ export function Kyc() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
       <header className="flex items-center gap-3">
         <BackButton />
-        <h1 className="flex-1 text-2xl font-semibold text-gray-900">Verificação de identidade</h1>
-        <Link to="/perfil" className="text-sm text-gray-600 underline">
+        <h1 className="flex-1 text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">
+          Verificação de identidade
+        </h1>
+        <Link to="/perfil" className="text-xs font-semibold text-piquete-blue hover:text-piquete-yellow-hover hover:underline">
           Perfil
         </Link>
       </header>
 
       {isLoading && (
-        <div className="flex flex-col gap-2">
-          <div className="h-6 w-40 animate-pulse rounded bg-gray-200" />
-          <div className="h-24 animate-pulse rounded bg-gray-200" />
+        <div className="flex flex-col gap-3">
+          <div className="h-6 w-40 animate-pulse rounded-xl bg-gray-200" />
+          <div className="h-24 animate-pulse rounded-3xl bg-gray-200" />
         </div>
       )}
 
@@ -82,89 +88,83 @@ export function Kyc() {
       )}
 
       {!isLoading && !isError && kyc && (
-        <div className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4">
-          <div className="flex items-center justify-between gap-2">
-            <p className="text-sm font-medium text-gray-900">Estado da submissão</p>
-            <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[kyc.status]}`}>
-              {STATUS_LABELS[kyc.status]}
-            </span>
-          </div>
+        <Card variant="solid">
+          <CardContent className="flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-bold text-piquete-blue">Estado da submissão</p>
+              <Badge variant={STATUS_BADGE_VARIANT[kyc.status]}>{STATUS_LABELS[kyc.status]}</Badge>
+            </div>
 
-          {kyc.status === 'PENDING' && (
-            <p className="text-sm text-gray-600">
-              Os teus documentos estão a ser revistos por um administrador. Volta a verificar mais tarde.
-            </p>
-          )}
-
-          {kyc.status === 'APPROVED' && (
-            // Aceitar pedidos exige também subscrição ativa (Backend TRD Adendo v1.12,
-            // item C) — dizer "já podes aceitar pedidos" aqui seria falso.
-            <div className="flex flex-col gap-1">
+            {kyc.status === 'PENDING' && (
               <p className="text-sm text-gray-600">
-                A tua identidade foi verificada. O passo seguinte é ativar a subscrição para aceitares pedidos.
+                Os teus documentos estão a ser revistos por um administrador. Volta a verificar mais tarde.
               </p>
-              <Link to="/subscricao" className="self-start text-sm text-gray-900 underline">
-                Ver subscrição
-              </Link>
-            </div>
-          )}
+            )}
 
-          {kyc.status === 'REJECTED' && (
-            <div className="flex flex-col gap-1">
-              <p className="text-sm text-gray-600">A tua submissão foi rejeitada. Corrige o problema indicado e submete novamente.</p>
-              {kyc.review_notes && <p className="text-sm text-red-700">Motivo: {kyc.review_notes}</p>}
-            </div>
-          )}
-        </div>
+            {kyc.status === 'APPROVED' && (
+              // Aceitar pedidos exige também subscrição ativa (Backend TRD Adendo v1.12,
+              // item C) — dizer "já podes aceitar pedidos" aqui seria falso.
+              <div className="flex flex-col gap-1">
+                <p className="text-sm text-gray-600">
+                  A tua identidade foi verificada. O passo seguinte é ativar a subscrição para aceitares pedidos.
+                </p>
+                <Link to="/subscricao" className="self-start text-sm font-semibold text-piquete-blue underline">
+                  Ver subscrição
+                </Link>
+              </div>
+            )}
+
+            {kyc.status === 'REJECTED' && (
+              <div className="flex flex-col gap-1">
+                <p className="text-sm text-gray-600">A tua submissão foi rejeitada. Corrige o problema indicado e submete novamente.</p>
+                {kyc.review_notes && <p className="text-sm text-rose-600">Motivo: {kyc.review_notes}</p>}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {!isLoading && !isError && showForm && (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <p className="text-sm text-gray-600">
-            Submete o número do teu BI, o NUIT e uma foto ou scan legível do documento para verificarmos a tua identidade.
-          </p>
+        <Card variant="solid">
+          <CardContent>
+            <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+              <p className="text-sm text-gray-600">
+                Submete o número do teu BI, o NUIT e uma foto ou scan legível do documento para verificarmos a tua identidade.
+              </p>
 
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Número do BI
-            <input
-              type="text"
-              required
-              value={biNumber}
-              onChange={(event) => setBiNumber(event.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            />
-          </label>
+              <Input
+                label="Número do BI"
+                type="text"
+                required
+                value={biNumber}
+                onChange={(event) => setBiNumber(event.target.value)}
+              />
 
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            NUIT
-            <input
-              type="text"
-              required
-              value={nuitNumber}
-              onChange={(event) => setNuitNumber(event.target.value)}
-              className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-            />
-          </label>
+              <Input
+                label="NUIT"
+                type="text"
+                required
+                value={nuitNumber}
+                onChange={(event) => setNuitNumber(event.target.value)}
+              />
 
-          <label className="flex flex-col gap-1 text-sm text-gray-700">
-            Foto ou scan do BI
-            <input
-              type="file"
-              accept="image/*"
-              required
-              onChange={(event) => setDocument(event.target.files?.[0] ?? null)}
-              className="text-sm"
-            />
-          </label>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-piquete-blue-dark">Foto ou scan do BI</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  required
+                  onChange={(event) => setDocument(event.target.files?.[0] ?? null)}
+                  className="text-sm text-gray-600 file:mr-3 file:rounded-xl file:border-0 file:bg-piquete-blue/10 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-piquete-blue hover:file:bg-piquete-blue/15"
+                />
+              </label>
 
-          <button
-            type="submit"
-            disabled={submitKycMutation.isPending}
-            className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-          >
-            {submitKycMutation.isPending ? 'A submeter...' : 'Submeter documentos'}
-          </button>
-        </form>
+              <Button type="submit" variant="primary" size="lg" disabled={submitKycMutation.isPending} isLoading={submitKycMutation.isPending} className="w-full">
+                Submeter documentos
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
       )}
     </main>
   )

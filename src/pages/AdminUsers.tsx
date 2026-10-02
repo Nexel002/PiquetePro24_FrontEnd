@@ -3,6 +3,9 @@ import { Link, Navigate } from 'react-router-dom'
 import { useProfile } from '../hooks/useProfile'
 import { useAdminUsers } from '../hooks/useAdminUsers'
 import { BackButton } from '../components/BackButton'
+import { Button } from '../components/ui/Button'
+import { Badge } from '../components/ui/Badge'
+import { Card } from '../components/ui/Card'
 import type { UserRole } from '../services/profile'
 
 const PAGE_SIZE = 25
@@ -14,6 +17,9 @@ const ROLE_LABELS: Record<UserRole, string> = {
   PROFESSIONAL: 'Profissional',
   ADMIN: 'Administrador',
 }
+
+const selectClassName =
+  'rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-piquete-blue/20 focus:border-piquete-blue'
 
 // TRD Adendo v1.9, item B: diretório geral de utilizadores — mesma convenção de
 // guard de role dentro do próprio componente já usada em AdminKyc.tsx/
@@ -35,7 +41,7 @@ export function AdminUsers() {
   if (isProfileLoading) {
     return (
       <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-6 w-6 animate-pulse rounded-full bg-gray-300" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
       </main>
     )
   }
@@ -56,10 +62,12 @@ export function AdminUsers() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-6">
+    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
       <header className="flex items-center gap-3">
         <BackButton />
-        <h1 className="flex-1 text-2xl font-semibold text-gray-900">Utilizadores</h1>
+        <h1 className="flex-1 text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">
+          Utilizadores
+        </h1>
       </header>
 
       <div className="flex flex-wrap gap-2 text-sm">
@@ -69,16 +77,16 @@ export function AdminUsers() {
             value={searchDraft}
             onChange={(event) => setSearchDraft(event.target.value)}
             placeholder="Pesquisar por nome ou telefone"
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-1.5"
+            className="flex-1 rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-sm text-gray-900 placeholder:text-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-piquete-blue/20 focus:border-piquete-blue"
           />
-          <button type="submit" className="rounded-lg border border-gray-300 px-3 py-1.5 text-gray-700">
+          <Button type="submit" variant="outline" size="sm">
             Pesquisar
-          </button>
+          </Button>
         </form>
         <select
           value={roleFilter}
           onChange={(event) => handleRoleChange(event.target.value as RoleFilter)}
-          className="rounded-lg border border-gray-300 px-3 py-1.5"
+          className={selectClassName}
         >
           <option value="ALL">Todos os roles</option>
           <option value="CLIENT">Clientes</option>
@@ -89,9 +97,9 @@ export function AdminUsers() {
 
       {isLoading && (
         <div className="flex flex-col gap-2">
-          <div className="h-14 animate-pulse rounded-lg bg-gray-200" />
-          <div className="h-14 animate-pulse rounded-lg bg-gray-200" />
-          <div className="h-14 animate-pulse rounded-lg bg-gray-200" />
+          <div className="h-14 animate-pulse rounded-2xl bg-gray-200" />
+          <div className="h-14 animate-pulse rounded-2xl bg-gray-200" />
+          <div className="h-14 animate-pulse rounded-2xl bg-gray-200" />
         </div>
       )}
 
@@ -105,17 +113,16 @@ export function AdminUsers() {
         <ul className="flex flex-col gap-2">
           {users.map((user) => (
             <li key={user.id}>
-              <Link
-                to={`/admin/utilizadores/${user.id}`}
-                className="flex items-center justify-between gap-2 rounded-lg border border-gray-200 p-3 hover:bg-gray-50"
-              >
-                <div>
-                  <p className="text-sm font-medium text-gray-900">{user.full_name}</p>
-                  <p className="text-xs text-gray-500">{user.phone ?? 'sem telefone'}</p>
-                </div>
-                <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">
-                  {ROLE_LABELS[user.role]}
-                </span>
+              <Link to={`/admin/utilizadores/${user.id}`}>
+                <Card variant="interactive">
+                  <div className="flex items-center justify-between gap-2 p-4">
+                    <div>
+                      <p className="text-sm font-bold text-piquete-blue">{user.full_name}</p>
+                      <p className="text-xs text-gray-500">{user.phone ?? 'sem telefone'}</p>
+                    </div>
+                    <Badge variant="info">{ROLE_LABELS[user.role]}</Badge>
+                  </div>
+                </Card>
               </Link>
             </li>
           ))}
@@ -124,22 +131,24 @@ export function AdminUsers() {
 
       {users && (offset > 0 || users.length === PAGE_SIZE) && (
         <div className="flex justify-between text-sm">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setOffset((current) => Math.max(0, current - PAGE_SIZE))}
             disabled={offset === 0}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-gray-700 disabled:opacity-50"
           >
             Anterior
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={() => setOffset((current) => current + PAGE_SIZE)}
             disabled={users.length < PAGE_SIZE}
-            className="rounded-lg border border-gray-300 px-3 py-1.5 text-gray-700 disabled:opacity-50"
           >
             Seguinte
-          </button>
+          </Button>
         </div>
       )}
     </main>

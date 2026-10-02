@@ -5,6 +5,9 @@ import { useProfile } from '../hooks/useProfile'
 import { useKycSubmissions, useReviewKyc } from '../hooks/useKyc'
 import type { KycStatus, ProfessionalKyc } from '../services/kyc'
 import { BackButton } from '../components/BackButton'
+import { Button } from '../components/ui/Button'
+import { Badge } from '../components/ui/Badge'
+import { Card } from '../components/ui/Card'
 
 const STATUS_LABELS: Record<KycStatus, string> = {
   PENDING: 'Em análise',
@@ -12,10 +15,10 @@ const STATUS_LABELS: Record<KycStatus, string> = {
   REJECTED: 'Rejeitado',
 }
 
-const STATUS_STYLES: Record<KycStatus, string> = {
-  PENDING: 'bg-amber-100 text-amber-700',
-  APPROVED: 'bg-green-100 text-green-700',
-  REJECTED: 'bg-red-100 text-red-700',
+const STATUS_BADGE_VARIANT: Record<KycStatus, 'pending' | 'approved' | 'rejected'> = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+  REJECTED: 'rejected',
 }
 
 const STATUS_FILTERS: Array<KycStatus | 'ALL'> = ['PENDING', 'APPROVED', 'REJECTED', 'ALL']
@@ -43,7 +46,7 @@ export function AdminKyc() {
   if (isProfileLoading) {
     return (
       <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-6 w-6 animate-pulse rounded-full bg-gray-300" />
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
       </main>
     )
   }
@@ -87,10 +90,12 @@ export function AdminKyc() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-6">
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
       <header className="flex items-center gap-3">
         <BackButton />
-        <h1 className="flex-1 text-2xl font-semibold text-gray-900">Revisão de KYC</h1>
+        <h1 className="flex-1 text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">
+          Revisão de KYC
+        </h1>
       </header>
 
       <div className="flex gap-2 text-sm">
@@ -99,7 +104,9 @@ export function AdminKyc() {
             key={filter}
             type="button"
             onClick={() => setStatusFilter(filter)}
-            className={`rounded-lg px-3 py-1.5 ${statusFilter === filter ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700'}`}
+            className={`rounded-xl px-3 py-1.5 font-semibold transition-colors ${
+              statusFilter === filter ? 'bg-piquete-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+            }`}
           >
             {STATUS_FILTER_LABELS[filter]}
           </button>
@@ -108,8 +115,8 @@ export function AdminKyc() {
 
       {isLoading && (
         <div className="flex flex-col gap-2">
-          <div className="h-24 animate-pulse rounded-lg bg-gray-200" />
-          <div className="h-24 animate-pulse rounded-lg bg-gray-200" />
+          <div className="h-24 animate-pulse rounded-2xl bg-gray-200" />
+          <div className="h-24 animate-pulse rounded-2xl bg-gray-200" />
         </div>
       )}
 
@@ -122,72 +129,60 @@ export function AdminKyc() {
       {submissions && submissions.length > 0 && (
         <ul className="flex flex-col gap-3">
           {submissions.map((kyc) => (
-            <li key={kyc.id} className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
-              <div className="flex items-start justify-between gap-2">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">BI {kyc.bi_number}</p>
-                  <p className="text-xs text-gray-500">NUIT {kyc.nuit_number}</p>
+            <li key={kyc.id}>
+              <Card variant="solid" className="flex flex-col gap-2 p-4">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="text-sm font-bold text-piquete-blue">BI {kyc.bi_number}</p>
+                    <p className="text-xs text-gray-500">NUIT {kyc.nuit_number}</p>
+                  </div>
+                  <Badge variant={STATUS_BADGE_VARIANT[kyc.status]}>{STATUS_LABELS[kyc.status]}</Badge>
                 </div>
-                <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[kyc.status]}`}>
-                  {STATUS_LABELS[kyc.status]}
-                </span>
-              </div>
 
-              {kyc.review_notes && <p className="text-sm text-gray-600">Motivo: {kyc.review_notes}</p>}
+                {kyc.review_notes && <p className="text-sm text-gray-600">Motivo: {kyc.review_notes}</p>}
 
-              {kyc.status === 'PENDING' && (
-                <div className="flex flex-col gap-2">
-                  {rejectingId === kyc.id ? (
-                    <div className="flex flex-col gap-2">
-                      <label className="flex flex-col gap-1 text-sm text-gray-700">
-                        Motivo da rejeição
-                        <textarea
-                          value={rejectNotes}
-                          onChange={(event) => setRejectNotes(event.target.value)}
-                          rows={2}
-                          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                        />
-                      </label>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => handleConfirmReject(kyc)}
-                          disabled={reviewKycMutation.isPending}
-                          className="rounded-lg bg-red-700 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-                        >
-                          Confirmar rejeição
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setRejectingId(null)}
-                          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm font-medium text-gray-700"
-                        >
-                          Cancelar
-                        </button>
+                {kyc.status === 'PENDING' && (
+                  <div className="flex flex-col gap-2">
+                    {rejectingId === kyc.id ? (
+                      <div className="flex flex-col gap-2">
+                        <label className="flex flex-col gap-1.5">
+                          <span className="text-xs font-semibold uppercase tracking-wider text-piquete-blue-dark">Motivo da rejeição</span>
+                          <textarea
+                            value={rejectNotes}
+                            onChange={(event) => setRejectNotes(event.target.value)}
+                            rows={2}
+                            className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-piquete-blue/20 focus:border-piquete-blue"
+                          />
+                        </label>
+                        <div className="flex gap-2">
+                          <Button type="button" variant="danger" size="sm" onClick={() => handleConfirmReject(kyc)} disabled={reviewKycMutation.isPending}>
+                            Confirmar rejeição
+                          </Button>
+                          <Button type="button" variant="ghost" size="sm" onClick={() => setRejectingId(null)}>
+                            Cancelar
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleApprove(kyc)}
-                        disabled={reviewKycMutation.isPending}
-                        className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-                      >
-                        Aprovar
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleStartReject(kyc.id)}
-                        disabled={reviewKycMutation.isPending}
-                        className="rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 disabled:opacity-50"
-                      >
-                        Rejeitar
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
+                    ) : (
+                      <div className="flex gap-2">
+                        <Button type="button" variant="primary" size="sm" onClick={() => handleApprove(kyc)} disabled={reviewKycMutation.isPending}>
+                          Aprovar
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStartReject(kyc.id)}
+                          disabled={reviewKycMutation.isPending}
+                          className="border-rose-300 text-rose-600 hover:bg-rose-600 hover:text-white"
+                        >
+                          Rejeitar
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </Card>
             </li>
           ))}
         </ul>

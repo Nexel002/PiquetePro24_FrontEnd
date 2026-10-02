@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAssignedServiceRequests, useServiceRequestContact } from '../hooks/useServiceRequests'
 import { BackButton } from '../components/BackButton'
+import { Button } from '../components/ui/Button'
+import { Badge } from '../components/ui/Badge'
 import { formatInternationalPhone } from '../lib/phone'
 import type { RequestStatus, ServiceRequest } from '../services/serviceRequests'
 
@@ -12,11 +14,11 @@ const STATUS_LABELS: Record<RequestStatus, string> = {
   CANCELLED: 'Cancelado',
 }
 
-const STATUS_STYLES: Record<RequestStatus, string> = {
-  OPEN: 'bg-gray-100 text-gray-700',
-  ASSIGNED: 'bg-blue-100 text-blue-700',
-  COMPLETED: 'bg-green-100 text-green-700',
-  CANCELLED: 'bg-red-100 text-red-700',
+const STATUS_BADGE_VARIANT: Record<RequestStatus, 'info' | 'pending' | 'approved' | 'rejected'> = {
+  OPEN: 'info',
+  ASSIGNED: 'pending',
+  COMPLETED: 'approved',
+  CANCELLED: 'rejected',
 }
 
 const dataFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'medium', timeZone: 'Africa/Maputo' })
@@ -28,19 +30,21 @@ export function AssignedServiceRequests() {
   const { data: requests, isLoading, isError } = useAssignedServiceRequests()
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
       <header className="flex items-center gap-3">
         <BackButton />
-        <h1 className="flex-1 text-2xl font-semibold text-gray-900">Trabalhos aceites</h1>
-        <Link to="/perfil" className="text-sm text-gray-600 underline">
+        <h1 className="flex-1 text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">
+          Trabalhos aceites
+        </h1>
+        <Link to="/perfil" className="text-xs font-semibold text-piquete-blue hover:text-piquete-yellow-hover hover:underline">
           Perfil
         </Link>
       </header>
 
       {isLoading && (
-        <div className="flex flex-col gap-2">
-          <div className="h-20 animate-pulse rounded-lg bg-gray-200" />
-          <div className="h-20 animate-pulse rounded-lg bg-gray-200" />
+        <div className="flex flex-col gap-3">
+          <div className="h-20 animate-pulse rounded-2xl bg-gray-200" />
+          <div className="h-20 animate-pulse rounded-2xl bg-gray-200" />
         </div>
       )}
 
@@ -51,10 +55,17 @@ export function AssignedServiceRequests() {
       )}
 
       {requests && requests.length === 0 && (
-        <div className="flex flex-col gap-2">
-          <p className="text-sm text-gray-600">Ainda não aceitaste nenhum pedido.</p>
-          <Link to="/pedidos-proximos" className="self-start text-sm text-gray-900 underline">
-            Ver pedidos perto de ti
+        <div className="flex flex-col items-center justify-center p-8 rounded-3xl bg-white border border-gray-100 shadow-card text-center gap-3">
+          <div className="w-14 h-14 rounded-2xl bg-piquete-yellow/15 border border-piquete-yellow/30 flex items-center justify-center text-2xl text-piquete-blue">
+            🧰
+          </div>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-base font-bold text-piquete-blue">Ainda não aceitaste nenhum pedido</h3>
+          </div>
+          <Link to="/pedidos-proximos" className="mt-2">
+            <Button variant="primary" size="md" className="rounded-xl font-bold shadow-glow-yellow">
+              Ver pedidos perto de ti
+            </Button>
           </Link>
         </div>
       )}
@@ -76,15 +87,13 @@ function TrabalhoAceite({ request }: { request: ServiceRequest }) {
   const [mostrarContacto, setMostrarContacto] = useState(false)
 
   return (
-    <li className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
+    <li className="flex flex-col gap-2.5 rounded-2xl bg-white border border-gray-100 shadow-card p-4 transition-all duration-300 hover:shadow-card-hover">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-gray-900">{request.title}</p>
-        <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[request.status]}`}>
-          {STATUS_LABELS[request.status]}
-        </span>
+        <p className="text-sm font-bold text-piquete-blue">{request.title}</p>
+        <Badge variant={STATUS_BADGE_VARIANT[request.status]}>{STATUS_LABELS[request.status]}</Badge>
       </div>
-      {request.description && <p className="text-sm text-gray-600">{request.description}</p>}
-      <p className="text-xs text-gray-500">
+      {request.description && <p className="text-xs text-gray-600 leading-relaxed">{request.description}</p>}
+      <p className="text-[11px] text-gray-400">
         {[request.neighborhood, request.district, request.province].filter(Boolean).join(', ')}
         {request.assigned_at && ` · aceite a ${dataFormatter.format(new Date(request.assigned_at))}`}
       </p>
@@ -93,13 +102,9 @@ function TrabalhoAceite({ request }: { request: ServiceRequest }) {
         (mostrarContacto ? (
           <ContactoCliente requestId={request.id} />
         ) : (
-          <button
-            type="button"
-            onClick={() => setMostrarContacto(true)}
-            className="self-start rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white"
-          >
+          <Button type="button" variant="primary" size="sm" onClick={() => setMostrarContacto(true)} className="self-start">
             Ver contacto do cliente
-          </button>
+          </Button>
         ))}
     </li>
   )
@@ -109,7 +114,7 @@ function ContactoCliente({ requestId }: { requestId: string }) {
   const { data: contact, isLoading, error } = useServiceRequestContact(requestId, { enabled: true })
 
   if (isLoading) {
-    return <div className="h-16 animate-pulse rounded-lg bg-gray-200" />
+    return <div className="h-16 animate-pulse rounded-2xl bg-gray-200" />
   }
 
   // A mensagem do backend explica o motivo (ex. subscrição expirou depois de aceitar:
@@ -117,10 +122,10 @@ function ContactoCliente({ requestId }: { requestId: string }) {
   // quem a pode resolver.
   if (error) {
     return (
-      <div role="alert" className="flex flex-col gap-1 rounded-lg border border-amber-200 bg-amber-50 p-3">
+      <div role="alert" className="flex flex-col gap-1 rounded-2xl border border-amber-200 bg-amber-50 p-3">
         <p className="text-sm text-amber-800">{error.message}</p>
         {error.message.includes('subscrição') && (
-          <Link to="/subscricao" className="self-start text-sm text-amber-900 underline">
+          <Link to="/subscricao" className="self-start text-sm font-semibold text-amber-900 underline">
             Ver subscrição
           </Link>
         )}
@@ -135,10 +140,10 @@ function ContactoCliente({ requestId }: { requestId: string }) {
   const temCoordenadas = contact.latitude !== null && contact.longitude !== null
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg bg-gray-50 p-3 text-sm">
-      <p className="font-medium text-gray-900">{contact.client_name}</p>
+    <div className="flex flex-col gap-2 rounded-2xl bg-gray-50 border border-gray-100 p-3 text-sm">
+      <p className="font-bold text-piquete-blue">{contact.client_name}</p>
       {contact.client_phone ? (
-        <a href={`tel:${formatInternationalPhone(contact.client_phone)}`} className="self-start text-gray-900 underline">
+        <a href={`tel:${formatInternationalPhone(contact.client_phone)}`} className="self-start text-piquete-blue font-semibold underline">
           Ligar: {formatInternationalPhone(contact.client_phone)}
         </a>
       ) : (
@@ -152,7 +157,7 @@ function ContactoCliente({ requestId }: { requestId: string }) {
           href={`https://www.google.com/maps/search/?api=1&query=${contact.latitude},${contact.longitude}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="self-start text-gray-900 underline"
+          className="self-start text-piquete-blue font-semibold underline"
         >
           Abrir localização exata no mapa
         </a>

@@ -3,6 +3,9 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useInitiateSubscription, useMySubscription } from '../hooks/useSubscription'
 import { BackButton } from '../components/BackButton'
+import { Button } from '../components/ui/Button'
+import { Badge } from '../components/ui/Badge'
+import { Card, CardContent } from '../components/ui/Card'
 import { formatInternationalPhone, PHONE_PREFIX } from '../lib/phone'
 import type { InitiateSubscriptionPayload, SubscriptionStatus, SubscriptionSummary } from '../services/subscriptions'
 
@@ -14,10 +17,10 @@ const STATUS_LABELS: Record<SubscriptionStatus, string> = {
   EXPIRED: 'Expirada',
 }
 
-const STATUS_STYLES: Record<SubscriptionStatus, string> = {
-  INACTIVE: 'bg-gray-100 text-gray-700',
-  ACTIVE: 'bg-green-100 text-green-700',
-  EXPIRED: 'bg-red-100 text-red-700',
+const STATUS_BADGE_VARIANT: Record<SubscriptionStatus, 'info' | 'active' | 'rejected'> = {
+  INACTIVE: 'info',
+  ACTIVE: 'active',
+  EXPIRED: 'rejected',
 }
 
 // Prefixos por operador — os mesmos que o backend valida (subscriptionController.ts):
@@ -51,19 +54,21 @@ export function Subscription() {
   const { data: summary, isLoading, isError } = useMySubscription()
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
       <header className="flex items-center gap-3">
         <BackButton />
-        <h1 className="flex-1 text-2xl font-semibold text-gray-900">Subscrição</h1>
-        <Link to="/perfil" className="text-sm text-gray-600 underline">
+        <h1 className="flex-1 text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">
+          Subscrição
+        </h1>
+        <Link to="/perfil" className="text-xs font-semibold text-piquete-blue hover:text-piquete-yellow-hover hover:underline">
           Perfil
         </Link>
       </header>
 
       {isLoading && (
-        <div className="flex flex-col gap-2">
-          <div className="h-6 w-40 animate-pulse rounded bg-gray-200" />
-          <div className="h-32 animate-pulse rounded bg-gray-200" />
+        <div className="flex flex-col gap-3">
+          <div className="h-6 w-40 animate-pulse rounded-xl bg-gray-200" />
+          <div className="h-32 animate-pulse rounded-3xl bg-gray-200" />
         </div>
       )}
 
@@ -84,64 +89,70 @@ function ConteudoSubscricao({ summary }: { summary: SubscriptionSummary }) {
 
   return (
     <>
-      <section className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4">
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-sm font-medium text-gray-900">Estado</p>
-          <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[summary.status]}`}>
-            {STATUS_LABELS[summary.status]}
-          </span>
-        </div>
-        {summary.status === 'ACTIVE' && summary.valid_until && (
-          <p className="text-sm text-gray-600">Válida até {dataFormatter.format(new Date(summary.valid_until))}.</p>
-        )}
-        {summary.status === 'EXPIRED' && (
+      <Card variant="solid">
+        <CardContent className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-bold text-piquete-blue">Estado</p>
+            <Badge variant={STATUS_BADGE_VARIANT[summary.status]}>{STATUS_LABELS[summary.status]}</Badge>
+          </div>
+          {summary.status === 'ACTIVE' && summary.valid_until && (
+            <p className="text-sm text-gray-600">Válida até {dataFormatter.format(new Date(summary.valid_until))}.</p>
+          )}
+          {summary.status === 'EXPIRED' && (
+            <p className="text-sm text-gray-600">
+              A tua subscrição expirou. Renova-a para voltares a aceitar pedidos.
+            </p>
+          )}
+          {summary.status === 'INACTIVE' && (
+            <p className="text-sm text-gray-600">Precisas de uma subscrição ativa para aceitar pedidos de clientes.</p>
+          )}
           <p className="text-sm text-gray-600">
-            A tua subscrição expirou. Renova-a para voltares a aceitar pedidos.
+            Plano mensal: {valorFormatter.format(summary.plan.amount)} {summary.plan.currency} por{' '}
+            {summary.plan.duration_days} dias.
           </p>
-        )}
-        {summary.status === 'INACTIVE' && (
-          <p className="text-sm text-gray-600">Precisas de uma subscrição ativa para aceitar pedidos de clientes.</p>
-        )}
-        <p className="text-sm text-gray-600">
-          Plano mensal: {valorFormatter.format(summary.plan.amount)} {summary.plan.currency} por{' '}
-          {summary.plan.duration_days} dias.
-        </p>
-      </section>
+        </CardContent>
+      </Card>
 
       {!summary.kyc_approved ? (
-        <section className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <p className="text-sm font-medium text-amber-800">Primeiro, a verificação de identidade</p>
-          <p className="text-sm text-amber-800">
-            Só podes pagar a subscrição depois de a tua identidade (KYC) estar aprovada — assim não pagas por um serviço
-            que ainda não podes usar.
-          </p>
-          <Link to="/verificacao-identidade" className="self-start text-sm text-amber-900 underline">
-            Ir para a verificação de identidade
-          </Link>
-        </section>
+        <Card variant="solid" className="border-amber-200 bg-amber-50">
+          <CardContent className="flex flex-col gap-2">
+            <p className="text-sm font-bold text-amber-800">Primeiro, a verificação de identidade</p>
+            <p className="text-sm text-amber-800">
+              Só podes pagar a subscrição depois de a tua identidade (KYC) estar aprovada — assim não pagas por um serviço
+              que ainda não podes usar.
+            </p>
+            <Link to="/verificacao-identidade" className="self-start text-sm font-semibold text-amber-900 underline">
+              Ir para a verificação de identidade
+            </Link>
+          </CardContent>
+        </Card>
       ) : pendente ? (
-        <section role="status" className="flex flex-col gap-2 rounded-lg border border-amber-200 bg-amber-50 p-4">
-          <div className="flex items-center gap-2">
-            <div aria-hidden className="h-4 w-4 animate-pulse rounded-full bg-amber-400" />
-            <p className="text-sm font-medium text-amber-800">A aguardar confirmação do pagamento</p>
-          </div>
-          <p className="text-sm text-amber-800">
-            Confirma o pagamento no telemóvel {transacao.payer_phone ? formatInternationalPhone(transacao.payer_phone) : ''} (introduz o PIN
-            quando o pedido aparecer). Esta página atualiza sozinha.
-          </p>
-        </section>
+        <Card variant="solid" className="border-amber-200 bg-amber-50">
+          <CardContent role="status" className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <div aria-hidden className="h-4 w-4 animate-pulse rounded-full bg-amber-400" />
+              <p className="text-sm font-bold text-amber-800">A aguardar confirmação do pagamento</p>
+            </div>
+            <p className="text-sm text-amber-800">
+              Confirma o pagamento no telemóvel {transacao.payer_phone ? formatInternationalPhone(transacao.payer_phone) : ''} (introduz o PIN
+              quando o pedido aparecer). Esta página atualiza sozinha.
+            </p>
+          </CardContent>
+        </Card>
       ) : !summary.payments_available ? (
-        <section className="flex flex-col gap-2 rounded-lg border border-gray-200 p-4">
-          <p className="text-sm font-medium text-gray-900">Pagamento online ainda indisponível</p>
-          <p className="text-sm text-gray-600">
-            Por agora, a ativação da subscrição é feita pela equipa PiquetePro24. Contacta-nos para combinar o pagamento
-            — a tua subscrição fica ativa assim que o confirmarmos.
-          </p>
-        </section>
+        <Card variant="solid">
+          <CardContent className="flex flex-col gap-2">
+            <p className="text-sm font-bold text-piquete-blue">Pagamento online ainda indisponível</p>
+            <p className="text-sm text-gray-600">
+              Por agora, a ativação da subscrição é feita pela equipa PiquetePro24. Contacta-nos para combinar o pagamento
+              — a tua subscrição fica ativa assim que o confirmarmos.
+            </p>
+          </CardContent>
+        </Card>
       ) : (
         <>
           {transacao?.status === 'FAILED' && summary.status !== 'ACTIVE' && (
-            <p role="alert" className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <p role="alert" className="rounded-2xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               O último pagamento não foi concluído. Podes tentar outra vez.
             </p>
           )}
@@ -179,81 +190,82 @@ function FormularioPagamento({ summary }: { summary: SubscriptionSummary }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <h2 className="text-sm font-medium text-gray-900">
-        {summary.status === 'ACTIVE' ? 'Renovar antecipadamente' : 'Pagar subscrição'}
-      </h2>
-      {summary.status === 'ACTIVE' && (
-        <p className="text-sm text-gray-600">Os novos {summary.plan.duration_days} dias somam-se aos que ainda tens.</p>
-      )}
+    <Card variant="solid">
+      <CardContent>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <h2 className="text-sm font-bold text-piquete-blue">
+            {summary.status === 'ACTIVE' ? 'Renovar antecipadamente' : 'Pagar subscrição'}
+          </h2>
+          {summary.status === 'ACTIVE' && (
+            <p className="text-sm text-gray-600">Os novos {summary.plan.duration_days} dias somam-se aos que ainda tens.</p>
+          )}
 
-      <fieldset className="flex flex-col gap-2">
-        <legend className="mb-1 text-sm text-gray-700">Método de pagamento</legend>
-        {gatewaysDisponiveis.map((g) => (
-          <label
-            key={g}
-            className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-sm ${
-              gateway === g ? 'border-gray-900' : 'border-gray-300'
-            }`}
-          >
-            <input
-              type="radio"
-              name="gateway"
-              value={g}
-              checked={gateway === g}
-              onChange={() => {
-                setGateway(g)
-                setErro(null)
-              }}
-            />
-            <span className="text-gray-900">
-              {GATEWAYS[g].nome} <span className="text-gray-500">({GATEWAYS[g].operador} {GATEWAYS[g].prefixos.join('/')})</span>
-            </span>
+          <fieldset className="flex flex-col gap-2">
+            <legend className="mb-1 text-xs font-semibold uppercase tracking-wider text-piquete-blue-dark">
+              Método de pagamento
+            </legend>
+            {gatewaysDisponiveis.map((g) => (
+              <label
+                key={g}
+                className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 text-sm transition-colors ${
+                  gateway === g ? 'border-piquete-blue bg-piquete-blue/5' : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="gateway"
+                  value={g}
+                  checked={gateway === g}
+                  onChange={() => {
+                    setGateway(g)
+                    setErro(null)
+                  }}
+                  className="accent-piquete-blue"
+                />
+                <span className="text-gray-900">
+                  {GATEWAYS[g].nome} <span className="text-gray-500">({GATEWAYS[g].operador} {GATEWAYS[g].prefixos.join('/')})</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+
+          <label className="flex flex-col gap-1.5 group">
+            <span className="text-xs font-semibold uppercase tracking-wider text-piquete-blue-dark">Número que vai pagar</span>
+            <div className="flex overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm focus-within:border-piquete-blue focus-within:ring-2 focus-within:ring-piquete-blue/20">
+              <span className="flex items-center bg-gray-50 px-3 text-sm text-gray-500 border-r border-gray-200">{PHONE_PREFIX}</span>
+              <input
+                type="tel"
+                inputMode="numeric"
+                autoComplete="tel-national"
+                required
+                maxLength={9}
+                value={digitos}
+                onChange={(event) => {
+                  setDigitos(event.target.value.replace(/\D/g, ''))
+                  setErro(null)
+                }}
+                aria-invalid={erro !== null}
+                aria-describedby={erro ? 'erro-telefone' : undefined}
+                className="min-w-0 flex-1 px-3 py-3 text-sm text-gray-900 placeholder:text-gray-400 outline-none"
+                placeholder="841234567"
+              />
+            </div>
+            {erro && (
+              <span id="erro-telefone" className="text-xs text-rose-500 font-medium">
+                {erro}
+              </span>
+            )}
           </label>
-        ))}
-      </fieldset>
 
-      <label className="flex flex-col gap-1 text-sm text-gray-700">
-        Número que vai pagar
-        <div className="flex items-center rounded-lg border border-gray-300">
-          <span className="border-r border-gray-300 px-3 py-2 text-sm text-gray-500">{PHONE_PREFIX}</span>
-          <input
-            type="tel"
-            inputMode="numeric"
-            autoComplete="tel-national"
-            required
-            maxLength={9}
-            value={digitos}
-            onChange={(event) => {
-              setDigitos(event.target.value.replace(/\D/g, ''))
-              setErro(null)
-            }}
-            aria-invalid={erro !== null}
-            aria-describedby={erro ? 'erro-telefone' : undefined}
-            className="min-w-0 flex-1 rounded-r-lg px-3 py-2 text-sm"
-            placeholder="841234567"
-          />
-        </div>
-        {erro && (
-          <span id="erro-telefone" className="text-sm text-red-600">
-            {erro}
-          </span>
-        )}
-      </label>
+          <Button type="submit" variant="primary" size="lg" disabled={initiate.isPending} isLoading={initiate.isPending} className="w-full">
+            {initiate.isPending ? 'A enviar pedido...' : `Pagar ${valorFormatter.format(summary.plan.amount)} ${summary.plan.currency}`}
+          </Button>
 
-      <button
-        type="submit"
-        disabled={initiate.isPending}
-        className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
-      >
-        {initiate.isPending
-          ? 'A enviar pedido...'
-          : `Pagar ${valorFormatter.format(summary.plan.amount)} ${summary.plan.currency}`}
-      </button>
-
-      {simulado && (
-        <p className="text-xs text-gray-500">Ambiente de testes: o pagamento é simulado e nenhum valor é cobrado.</p>
-      )}
-    </form>
+          {simulado && (
+            <p className="text-xs text-gray-500 text-center">Ambiente de testes: o pagamento é simulado e nenhum valor é cobrado.</p>
+          )}
+        </form>
+      </CardContent>
+    </Card>
   )
 }
