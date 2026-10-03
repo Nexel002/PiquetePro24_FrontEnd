@@ -902,3 +902,23 @@ Além disso: `/service_requests/nearby` passa a exigir `PROFESSIONAL` e deixa de
 **Perspetiva do frontend:** só tipos — `OwnKyc` (sem `bi_document_url`/`reviewed_by`) para `GET`/`POST /kyc`, e `NearbyServiceRequest` sem `client_id`. Nenhum ecrã usava os campos retirados; os sliders de raio já só enviavam inteiros. Um 500 passa a trazer sempre a mesma mensagem genérica, que o interceptor mostra tal como vem.
 
 **Critérios de entrega correspondentes:** ver `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 6.
+
+---
+
+## Adendo v1.16
+
+### A. Simplificação do ecrã de perfil e gravação automática da localização — pedido do utilizador, sem componente no backend
+
+**Contexto:** depois do redesign de `feat/redesign-tela-perfil` (Adendo v1.13), o utilizador pediu, por iterações sucessivas de feedback sobre capturas de ecrã reais (mobile e desktop), uma simplificação adicional de `Profile.tsx` — menos elementos, ações de conta consolidadas, e captura de localização num só toque.
+
+**Decisões:**
+- **Removidos:** badges flutuantes de contagem de pedidos/concluídos sobre a foto, estrelas de avaliação (fixas, nunca refletiam dados reais), selo de "verificado", label "Conta: Cliente" (redundante com o que já era editável) e os botões "Editar" e "Solicitar Novo Serviço" (considerado desnecessário nesta tela — o CTA de pedir serviço já existe noutros ecrãs).
+- **Ações de conta consolidadas:** editar nome/telefone, mudar password e remover foto passam todas a estar atrás de um único ícone de definições (engrenagem), em vez de três entradas separadas; um ícone de câmara ao lado dispara o upload de foto diretamente.
+- **Layout responsivo:** em mobile o ecrã ocupa o espaço todo, sem margens laterais nem cantos arredondados (pedido explícito — "não pode haver espaços em branco no lado"); a partir do breakpoint `sm:` o cartão fica flutuante sobre a página branca. Foi tentado um tratamento de modal com fundo escurecido no desktop, inspirado no perfil de artista do Spotify — **revertido a pedido do utilizador**: além de não agradar visualmente, a combinação `position: fixed` + scroll interno + animação de escala (`animate-fade-in`) coincide com um bug de repintura conhecido no Chrome, e terá contribuído para um efeito "fantasma" (texto e ícones sobrepostos/pouco nítidos) relatado numa das iterações.
+- **`BackButton` (`src/components/BackButton.tsx`) ganhou um `className` opcional**, com o valor por omissão preservado (cinzento, para cabeçalhos em fundo branco) — necessário porque o ícone ficava invisível sobre a foto escura do cabeçalho de `Profile.tsx`, que passa `text-white`. Os outros 12 ecrãs que usam `<BackButton />` sem argumentos não mudam.
+- **`LocationForm` — mudança de comportamento, aplica-se a todos os consumidores do componente partilhado (`Profile.tsx` e `pages/onboarding/CompleteLocation.tsx`):** o botão "Usar a minha localização (GPS)" e o passo de confirmação ("Localização encontrada" + "Confirmar esta localização" + "Localização atualizada com sucesso!") foram removidos. Um único toque num ícone de localização obtém o GPS e grava de imediato assim que a geocodificação reversa termina (sucesso ou erro) — sem exigir um segundo toque. A gravação espera a geocodificação reversa responder para não perder `province`/`district`/`neighborhood` (mesma lógica de enriquecimento do Adendo v1.4 G), mas nunca bloqueia indefinidamente: um erro da geocodificação também desbloqueia a gravação.
+- **CTA "Fazer o Meu Primeiro Pedido"** (histórico de pedidos vazio) passa de botão com texto a um ícone "+" sólido, redondo, com fundo amarelo.
+
+**Verificado em cada uma das iterações desta entrega:** `tsc -b`, `eslint` e `vite build` limpos; os 15 testes Vitest existentes (`Subscription.test.tsx`, `Kyc.test.tsx`, que não tocam nesta página) continuam a passar sem alteração. **Não verificado:** validação interativa em browser (sem ferramenta de automação disponível nesta sessão) — cada iteração foi validada pelo próprio utilizador por captura de ecrã direta, incluindo a deteção do problema de repintura do modal desktop que levou à reversão acima.
+
+**Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6.
