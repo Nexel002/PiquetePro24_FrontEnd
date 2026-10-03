@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { useUpdateLocation } from '../hooks/useProfile'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useReverseGeocode } from '../hooks/useReverseGeocode'
@@ -47,28 +47,34 @@ export function LocationForm({
     geolocation.locate()
   }
 
-  // O efeito de gravar assim que o GPS responde fica no handler do botão "Confirmar",
-  // não automático ao obter coordenadas — o utilizador vê o resultado antes de o
-  // backend gravar, consistente com o fluxo do fallback manual (que também só grava
-  // ao submeter o formulário).
-  //
-  // province/district/neighborhood vão junto das coordenadas quando a geocodificação
-  // reversa já respondeu (pendingPlace.data) — cache legível da hierarquia ao lado do
-  // GPS, para não deixar esses campos sempre em branco quando a localização vem por
-  // GPS. Se a geocodificação ainda não respondeu ou falhou, seguem undefined e o
-  // backend grava null nesses campos (não bloqueia a confirmação por isso).
-  function handleConfirmGps() {
-    if (geolocation.state.status !== 'success') return
+  // Gravação automática assim que o GPS responde (pedido do utilizador — sem passo
+  // de "confirmar", um só toque no ícone basta). Espera a geocodificação reversa
+  // terminar (sucesso ou erro) antes de gravar, para não perder province/district/
+  // neighborhood quando a resposta chega a tempo — mas não bloqueia para sempre se
+  // ela falhar (pendingPlace.isLoading passa a false também no erro).
+  // autoConfirmedRef evita gravar duas vezes para a mesma coordenada (o efeito
+  // corre de novo quando pendingPlace deixa de estar a carregar).
+  const autoConfirmedRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (geolocation.state.status !== 'success' || pendingPlace.isLoading) return
+    const { latitude, longitude } = geolocation.state.coordinates
+    const key = `${latitude},${longitude}`
+    if (autoConfirmedRef.current === key) return
+    autoConfirmedRef.current = key
+
     updateLocation.mutate(
       {
-        ...geolocation.state.coordinates,
+        latitude,
+        longitude,
         province: pendingPlace.data?.province ?? undefined,
         district: pendingPlace.data?.district ?? undefined,
         neighborhood: pendingPlace.data?.neighborhood ?? undefined,
       },
       { onSuccess: onSaved },
     )
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geolocation.state, pendingPlace.isLoading])
 
   function handleSubmitHierarchy(event: FormEvent) {
     event.preventDefault()
@@ -85,51 +91,44 @@ export function LocationForm({
       ? [profile.province, profile.district, profile.neighborhood].filter(Boolean).join(' — ')
       : 'Ainda não definida'
 
+  const isBusy = geolocation.state.status === 'locating' || (geolocation.state.status === 'success' && (pendingPlace.isLoading || updateLocation.isPending))
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-piquete-blue/5 border border-piquete-blue/10 rounded-xl p-3 flex flex-col items-center justify-center text-center">
+      {/* Um só toque no ícone obtém o GPS e grava de imediato — sem passo de
+          confirmação à parte (pedido do utilizador). */}
+      <div className="relative bg-piquete-blue/5 border border-piquete-blue/10 rounded-xl p-3 flex flex-col items-center justify-center text-center">
+        <button
+          type="button"
+          onClick={handleUseGps}
+          disabled={isBusy}
+          aria-label="Atualizar localização por GPS"
+          className="absolute top-2 right-2 p-1.5 rounded-full bg-white border border-piquete-blue/20 text-piquete-blue hover:bg-piquete-blue hover:text-white transition-colors disabled:opacity-50"
+        >
+          {isBusy ? (
+            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 21c-4.418-4.03-7-7.86-7-11a7 7 0 1114 0c0 3.14-2.582 6.97-7 11z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11.5a2 2 0 100-4 2 2 0 000 4z" />
+            </svg>
+          )}
+        </button>
         <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Localização Atual</p>
         <p className="text-sm font-bold text-piquete-blue">
-          {currentLocationLabel}
+          {geolocation.state.status === 'locating'
+            ? 'A localizar...'
+            : geolocation.state.status === 'success' && pendingPlace.isLoading
+              ? 'A identificar o lugar...'
+              : currentLocationLabel}
         </p>
       </div>
 
-      <Button
-        type="button"
-        onClick={handleUseGps}
-        disabled={geolocation.state.status === 'locating'}
-        isLoading={geolocation.state.status === 'locating'}
-        className="w-full"
-      >
-        {geolocation.state.status === 'locating' ? 'A localizar...' : 'Usar a minha localização (GPS)'}
-      </Button>
-
       {geolocation.state.status === 'error' && (
         <p className="text-sm font-medium text-red-600 text-center">{geolocation.state.message}</p>
-      )}
-
-      {geolocation.state.status === 'success' && (
-        <div className="flex flex-col gap-3 rounded-xl border-2 border-piquete-yellow bg-white p-4 shadow-sm">
-          <p className="text-sm font-semibold text-gray-700 text-center">
-            Localização encontrada:{' '}
-            <span className="text-piquete-blue block mt-1 text-base">
-              {pendingPlace.data?.placeName ??
-                (pendingPlace.isError
-                  ? `${geolocation.state.coordinates.latitude.toFixed(4)}, ${geolocation.state.coordinates.longitude.toFixed(4)}`
-                  : 'A identificar o lugar...')}
-            </span>
-          </p>
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={handleConfirmGps}
-            disabled={updateLocation.isPending}
-            isLoading={updateLocation.isPending}
-            className="w-full"
-          >
-            Confirmar esta localização
-          </Button>
-        </div>
       )}
 
       {allowManual && (
@@ -196,11 +195,6 @@ export function LocationForm({
       {updateLocation.isError && (
         <p className="text-sm font-medium text-red-600 text-center bg-red-50 p-2 rounded-lg mt-2">
           Não foi possível guardar a localização. Tenta novamente.
-        </p>
-      )}
-      {updateLocation.isSuccess && (
-        <p className="text-sm font-medium text-green-700 text-center bg-green-50 p-2 rounded-lg mt-2">
-          Localização atualizada com sucesso!
         </p>
       )}
     </div>

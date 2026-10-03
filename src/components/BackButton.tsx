@@ -3,7 +3,11 @@ import { useNavigate } from 'react-router-dom'
 // Volta ao ecrã anterior no histórico do browser (navigate(-1)), não sempre para um
 // destino fixo — se o utilizador entrou nesta tela a partir de um link diferente da
 // Home, "voltar" deve respeitar essa navegação em vez de a ignorar.
-export function BackButton() {
+//
+// `className` sobrepõe a cor por omissão (cinza, para cabeçalhos em fundo branco) —
+// necessário em Profile.tsx, onde o botão fica sobre uma foto escura e precisa de
+// ficar branco para ter contraste suficiente.
+export function BackButton({ className = 'text-gray-600 hover:bg-gray-100' }: { className?: string } = {}) {
   const navigate = useNavigate()
 
   return (
@@ -11,7 +15,7 @@ export function BackButton() {
       type="button"
       onClick={() => navigate(-1)}
       aria-label="Voltar"
-      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-gray-600 hover:bg-gray-100"
+      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${className}`}
     >
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5">
         <path
