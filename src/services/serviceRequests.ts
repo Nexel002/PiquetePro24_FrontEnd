@@ -17,6 +17,10 @@ export interface ServiceRequest {
   created_at: string
   assigned_at: string | null
   completed_at: string | null
+  // Só vem preenchido em fetchMyServiceRequests (Fase 9) — indica se o pedido já tem
+  // avaliação do cliente, para decidir se mostra o formulário. undefined nos outros
+  // endpoints (ex. fetchAssignedServiceRequests, do lado do profissional).
+  has_review?: boolean
 }
 
 // Sem client_id desde a Fase 6 do backend (TRD Adendo v1.15, item C): não é preciso para
@@ -108,6 +112,29 @@ export async function cancelServiceRequest(requestId: string): Promise<ServiceRe
 // aceite e ao contacto do cliente.
 export async function fetchAssignedServiceRequests(): Promise<ServiceRequest[]> {
   const response = await api.get<ServiceRequest[]>('/service_requests/assigned')
+  return response.data
+}
+
+export interface ReviewPayload {
+  rating: number
+  comment?: string
+}
+
+export interface CreatedReview {
+  id: string
+  service_request_id: string
+  professional_id: string
+  client_id: string
+  rating: number
+  comment: string | null
+  created_at: string
+}
+
+// POST /service_requests/:id/review (Fase 9, TRD Adendo v1.17) — só o client_id do
+// pedido pode avaliar, e só depois de COMPLETED (backend valida; 400/403/409 chegam
+// como Error com a mensagem do backend).
+export async function submitServiceRequestReview(requestId: string, payload: ReviewPayload): Promise<CreatedReview> {
+  const response = await api.post<CreatedReview>(`/service_requests/${requestId}/review`, payload)
   return response.data
 }
 

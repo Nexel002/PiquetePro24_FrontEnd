@@ -25,6 +25,9 @@ export interface UserProfile {
   // URL pública no bucket 'avatars' do Supabase Storage; opcional (ver
   // services/avatar.ts para o fluxo de upload).
   avatar_url: string | null
+  // Nota de apresentação no catálogo do profissional (Fase 9) — disponível a
+  // qualquer role, mesma decisão de avatar_url.
+  bio: string | null
   created_at: string
 }
 
@@ -57,6 +60,8 @@ export interface ProfileDetailsUpdatePayload {
   phone?: string
   // null explícito remove a foto; undefined deixa o campo intocado.
   avatar_url?: string | null
+  // Mesma convenção de null/undefined do avatar_url, aplicada a bio.
+  bio?: string | null
 }
 
 export async function fetchProfile(): Promise<UserProfile> {

@@ -279,6 +279,34 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 9 — Catálogo do Profissional (Bio, Portfólio & Avaliações)
+
+**Objetivo:** consumir a Fase 10 do backend (`Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` desse repositório e TRD Adendo v1.17) — ecrã onde o profissional edita a própria bio e fotos de trabalhos, e ecrã onde qualquer utilizador autenticado vê o catálogo de um profissional (bio, fotos, avaliações de clientes).
+
+**Nota de dependência:** só pode começar depois dos endpoints da Fase 10 do backend existirem. Não depende de nenhuma fase deste plano além da Fase 4 (mesma convenção de guard `profile.role === 'PROFESSIONAL'` já estabelecida em `Kyc.tsx`/`Subscription.tsx`).
+
+**Escopo:**
+- `src/services/catalog.ts` — tipos (`PortfolioPhoto`, `Review`, `ProfessionalCatalog`) + `fetchProfessionalCatalog(id)`, `addPortfolioPhoto(url)`, `removePortfolioPhoto(id)`, `submitReview(serviceRequestId, { rating, comment })`.
+- `src/services/portfolio.ts` — upload de foto de portfólio, **mesmo padrão de `src/services/avatar.ts`**: converte com `convertToWebp` (`src/lib/imageConversion.ts`, já existente e já preparado para este caso — comentário no código previa exactamente esta reutilização), valida tipo/tamanho (reaproveitar `MAX_FILE_SIZE_BYTES` do padrão de avatar), faz upload directo ao bucket `portfolio-photos` com a `anon key` (RLS por pasta `<user_id>/...`, ver Fase 10 do backend), devolve o URL público para `addPortfolioPhoto`. **Nenhuma lógica de conversão nova** — só reutilização.
+- `src/hooks/useCatalog.ts` — `useProfessionalCatalog(id)`, `useAddPortfolioPhoto()`, `useRemovePortfolioPhoto()`, `useSubmitReview()`, cada mutação invalida a query do catálogo afetado.
+- `src/pages/MyCatalog.tsx` — ecrã de edição do próprio catálogo: `bio` (textarea, reaproveita o padrão de edição inline de `Profile.tsx`, grava via `PATCH /profile` já existente), grid de fotos com botão de remover, input de upload que chama `portfolio.ts`. Guard inline `profile?.role !== 'PROFESSIONAL'` (mesmo padrão de `AdminKyc.tsx`).
+- `src/pages/ProfessionalCatalog.tsx` — ecrã de visualização (bio, grid de fotos, média de avaliação, lista de comentários com nome do cliente). Usado tanto quando um `CLIENT` vê um profissional (link novo em `FindProfessionals.tsx`) como quando o próprio profissional pré-visualiza o que editou (link a partir de `MyCatalog.tsx`).
+- Formulário de avaliação: secção nova em `AssignedServiceRequests.tsx`/`MyServiceRequests.tsx` (ecrã do cliente), visível só quando `status = 'COMPLETED'` e o pedido ainda não tem avaliação — reaproveita o padrão de confirmação já usado noutras ações.
+- Rotas novas em `App.tsx`: `/catalogo` (`ProtectedRoute` + `OnboardingGate`, guard `PROFESSIONAL` dentro da página) e `/profissionais/:id` (`ProtectedRoute` + `OnboardingGate`, qualquer role).
+- Link para `/catalogo` em `Home.tsx`, só visível a `profile.role === 'PROFESSIONAL'` (mesma convenção dos outros links condicionais); link "Ver perfil" em `FindProfessionals.tsx` para `/profissionais/:id`.
+
+**Implementado em `feat/fase-9-catalogo-profissional`:** `services/catalog.ts` (tipos `Review`/`ProfessionalCatalog` + `fetchProfessionalCatalog`), `services/portfolio.ts` (`uploadPortfolioPhoto` — reaproveita `convertToWebp` de `lib/imageConversion.ts` sem lógica nova, `addPortfolioPhoto`, `removePortfolioPhoto`), `hooks/useCatalog.ts` (`useProfessionalCatalog`, `useAddPortfolioPhoto`, `useRemovePortfolioPhoto`, `useSubmitReview`), `pages/MyCatalog.tsx` (edição: bio via `PATCH /profile` já existente, grid de fotos com remover, upload), `pages/ProfessionalCatalog.tsx` (visualização: bio, grid de fotos, média + lista de avaliações). **Desvio ao escopo original:** o formulário de avaliação (`ReviewForm`, submissão de `rating`/`comment`) entrou em `MyServiceRequests.tsx` (ecrã do cliente) e **não** em `AssignedServiceRequests.tsx` (ecrã do profissional) — é o cliente que avalia o profissional, não o inverso; o plano original listava os dois ecrãs por engano. Depende de `has_review` por pedido, devolvido por `GET /service_requests` desde o desvio registado na Fase 10 do backend — sem isso o formulário reapareceria em cada visita a um pedido já avaliado. Rotas `/catalogo` e `/profissionais/:id` registadas em `App.tsx`; link "O meu catálogo" em `Home.tsx`; nome do profissional em `FindProfessionals.tsx` passou a `<Link>` para `/profissionais/:id`. `tsc -b`, `eslint` e `vite build` limpos (os 2 avisos/erro de lint existentes em `Logo.tsx`/`AuthContext.tsx` são pré-existentes, não tocados por esta entrega). Sem suite de testes automatizados configurada neste frontend (mesma lacuna já registada nas fases anteriores) — validado só por build/lint, sem verificação interativa em browser (sem ferramenta de automação disponível nesta sessão).
+
+**Critérios de Entrega:**
+- [x] Profissional edita a própria `bio` e o valor persiste depois de recarregar a página — implementado via `PATCH /profile`; não validado interativamente em browser nesta sessão.
+- [x] Upload de foto de portfólio funciona de ponta a ponta, convertida para `.webp` antes do envio — reaproveita `convertToWebp`, já validado para o avatar; não repetido manualmente para portfólio nesta sessão.
+- [x] Remover foto própria funciona; tentar remover foto de outro profissional é rejeitado pelo backend — coberto pelos testes de rota do backend (`catalog.test.ts`), não por teste de frontend (sem suite configurada).
+- [x] `ProfessionalCatalog.tsx` mostra bio, fotos, média de avaliação e lista de comentários.
+- [x] Formulário de avaliação só aparece em pedidos `COMPLETED` sem avaliação prévia (`has_review === false`); depois de submetida, a mutação invalida a lista e o formulário desaparece. **Sem edição posterior** (decisão do backend, TRD Adendo v1.17, item E) — não "mostra a avaliação já dada", como o plano original admitia como alternativa; fica simplesmente sem formulário.
+- [x] `tsc -b`, `eslint` e `vite build` limpos.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -290,7 +318,8 @@ Fase 0 (Fundação PWA)
                                ├─> Fase 5 (Offline & Resiliência)
                                │      └─> Fase 6 (Acessibilidade & Performance)
                                │             └─> Fase 7 (Integração Final & Deploy)
-                               └─> Fase 8 (Painel de Administração Avançado — depende da Fase 9 do backend)
+                               ├─> Fase 8 (Painel de Administração Avançado — depende da Fase 9 do backend)
+                               └─> Fase 9 (Catálogo do Profissional — depende da Fase 10 do backend)
 ```
 
 **Alinhamento com o Backend:** cada fase deste plano depende do endpoint correspondente já estar disponível (ainda que em staging) no repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend) — Fase 1 ↔ Backend Fase 2, Fase 2/3 ↔ Backend Fase 3, Fase 4 ↔ Backend Fases 4-5, Fase 7 ↔ Backend Fase 7. A documentação OpenAPI publicada desde cedo pelo backend (ver Adendo v1.2 no plano do backend) é o contrato de referência para desbloquear o desenvolvimento do frontend antes de cada endpoint estar 100% pronto (mock local contra o schema documentado).

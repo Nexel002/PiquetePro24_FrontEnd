@@ -60,6 +60,9 @@ export function Home() {
                 <Link to="/trabalhos-aceites" className="w-full">
                   <Button variant="glass" className="w-full">Trabalhos aceites</Button>
                 </Link>
+                <Link to="/catalogo" className="w-full">
+                  <Button variant="glass" className="w-full">O meu catálogo</Button>
+                </Link>
                 <Link to="/verificacao-identidade" className="w-full">
                   <Button variant="glass" className="w-full">Verificação de identidade</Button>
                 </Link>
