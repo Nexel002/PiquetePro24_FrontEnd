@@ -13,6 +13,8 @@ import { NearbyServiceRequests } from './pages/NearbyServiceRequests'
 import { Kyc } from './pages/Kyc'
 import { Subscription } from './pages/Subscription'
 import { AssignedServiceRequests } from './pages/AssignedServiceRequests'
+import { MyCatalog } from './pages/MyCatalog'
+import { ProfessionalCatalog } from './pages/ProfessionalCatalog'
 import { AdminKyc } from './pages/AdminKyc'
 import { AdminAuditLog } from './pages/AdminAuditLog'
 import { AdminUsers } from './pages/AdminUsers'
@@ -142,6 +144,32 @@ function App() {
                 <ProtectedRoute>
                   <OnboardingGate>
                     <AssignedServiceRequests />
+                  </OnboardingGate>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Backend Fase 10 (TRD Adendo v1.17): catálogo do profissional. Guard de
+                role dentro do próprio componente (MyCatalog.tsx), mesma convenção de
+                Kyc.tsx/Subscription.tsx — o link em Home.tsx só aparece a
+                profissionais. /profissionais/:id é visível a qualquer role
+                autenticado (sem link público — ver Adendo v1.17, item B). */}
+            <Route
+              path="/catalogo"
+              element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <MyCatalog />
+                  </OnboardingGate>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profissionais/:id"
+              element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <ProfessionalCatalog />
                   </OnboardingGate>
                 </ProtectedRoute>
               }

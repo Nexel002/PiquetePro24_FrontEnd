@@ -922,3 +922,25 @@ Além disso: `/service_requests/nearby` passa a exigir `PROFESSIONAL` e deixa de
 **Verificado em cada uma das iterações desta entrega:** `tsc -b`, `eslint` e `vite build` limpos; os 15 testes Vitest existentes (`Subscription.test.tsx`, `Kyc.test.tsx`, que não tocam nesta página) continuam a passar sem alteração. **Não verificado:** validação interativa em browser (sem ferramenta de automação disponível nesta sessão) — cada iteração foi validada pelo próprio utilizador por captura de ecrã direta, incluindo a deteção do problema de repintura do modal desktop que levou à reversão acima.
 
 **Critério de entrega correspondente:** ver `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6.
+
+---
+
+## Adendo v1.17
+
+### Catálogo do Profissional (Bio, Portfólio & Avaliações) — requisito previsto na Secção 2 (linha 396) nunca implementado
+
+**Contexto:** ao criar contas de profissional de teste para validar o login, o utilizador pediu para "editar o catálogo como profissional". Esclarecido por iteração directa com o utilizador que não se trata de categorias de serviço, mas de um perfil de profissional dentro da app — bio (como no Instagram), fotos dos trabalhos já feitos, e avaliações/comentários de clientes (geradas pelo sistema, não editáveis pelo profissional, mas exibidas no catálogo dele). Nada disto existe hoje em nenhum dos dois repositórios: confirmado por leitura directa do schema (`supabase/migrations/`) — não há coluna de bio, tabela de fotos de portfólio, nem qualquer tabela de avaliações; as "estrelas de avaliação" removidas do ecrã de perfil no Adendo v1.16 eram decorativas, nunca refletiram dados reais.
+
+**Decisões (confirmadas com o utilizador):**
+
+**A. Avaliação só por cliente com pedido CONCLUÍDO com esse profissional.** Uma avaliação (`service_reviews`) só pode ser criada a partir de um `service_request` com `status = 'COMPLETED'` e `client_id` igual ao autor — não um formulário aberto para "avaliar qualquer profissional". Motivo: avaliação verificada, ligada a uma transação real, evita avaliações falsas ou manipuladas. Uma avaliação por pedido (`UNIQUE(service_request_id)`); um cliente com vários pedidos concluídos com o mesmo profissional pode avaliar cada pedido uma vez.
+
+**B. Catálogo só visível a utilizadores autenticados, sem link público.** Consistente com o resto do projecto desde a Fase 6 (Adendo v1.15, item A): nenhuma tabela de negócio tem leitura pública directa, tudo passa pelo backend com sessão. `GET /professionals/:id/catalog` exige `requireAuth`, sem excepção. Partilha pública (link sem login) fica fora de âmbito — pode ser revisitado como funcionalidade de marketing/aquisição no futuro, não implícito nesta entrega.
+
+**C. Fotos de portfólio sem limite de quantidade nem moderação prévia.** Decisão explícita do utilizador, com o risco registado: sem limite de quantidade nem moderação por `ADMIN`, um profissional pode subir um número arbitrário de fotos e qualquer conteúdo (dentro do que a conversão de imagem aceita) fica visível de imediato a outros utilizadores autenticados, sem revisão. Mesma lógica de confiança já aplicada ao `avatar_url` (sobe e aparece de imediato). Se vier a ser necessário, um limite ou fila de moderação entra como extensão futura, não retroactiva.
+
+**D. Todas as imagens de upload (avatar e, agora, fotos de portfólio) passam por conversão para WebP antes de chegarem ao Storage.** Pedido explícito do utilizador, pela poupança de espaço (ex. uma foto de 12 MB em JPG pode ficar entre 1–2 MB em WebP). **Já implementado desde a Fase 2** para o avatar (`src/lib/imageConversion.ts`, `convertToWebp` — Canvas API no browser, sem dependência externa, redimensiona ao maior lado a 1280px e aplica qualidade 0.85; GIFs animados e SVGs ficam de fora da conversão, de propósito, para não perder animação nem converter algo já pequeno/vectorial; cai de volta ao ficheiro original, sem bloquear o upload, se o browser não suportar `canvas.toBlob` com WebP). O código já tinha um comentário a prever esta reutilização — `src/services/portfolio.ts` (Fase 9 do frontend) reaproveita a mesma função, sem lógica nova. Conversão acontece no cliente (browser), antes do upload directo ao Supabase Storage — não no backend, porque o ficheiro nunca passa pelo servidor Node (mesmo padrão de upload directo do avatar, Fase 2). **Fora de âmbito:** documentos de KYC (bucket privado, prioridade é fidelidade legal do documento para revisão do admin, não poupança de espaço — não converter).
+
+**E. Fora de âmbito desta entrega, registado como trabalho futuro:** resposta do profissional a uma avaliação; edição ou eliminação de uma avaliação já submetida (nem pelo cliente, nem pelo admin); filtrar `GET /professionals/nearby` por classificação média; moderação de fotos/comentários por `ADMIN`.
+
+**Critérios de entrega correspondentes:** ver `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 10, e `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 9.

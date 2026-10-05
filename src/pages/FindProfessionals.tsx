@@ -148,14 +148,14 @@ export function FindProfessionals() {
                       {professional.full_name.charAt(0).toUpperCase()}
                     </div>
                   )}
-                  <div className="flex-1">
-                    <p className="text-base font-bold text-gray-900">{professional.full_name}</p>
+                  <Link to={`/profissionais/${professional.id}`} className="flex-1">
+                    <p className="text-base font-bold text-gray-900 hover:underline">{professional.full_name}</p>
                     <p className="text-xs font-medium text-piquete-gray">
                       {professional.professional_type ? PROFESSIONAL_TYPE_LABELS[professional.professional_type] : ''}
                       <span className="mx-1">•</span>
                       <span className="text-piquete-blue font-semibold">{(professional.distance_m / 1000).toFixed(1)} km</span>
                     </p>
-                  </div>
+                  </Link>
                   {creatingForId !== professional.id && (
                     <Button
                       type="button"
