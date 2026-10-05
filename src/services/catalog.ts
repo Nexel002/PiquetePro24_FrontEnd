@@ -1,6 +1,7 @@
 import { api } from '../lib/api'
 import type { PortfolioPhoto } from './portfolio'
 import type { ProfessionalType } from './profile'
+import type { ServiceCategory } from './serviceCategories'
 
 export interface Review {
   id: string
@@ -19,6 +20,7 @@ export interface ProfessionalCatalog {
   avatar_url: string | null
   professional_type: ProfessionalType | null
   bio: string | null
+  services: ServiceCategory[]
   portfolio: PortfolioPhoto[]
   rating_avg: number | null
   rating_count: number
