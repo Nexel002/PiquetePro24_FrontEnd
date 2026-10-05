@@ -3,6 +3,8 @@ import { Link, Navigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useProfile, useUpdateProfileDetails } from '../hooks/useProfile'
 import { useAddPortfolioPhoto, useProfessionalCatalog, useRemovePortfolioPhoto } from '../hooks/useCatalog'
+import { useReplaceMyServices, useServiceCategories } from '../hooks/useServiceCategories'
+import { MAX_SERVICES_PER_PROFESSIONAL } from '../services/serviceCategories'
 import { PortfolioUploadError } from '../services/portfolio'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
@@ -19,8 +21,19 @@ export function MyCatalog() {
   const addPhoto = useAddPortfolioPhoto(profile?.id)
   const removePhoto = useRemovePortfolioPhoto(profile?.id)
 
+  const categories = useServiceCategories()
+  const replaceServices = useReplaceMyServices(profile?.id)
+
   const [bio, setBio] = useState<string | null>(null)
   const bioValue = bio ?? profile?.bio ?? ''
+
+  // null = ainda sem edição local; nesse caso vale o que o servidor devolveu.
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[] | null>(null)
+  const savedServiceIds = catalog.data?.services.map((service) => service.id) ?? []
+  const serviceIds = selectedServiceIds ?? savedServiceIds
+  const servicesChanged =
+    selectedServiceIds !== null &&
+    (selectedServiceIds.length !== savedServiceIds.length || selectedServiceIds.some((id) => !savedServiceIds.includes(id)))
 
   if (isProfileLoading) {
     return (
@@ -43,6 +56,24 @@ export function MyCatalog() {
         onError: () => toast.error('Não foi possível guardar a bio. Tenta novamente.'),
       },
     )
+  }
+
+  function toggleService(serviceId: string) {
+    setSelectedServiceIds((current) => {
+      const base = current ?? savedServiceIds
+      if (base.includes(serviceId)) return base.filter((id) => id !== serviceId)
+      return base.length >= MAX_SERVICES_PER_PROFESSIONAL ? base : [...base, serviceId]
+    })
+  }
+
+  function handleSaveServices() {
+    replaceServices.mutate(serviceIds, {
+      onSuccess: () => {
+        setSelectedServiceIds(null)
+        toast.success('Serviços atualizados.')
+      },
+      onError: () => toast.error('Não foi possível guardar os serviços. Tenta novamente.'),
+    })
   }
 
   function handleAddPhoto(event: React.ChangeEvent<HTMLInputElement>) {
@@ -91,6 +122,73 @@ export function MyCatalog() {
               isLoading={updateProfile.isPending}
             >
               Guardar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card variant="solid">
+        <CardContent className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between">
+            <p className="text-sm font-bold text-piquete-blue">Serviços que prestas</p>
+            <span className="text-xs text-gray-400">
+              {serviceIds.length}/{MAX_SERVICES_PER_PROFESSIONAL}
+            </span>
+          </div>
+          <p className="text-xs text-gray-500">
+            É por estes serviços que os clientes te encontram na pesquisa. Escolhe até {MAX_SERVICES_PER_PROFESSIONAL}.
+          </p>
+
+          {(categories.isLoading || catalog.isLoading) && (
+            <div className="flex flex-wrap gap-2">
+              {[0, 1, 2, 3].map((i) => (
+                <div key={i} className="h-8 w-24 animate-pulse rounded-full bg-gray-200" />
+              ))}
+            </div>
+          )}
+
+          {categories.isError && <p className="text-sm text-gray-600">Não foi possível carregar a lista de serviços.</p>}
+
+          {categories.data && !catalog.isLoading && (
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Serviços que prestas">
+              {categories.data.map((service) => {
+                const selected = serviceIds.includes(service.id)
+                const blocked = !selected && serviceIds.length >= MAX_SERVICES_PER_PROFESSIONAL
+                return (
+                  <button
+                    key={service.id}
+                    type="button"
+                    onClick={() => toggleService(service.id)}
+                    disabled={blocked}
+                    aria-pressed={selected}
+                    className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-colors disabled:opacity-40 ${
+                      selected
+                        ? 'border-piquete-blue bg-piquete-blue text-white'
+                        : 'border-gray-200 bg-white text-piquete-blue hover:border-piquete-blue/40'
+                    }`}
+                  >
+                    {service.name}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {catalog.data && savedServiceIds.length === 0 && selectedServiceIds === null && (
+            <p className="rounded-xl bg-amber-50 p-2.5 text-xs text-amber-700">
+              Ainda não escolheste nenhum serviço — os clientes só te encontram pelo nome.
+            </p>
+          )}
+
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              size="sm"
+              onClick={handleSaveServices}
+              disabled={!servicesChanged || serviceIds.length === 0 || replaceServices.isPending}
+              isLoading={replaceServices.isPending}
+            >
+              Guardar serviços
             </Button>
           </div>
         </CardContent>

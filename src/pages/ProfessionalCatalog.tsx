@@ -179,6 +179,16 @@ export function ProfessionalCatalog() {
                 )}
               </div>
 
+              {catalog.services.length > 0 && (
+                <ul className="flex flex-wrap gap-1.5" aria-label="Serviços">
+                  {catalog.services.map((service) => (
+                    <li key={service.id} className="rounded-full bg-piquete-blue/10 px-3 py-1 text-xs font-semibold text-piquete-blue">
+                      {service.name}
+                    </li>
+                  ))}
+                </ul>
+              )}
+
               {catalog.bio && <p className="whitespace-pre-wrap text-sm leading-relaxed text-piquete-gray-dark">{catalog.bio}</p>}
 
               <div className="flex gap-2">

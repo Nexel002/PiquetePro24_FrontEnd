@@ -5,6 +5,7 @@ import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { Logo } from '../components/ui/Logo'
+import { ServiceSearch } from '../components/ServiceSearch'
 
 export function Home() {
   const { session, signOut } = useAuth()
@@ -72,9 +73,7 @@ export function Home() {
               </>
             ) : (
               <>
-                <Link to="/profissionais" className="w-full">
-                  <Button variant="primary" className="w-full">Procurar profissionais</Button>
-                </Link>
+                <ServiceSearch />
                 <Link to="/os-meus-pedidos" className="w-full">
                   <Button variant="glass" className="w-full">Os meus pedidos</Button>
                 </Link>
