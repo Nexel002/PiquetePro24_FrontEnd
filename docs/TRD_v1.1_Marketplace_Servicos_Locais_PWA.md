@@ -944,3 +944,33 @@ Além disso: `/service_requests/nearby` passa a exigir `PROFESSIONAL` e deixa de
 **E. Fora de âmbito desta entrega, registado como trabalho futuro:** resposta do profissional a uma avaliação; edição ou eliminação de uma avaliação já submetida (nem pelo cliente, nem pelo admin); filtrar `GET /professionals/nearby` por classificação média; moderação de fotos/comentários por `ADMIN`.
 
 **Critérios de entrega correspondentes:** ver `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 10, e `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 9.
+
+---
+
+## Adendo v1.18
+
+### Busca por serviço, pedido a vários profissionais e propostas — o fluxo central do produto (PLANO, por aprovar)
+
+**Contexto:** depois de testar o catálogo (Adendo v1.17), o utilizador descreveu o fluxo que o sistema deve ter: o cliente pesquisa um serviço ("canalizador") ou um nome; vê os profissionais desse serviço, **os próximos primeiro e depois os restantes**; abre o perfil; **escolhe pelo menos três** e envia-lhes o pedido; cada um responde com a sua proposta e o cliente fica com a melhor; o profissional é avisado **por email**; o cliente tem **histórico** dos profissionais com quem já trabalhou. Confirmado no código que nada disto existia: sem tipo de serviço por profissional, sem pesquisa por texto, a busca de proximidade corta num raio de 50 km, `POST /service_requests` não recebe profissional (o pedido é aberto e qualquer profissional o auto-atribui) e o único email é o de boas-vindas/KYC/pagamento.
+
+**Decisões (do utilizador, salvo indicação):**
+
+**A. Reverte duas decisões do Adendo v1.17.** O item D ("filtrar por categoria fica fora de âmbito") e a premissa de pedido aberto a qualquer profissional deixam de valer. O pedido passa a ser **dirigido a vários profissionais escolhidos pelo cliente** (decisão do utilizador: pedido a um só profissional "será muito raro"). O pedido aberto e `/pedidos-proximos` mantêm-se, mas não apanham pedidos com convites.
+
+**B. Vários serviços por profissional, lista fixa e curada** (decisão do utilizador: "podemos pôr mais que um serviço"). Máximo 5 por profissional. Lista inicial (seed da migration; crescer é nova migration, não ecrã de admin): Canalização, Eletricidade, Pintura, Jardinagem, Limpeza Doméstica, Carpintaria, Climatização (AC/Refrigeração), Serralharia, Mudanças & Transporte, Informática & Eletrónica. A pesquisa casa texto com o nome da categoria e o nome do profissional, sem acentos nem maiúsculas.
+
+**C. Pelo menos três convites, no máximo cinco** (mínimo do utilizador; **o máximo é assunção minha**, para travar spam de email — a confirmar). Se a categoria tiver menos de 3 profissionais, o pedido vai a todos os que existirem.
+
+**D. Proposta estruturada (preço + mensagem), sem chat.** "O cliente vai falar com os canalizadores em forma de buscar quem tem a melhor proposta" — **assunção a confirmar:** modela-se como uma proposta por convidado (preço em MZN + mensagem), que o cliente compara e escolhe; depois de escolhido, o cliente passa a ver o **telefone do profissional** (extensão da Secção 5: hoje só o profissional vê contacto do cliente) e continuam a falar fora da app. Chat in-app fica de fora — é uma funcionalidade à parte, e a proposta estruturada já dá a comparação de preços que o utilizador descreveu.
+
+**E. Elegibilidade para propor = a de aceitar um pedido** (KYC `APPROVED` + subscrição `ACTIVE`, Adendo v1.12). A lista mostra todos os profissionais; um não elegível recebe o email mas não consegue responder, e o ecrã diz porquê. Contacto e morada exacta do cliente continuam só para o profissional **escolhido** e elegível.
+
+**F. Notificações só por email** nesta fase (decisão do utilizador): `novoPedidoDeServico`, `propostaRecebida`, `propostaEscolhida`/`propostaNaoEscolhida`. Push/WebSocket fora de âmbito.
+
+**G. Histórico do cliente:** lista dos profissionais com quem já teve pedidos concluídos (nº de trabalhos, último, avaliação dada) e atalho para voltar a pedir.
+
+**H. Privacidade da localização — risco assumido com mitigação.** Pesquisar sem tecto de raio e por categoria facilita aproximar onde mora um profissional (o que o Adendo v1.15, item C, evitou). Mitigação: origem na grelha de ~500 m, distância dos não-próximos arredondada a km inteiro, nunca coordenadas, paginação com tecto e rate limit por utilizador. Revisitar se houver abuso.
+
+**Por decidir ainda (não bloqueia o plano, mas convém confirmar):** máximo de 5 convites (C); modelo de proposta estruturada em vez de chat (D); se o pedido aberto e `/pedidos-proximos` devem ser removidos no futuro; expiração automática de convites sem resposta.
+
+**Critérios de entrega correspondentes:** ver `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 11, e `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 10.

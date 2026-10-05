@@ -307,6 +307,41 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 10 — Pesquisa por Serviço, Pedido a Vários Profissionais & Propostas
+
+**Estado: PLANO — por aprovar, nada implementado.**
+
+**Objetivo:** consumir a Fase 11 do backend (`Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` desse repositório e TRD Adendo v1.18): o cliente pesquisa um serviço ou nome, vê os profissionais (perto primeiro, depois os restantes), abre o catálogo, escolhe pelo menos três, envia o pedido, compara propostas e escolhe; o profissional define os seus serviços e responde a convites.
+
+**Nota de dependência:** cada bloco só começa depois do bloco correspondente do backend existir. Reaproveita o catálogo (Fase 9) como ecrã de destino da lista de resultados.
+
+**Escopo — três blocos, na mesma ordem do backend:**
+
+**Bloco A — Serviços e pesquisa**
+- `services/serviceCategories.ts` + `hooks/useServiceCategories.ts` (lista), `services/professionalSearch.ts` + `hooks/useProfessionalSearch.ts` (`GET /professionals/search`, paginação com `useInfiniteQuery`).
+- `pages/FindProfessionals.tsx` é **reescrita**: campo de pesquisa (texto + chips das categorias mais comuns), pede a localização (reaproveita `useGeolocation`; sem GPS pesquisa na mesma, ordenada sem distância), resultados em duas secções — "Perto de ti" (`is_nearby`) e "Outros profissionais" — cada cartão com foto, nome, serviços, média de avaliações, distância; toque abre `/profissionais/:id`. Estados: loading (skeleton), erro, vazio ("Nenhum canalizador encontrado"), sucesso. O botão "Pedir" actual (pedido aberto sem profissional) sai deste ecrã; o fluxo passa a ser o do Bloco B.
+- `pages/MyCatalog.tsx` ganha a escolha dos serviços (chips multi-selecção de `GET /service-categories`, 1–5, `PUT /professionals/me/services`); `pages/ProfessionalCatalog.tsx` mostra os serviços do profissional.
+
+**Bloco B — Pedido, propostas e escolha**
+- Cartões de resultado ganham selecção (caixa), barra fixa em baixo "Pedir a N profissionais" (activa com ≥ 3, ou todos se houver menos de 3; máx. 5) → `pages/NewServiceRequest.tsx` (título, descrição, localização — reaproveita `LocationForm`) → `POST /service_requests` com `category_id` + `professional_ids`.
+- Profissional: `pages/ReceivedInvitations.tsx` (`/pedidos-recebidos`, link em `Home.tsx`) — convites com estado, formulário de proposta (preço em MZN + mensagem) ou recusar; se não elegível, mostra porquê com link para KYC/subscrição.
+- Cliente: `pages/MyServiceRequests.tsx` mostra, por pedido, nº de propostas; novo `pages/RequestProposals.tsx` (`/os-meus-pedidos/:id/propostas`) compara propostas lado a lado (preço, mensagem, média e nº de avaliações, link para o catálogo) e permite **escolher** (confirmação em duas etapas, mesma convenção de "Apagar conta"). Depois de escolhido mostra o telefone do profissional.
+- `hooks/useInvitations.ts`, `hooks/useProposals.ts`, `services/invitations.ts`; todas as mutações invalidam as queries afectadas.
+
+**Bloco C — Histórico**
+- `pages/MyProfessionals.tsx` (`/os-meus-profissionais`, link em `Home.tsx` do cliente): "Profissionais com quem já trabalhaste" — nº de trabalhos, último, a tua avaliação, atalho "Pedir outra vez" (abre o catálogo). `MyServiceRequests.tsx` mostra o profissional escolhido por pedido.
+
+**Critérios de Entrega:**
+- [ ] Bloco A: pesquisar "canalizador" lista os canalizadores, os próximos primeiro, depois os restantes, com os quatro estados de UI tratados.
+- [ ] Bloco A: profissional escolhe e guarda vários serviços; aparecem no catálogo e na pesquisa.
+- [ ] Bloco B: não deixa enviar com menos de 3 (excepto categoria com menos de 3 profissionais) nem com mais de 5.
+- [ ] Bloco B: profissional convidado vê o convite, propõe ou recusa; não elegível vê o motivo e o caminho para resolver.
+- [ ] Bloco B: cliente compara propostas e escolhe uma; só depois vê o telefone do profissional.
+- [ ] Bloco C: histórico lista só profissionais de pedidos concluídos; "Pedir outra vez" abre o catálogo certo.
+- [ ] `tsc -b`, `eslint` e `vite build` limpos (os 2 problemas de lint pré-existentes em `Logo.tsx`/`AuthContext.tsx` não contam).
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -320,6 +355,7 @@ Fase 0 (Fundação PWA)
                                │             └─> Fase 7 (Integração Final & Deploy)
                                ├─> Fase 8 (Painel de Administração Avançado — depende da Fase 9 do backend)
                                └─> Fase 9 (Catálogo do Profissional — depende da Fase 10 do backend)
+                                      └─> Fase 10 (Pesquisa por Serviço, Pedido a Vários & Propostas — depende da Fase 11 do backend)
 ```
 
 **Alinhamento com o Backend:** cada fase deste plano depende do endpoint correspondente já estar disponível (ainda que em staging) no repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend) — Fase 1 ↔ Backend Fase 2, Fase 2/3 ↔ Backend Fase 3, Fase 4 ↔ Backend Fases 4-5, Fase 7 ↔ Backend Fase 7. A documentação OpenAPI publicada desde cedo pelo backend (ver Adendo v1.2 no plano do backend) é o contrato de referência para desbloquear o desenvolvimento do frontend antes de cada endpoint estar 100% pronto (mock local contra o schema documentado).
