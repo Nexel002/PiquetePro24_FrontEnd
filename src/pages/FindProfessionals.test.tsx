@@ -1,5 +1,5 @@
-import { cleanup, render, screen, within } from '@testing-library/react'
-import { MemoryRouter } from 'react-router-dom'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { SearchedProfessional } from '../services/professionalSearch'
 import { FindProfessionals } from './FindProfessionals'
@@ -18,8 +18,6 @@ const estado = vi.hoisted(() => ({
 vi.mock('../hooks/useProfessionalSearch', () => ({ useProfessionalSearch: () => estado.pesquisa }))
 vi.mock('../hooks/useServiceCategories', () => ({ useServiceCategories: () => ({ data: estado.categorias }) }))
 vi.mock('../hooks/useGeolocation', () => ({ useGeolocation: () => ({ state: estado.geolocalizacao, locate: vi.fn() }) }))
-vi.mock('../hooks/useServiceRequests', () => ({ useCreateServiceRequest: () => ({ mutate: vi.fn(), isPending: false }) }))
-vi.mock('../hooks/useProfile', () => ({ useProfile: () => ({ data: { province: 'Maputo' } }) }))
 
 function profissional(extra: Partial<SearchedProfessional> & { id: string; full_name: string }): SearchedProfessional {
   return {
@@ -59,9 +57,17 @@ function mostrar(
   }
   render(
     <MemoryRouter initialEntries={[opcoes.url ?? '/profissionais']}>
-      <FindProfessionals />
+      <Routes>
+        <Route path="/profissionais" element={<FindProfessionals />} />
+        <Route path="/novo-pedido" element={<EstadoRecebido />} />
+      </Routes>
     </MemoryRouter>,
   )
+}
+
+// Destino de "Pedir a N": mostra o estado de navegação que o ecrã seguinte recebe.
+function EstadoRecebido() {
+  return <pre data-testid="estado-novo-pedido">{JSON.stringify(useLocation().state)}</pre>
 }
 
 afterEach(cleanup)
@@ -164,5 +170,100 @@ describe('FindProfessionals — estados', () => {
     expect((screen.getByRole('searchbox') as HTMLInputElement).value).toBe('canalizador')
     expect(screen.getByRole('button', { name: 'Pintura' }).getAttribute('aria-pressed')).toBe('true')
     expect(screen.getByRole('button', { name: 'Canalização' }).getAttribute('aria-pressed')).toBe('false')
+  })
+})
+
+// Bloco B (Backend Fase 11, Adendo v1.18): escolher exatamente 3 profissionais (ou todos
+// se houver menos) e seguir para /novo-pedido.
+describe('FindProfessionals — escolher a quem enviar o pedido', () => {
+  const quatro = () => [
+    [
+      profissional({ id: 'p1', full_name: 'Ana Um' }),
+      profissional({ id: 'p2', full_name: 'Bruno Dois' }),
+      profissional({ id: 'p3', full_name: 'Carla Três' }),
+      profissional({ id: 'p4', full_name: 'Diogo Quatro' }),
+    ],
+  ]
+  const escolher = (nome: string) => fireEvent.click(screen.getByRole('checkbox', { name: `Escolher ${nome}` }))
+  const botaoPedir = () => screen.getByRole('button', { name: /^Pedir a / }) as HTMLButtonElement
+
+  it('só deixa enviar com exatamente 3 escolhidos, e bloqueia os restantes quando chega aos 3', () => {
+    mostrar(quatro(), { url: '/profissionais?category=canalizacao' })
+
+    expect(botaoPedir().disabled).toBe(true)
+    escolher('Ana Um')
+    escolher('Bruno Dois')
+    expect(botaoPedir().disabled).toBe(true)
+    expect(screen.getByText('2/3')).toBeTruthy()
+
+    escolher('Carla Três')
+    expect(botaoPedir().disabled).toBe(false)
+    expect((screen.getByRole('checkbox', { name: 'Escolher Diogo Quatro' }) as HTMLInputElement).disabled).toBe(true)
+  })
+
+  it('desmarcar liberta de novo as outras caixas', () => {
+    mostrar(quatro(), { url: '/profissionais?category=canalizacao' })
+
+    escolher('Ana Um')
+    escolher('Bruno Dois')
+    escolher('Carla Três')
+    escolher('Ana Um')
+
+    expect(botaoPedir().disabled).toBe(true)
+    expect((screen.getByRole('checkbox', { name: 'Escolher Diogo Quatro' }) as HTMLInputElement).disabled).toBe(false)
+  })
+
+  it('"Pedir a 3" leva ao novo pedido com o serviço e os profissionais escolhidos', () => {
+    mostrar(quatro(), { url: '/profissionais?category=canalizacao' })
+
+    escolher('Ana Um')
+    escolher('Carla Três')
+    escolher('Diogo Quatro')
+    fireEvent.click(botaoPedir())
+
+    expect(JSON.parse(screen.getByTestId('estado-novo-pedido').textContent ?? '')).toEqual({
+      categoryId: 'c1',
+      categoryName: 'Canalização',
+      professionals: [
+        { id: 'p1', full_name: 'Ana Um' },
+        { id: 'p3', full_name: 'Carla Três' },
+        { id: 'p4', full_name: 'Diogo Quatro' },
+      ],
+    })
+  })
+
+  it('serviço com menos de 3 profissionais: escolhem-se todos', () => {
+    mostrar([[profissional({ id: 'p1', full_name: 'Ana Um' }), profissional({ id: 'p2', full_name: 'Bruno Dois' })]], {
+      url: '/profissionais?category=canalizacao',
+    })
+
+    expect(screen.getByText(/só há 2 para Canalização/)).toBeTruthy()
+    escolher('Ana Um')
+    expect(botaoPedir().disabled).toBe(true)
+    escolher('Bruno Dois')
+    expect(botaoPedir().disabled).toBe(false)
+  })
+
+  it('pesquisa por texto: o serviço comum a todos os resultados é deduzido, sem escolher o botão do serviço', () => {
+    mostrar(quatro(), { url: '/profissionais?q=canalizador' })
+
+    expect(screen.getAllByRole('checkbox')).toHaveLength(4)
+    expect(screen.queryByText(/escolhe primeiro o serviço/)).toBeNull()
+  })
+
+  it('resultados com serviços diferentes e sem serviço escolhido: pede para escolher o serviço, sem caixas', () => {
+    mostrar(
+      [
+        [
+          profissional({ id: 'p1', full_name: 'Ana Um' }),
+          profissional({ id: 'p2', full_name: 'Bruno Dois', services: [{ id: 'c2', slug: 'pintura', name: 'Pintura' }] }),
+        ],
+      ],
+      { url: '/profissionais?q=a' },
+    )
+
+    expect(screen.getByText(/escolhe primeiro o serviço/)).toBeTruthy()
+    expect(screen.queryAllByRole('checkbox')).toHaveLength(0)
+    expect(screen.queryByRole('button', { name: /^Pedir a / })).toBeNull()
   })
 })

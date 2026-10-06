@@ -136,6 +136,19 @@ export function MyServiceRequests() {
                 {createdAtFormatter.format(new Date(serviceRequest.created_at))}
               </p>
 
+              {(serviceRequest.invited_count ?? 0) > 0 && (
+                <Link
+                  to={`/os-meus-pedidos/${serviceRequest.id}/propostas`}
+                  className="flex items-center justify-between rounded-xl bg-piquete-blue/5 px-3 py-2 text-xs font-semibold text-piquete-blue hover:bg-piquete-blue/10"
+                >
+                  <span>
+                    Enviado a {serviceRequest.invited_count} profissionais · {serviceRequest.proposal_count ?? 0}{' '}
+                    {serviceRequest.proposal_count === 1 ? 'proposta' : 'propostas'}
+                  </span>
+                  <span aria-hidden>›</span>
+                </Link>
+              )}
+
               {serviceRequest.status === 'COMPLETED' && serviceRequest.professional_id && serviceRequest.has_review === false && (
                 <ReviewForm requestId={serviceRequest.id} professionalId={serviceRequest.professional_id} />
               )}

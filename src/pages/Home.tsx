@@ -55,8 +55,11 @@ export function Home() {
               </>
             ) : profile?.role === 'PROFESSIONAL' ? (
               <>
+                <Link to="/pedidos-recebidos" className="w-full">
+                  <Button variant="primary" className="w-full">Pedidos recebidos</Button>
+                </Link>
                 <Link to="/pedidos-proximos" className="w-full">
-                  <Button variant="primary" className="w-full">Pedidos perto de ti</Button>
+                  <Button variant="glass" className="w-full">Pedidos perto de ti</Button>
                 </Link>
                 <Link to="/trabalhos-aceites" className="w-full">
                   <Button variant="glass" className="w-full">Trabalhos aceites</Button>
