@@ -27,6 +27,9 @@ export interface ServiceRequest {
   // avaliação do cliente, para decidir se mostra o formulário. undefined nos outros
   // endpoints (ex. fetchAssignedServiceRequests, do lado do profissional).
   has_review?: boolean
+  // Só vem preenchido em fetchMyServiceRequests (Backend Fase 11, Bloco C): nome do
+  // profissional escolhido/atribuído; ausente enquanto o pedido não tem profissional.
+  professional_name?: string
 }
 
 // Sem client_id desde a Fase 6 do backend (TRD Adendo v1.15, item C): não é preciso para

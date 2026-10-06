@@ -8,6 +8,7 @@ import { Profile } from './pages/Profile'
 import { CompletePhone } from './pages/onboarding/CompletePhone'
 import { CompleteLocation } from './pages/onboarding/CompleteLocation'
 import { FindProfessionals } from './pages/FindProfessionals'
+import { MyProfessionals } from './pages/MyProfessionals'
 import { MyServiceRequests } from './pages/MyServiceRequests'
 import { NearbyServiceRequests } from './pages/NearbyServiceRequests'
 import { Kyc } from './pages/Kyc'
@@ -98,6 +99,17 @@ function App() {
                 <ProtectedRoute>
                   <OnboardingGate>
                     <MyServiceRequests />
+                  </OnboardingGate>
+                </ProtectedRoute>
+              }
+            />
+            {/* Backend Fase 11, Bloco C: histórico de profissionais do cliente. */}
+            <Route
+              path="/os-meus-profissionais"
+              element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <MyProfessionals />
                   </OnboardingGate>
                 </ProtectedRoute>
               }
