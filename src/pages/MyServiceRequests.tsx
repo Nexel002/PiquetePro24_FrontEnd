@@ -136,6 +136,15 @@ export function MyServiceRequests() {
                 {createdAtFormatter.format(new Date(serviceRequest.created_at))}
               </p>
 
+              {serviceRequest.professional_name && serviceRequest.professional_id && (
+                <p className="text-xs text-gray-600">
+                  Profissional:{' '}
+                  <Link to={`/profissionais/${serviceRequest.professional_id}`} className="font-semibold text-piquete-blue hover:underline">
+                    {serviceRequest.professional_name}
+                  </Link>
+                </p>
+              )}
+
               {(serviceRequest.invited_count ?? 0) > 0 && (
                 <Link
                   to={`/os-meus-pedidos/${serviceRequest.id}/propostas`}

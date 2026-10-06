@@ -80,6 +80,9 @@ export function Home() {
                 <Link to="/os-meus-pedidos" className="w-full">
                   <Button variant="glass" className="w-full">Os meus pedidos</Button>
                 </Link>
+                <Link to="/os-meus-profissionais" className="w-full">
+                  <Button variant="glass" className="w-full">Os meus profissionais</Button>
+                </Link>
               </>
             )}
 

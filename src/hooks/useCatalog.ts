@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchProfessionalCatalog } from '../services/catalog'
+import { workedWithProfessionalsKey } from './useWorkedWithProfessionals'
 import { addPortfolioPhoto, removePortfolioPhoto, uploadPortfolioPhoto } from '../services/portfolio'
 import { submitServiceRequestReview, type ReviewPayload } from '../services/serviceRequests'
 import { useAuth } from '../store/AuthContext'
@@ -53,6 +54,8 @@ export function useSubmitReview(professionalId: string | undefined) {
       submitServiceRequestReview(input.requestId, input.payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['service_requests', 'mine'] })
+      // A avaliação dada aparece em "Os meus profissionais".
+      void queryClient.invalidateQueries({ queryKey: workedWithProfessionalsKey })
       if (professionalId) void queryClient.invalidateQueries({ queryKey: catalogQueryKey(professionalId) })
     },
   })

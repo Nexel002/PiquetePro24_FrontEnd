@@ -12,6 +12,7 @@ import {
   type CreateServiceRequestPayload,
   type NearbyServiceRequestsParams,
 } from '../services/serviceRequests'
+import { workedWithProfessionalsKey } from './useWorkedWithProfessionals'
 
 // O interceptor de lib/api.ts já desempacota error.response.data.error num Error
 // simples — a mensagem do backend (ex. "Este pedido já não está disponível para
@@ -115,6 +116,8 @@ export function useCompleteServiceRequest() {
     mutationFn: (requestId: string) => completeServiceRequest(requestId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: myServiceRequestsKey })
+      // Concluir faz o profissional entrar no histórico "Os meus profissionais".
+      queryClient.invalidateQueries({ queryKey: workedWithProfessionalsKey })
       toast.success('Pedido concluído.')
     },
     onError: (error) => {
