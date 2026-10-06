@@ -14,6 +14,9 @@ import { Kyc } from './pages/Kyc'
 import { Subscription } from './pages/Subscription'
 import { AssignedServiceRequests } from './pages/AssignedServiceRequests'
 import { MyCatalog } from './pages/MyCatalog'
+import { NewServiceRequest } from './pages/NewServiceRequest'
+import { ReceivedInvitations } from './pages/ReceivedInvitations'
+import { RequestProposals } from './pages/RequestProposals'
 import { ProfessionalCatalog } from './pages/ProfessionalCatalog'
 import { AdminKyc } from './pages/AdminKyc'
 import { AdminAuditLog } from './pages/AdminAuditLog'
@@ -95,6 +98,40 @@ function App() {
                 <ProtectedRoute>
                   <OnboardingGate>
                     <MyServiceRequests />
+                  </OnboardingGate>
+                </ProtectedRoute>
+              }
+            />
+            {/* Backend Fase 11, Bloco B (TRD Adendo v1.18): pedido a vários profissionais e
+                propostas. /novo-pedido depende do estado de navegação vindo da pesquisa
+                (sem ele volta à pesquisa); /pedidos-recebidos tem o guard de role dentro
+                do componente, como as outras rotas de profissional. */}
+            <Route
+              path="/novo-pedido"
+              element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <NewServiceRequest />
+                  </OnboardingGate>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/os-meus-pedidos/:id/propostas"
+              element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <RequestProposals />
+                  </OnboardingGate>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/pedidos-recebidos"
+              element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <ReceivedInvitations />
                   </OnboardingGate>
                 </ProtectedRoute>
               }

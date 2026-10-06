@@ -17,6 +17,12 @@ export interface ServiceRequest {
   created_at: string
   assigned_at: string | null
   completed_at: string | null
+  // Serviço pedido (Fase 10, Bloco B) — null nos pedidos abertos antigos.
+  category_id: string | null
+  // Só vêm preenchidos em fetchMyServiceRequests, para pedidos dirigidos: a quantos
+  // profissionais foi enviado e quantas propostas já chegaram (0 num pedido aberto).
+  invited_count?: number
+  proposal_count?: number
   // Só vem preenchido em fetchMyServiceRequests (Fase 9) — indica se o pedido já tem
   // avaliação do cliente, para decidir se mostra o formulário. undefined nos outros
   // endpoints (ex. fetchAssignedServiceRequests, do lado do profissional).
@@ -45,6 +51,10 @@ export interface CreateServiceRequestPayload {
   title: string
   description?: string
   location: ServiceRequestLocationInput
+  // Pedido dirigido (Backend Fase 11, Adendo v1.18): vêm juntos ou não vêm. Sem eles é o
+  // pedido aberto de sempre.
+  category_id?: string
+  professional_ids?: string[]
 }
 
 export interface NearbyServiceRequestsParams {

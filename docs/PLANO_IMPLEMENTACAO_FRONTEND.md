@@ -309,7 +309,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 10 — Pesquisa por Serviço, Pedido a Vários Profissionais & Propostas
 
-**Estado: plano aprovado pelo utilizador (05/10/2026). Bloco A implementado em `feat/fase-10-bloco-a-servicos-e-pesquisa`; blocos B e C por fazer.**
+**Estado: plano aprovado pelo utilizador (05/10/2026). Bloco A implementado e em produção. Bloco B implementado em `feat/fase-10-bloco-b-convites-e-propostas`, mas **depende do backend do Bloco B, que ainda não está em produção** (migration por aplicar — ver Fase 11 do plano do backend): não fazer push do frontend antes de o backend estar no ar. Bloco C por fazer.**
 
 **Implementado — Bloco A:** `services/serviceCategories.ts` + `hooks/useServiceCategories.ts`, `services/professionalSearch.ts` + `hooks/useProfessionalSearch.ts` (`useInfiniteQuery`, offset com o mesmo tecto do backend); `pages/FindProfessionals.tsx` reescrita (campo de pesquisa com debounce de 350 ms, chips de serviço, agrupamento "Perto de ti"/"Outros profissionais", estados loading/erro/vazio/sucesso, "Ver mais"); `components/ServiceSearch.tsx` no ecrã inicial do cliente (`Home.tsx`) — **pedido do utilizador durante a implementação: "ao entrar no sistema deve aparecer um campo de busca por serviços"** (campo + atalhos das 6 primeiras categorias; o texto viaja no URL como `?q=`/`?category=`); `MyCatalog.tsx` ganha a escolha de serviços (chips, 1–5, "Guardar serviços") e `ProfessionalCatalog.tsx` mostra-os. **Desvios ao plano abaixo:**
 - **O botão "Pedir" (pedido aberto, sem profissional) mantém-se nos cartões por agora.** O plano dizia que saía neste bloco, mas sem ele o cliente ficava sem qualquer forma de criar um pedido até o Bloco B existir. Sai no Bloco B, quando a selecção múltipla o substituir.
@@ -317,7 +317,16 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - `hooks/useNearbyProfessionals.ts` e `services/nearbyProfessionals.ts` **apagados** — ficaram sem consumidores com a reescrita (o endpoint `/professionals/nearby` mantém-se no backend).
 - `FindProfessionals.test.tsx` (10 testes novos: agrupamento perto/outros, distâncias, serviços truncados a 2, sem localização, vazio, erro, filtros vindos do URL). `tsc -b` limpo; `eslint` só com os 2 problemas pré-existentes (`Logo.tsx`, `AuthContext.tsx`). Não verificado em browser nesta sessão.
 
-**Objetivo:** consumir a Fase 11 do backend (`Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` desse repositório e TRD Adendo v1.18): o cliente pesquisa um serviço ou nome, vê os profissionais (perto primeiro, depois os restantes), abre o catálogo, escolhe pelo menos três, envia o pedido, compara propostas e escolhe; o profissional define os seus serviços e responde a convites.
+**Implementado — Bloco B:** `services/invitations.ts` (tipos e chamadas; `INVITATIONS_PER_REQUEST = 3`), `hooks/useInvitations.ts`, `pages/NewServiceRequest.tsx` (`/novo-pedido`), `pages/ReceivedInvitations.tsx` (`/pedidos-recebidos`), `pages/RequestProposals.tsx` (`/os-meus-pedidos/:id/propostas`); `FindProfessionals.tsx` ganha a selecção de profissionais e a barra "Pedir a N"; `MyServiceRequests.tsx` mostra "Enviado a N profissionais · M propostas" com atalho; `Home.tsx` do profissional ganha "Pedidos recebidos" como acção principal ("Pedidos perto de ti" passa a secundária); rotas em `App.tsx`. **Desvios ao plano abaixo:**
+- **Exatamente 3 profissionais, não "3 a 5"** — decisão do utilizador em 06/10/2026 ("no máximo 3 propostas"; ver Adendo v1.18, item C). A barra mostra "0/3" e só activa o botão com 3 escolhidos; quando há menos de 3 profissionais para o serviço, escolhem-se todos ("só há 2 para Canalização"). Com mais páginas de resultados por carregar não se sabe ainda quantos há: pede-se 3 e o backend confirma.
+- **Que serviço se está a pedir:** o botão de serviço escolhido ou, sem botão, o único serviço comum a todos os resultados (quem pesquisa "canalizador" só vê canalizadores). Com resultados de serviços diferentes o ecrã pede para escolher o serviço primeiro e não mostra caixas de selecção. Não estava no plano — o backend exige `category_id` e o texto livre da pesquisa não o dá.
+- **O botão provisório "Pedir" (pedido aberto) saiu**, como previsto; `useCreateServiceRequest` passou a ser usado só por `NewServiceRequest.tsx`.
+- **O local do serviço vem do perfil** (o onboarding já obriga a ter localização), não de um formulário novo com `LocationForm` como o plano dizia: pedir outra vez a mesma morada seria atrito. O ecrã mostra o local e um atalho "Alterar no perfil"; sem província no perfil não deixa enviar.
+- **`hooks/useProposals.ts` não existe** — as propostas ficaram em `hooks/useInvitations.ts` (um só ficheiro por domínio, como o resto do repositório).
+- **O pedido fica sem "Concluir" até ser escolhido alguém:** um pedido dirigido continua `OPEN`; só depois de escolher passa a `ASSIGNED` e o botão "Concluir" aparece (comportamento herdado de `MyServiceRequests.tsx`, não alterado).
+- Testes novos: `ReceivedInvitations.test.tsx` (15), `RequestProposals.test.tsx` (11) e 6 casos de selecção em `FindProfessionals.test.tsx` (agora 16). `NewServiceRequest.tsx`, `ServiceSearch.tsx` e a ligação em `MyServiceRequests.tsx` **não têm teste**. `tsc -b` limpo; `eslint` só com os 2 problemas pré-existentes. Não verificado em browser, nem contra o backend real (o do Bloco B ainda não está em produção).
+
+**Objetivo:** consumir a Fase 11 do backend (`Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` desse repositório e TRD Adendo v1.18): o cliente pesquisa um serviço ou nome, vê os profissionais (perto primeiro, depois os restantes), abre o catálogo, escolhe três, envia o pedido, compara propostas e escolhe; o profissional define os seus serviços e responde a convites.
 
 **Nota de dependência:** cada bloco só começa depois do bloco correspondente do backend existir. Reaproveita o catálogo (Fase 9) como ecrã de destino da lista de resultados.
 
@@ -329,22 +338,22 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - `pages/MyCatalog.tsx` ganha a escolha dos serviços (chips multi-selecção de `GET /service-categories`, 1–5, `PUT /professionals/me/services`); `pages/ProfessionalCatalog.tsx` mostra os serviços do profissional.
 
 **Bloco B — Pedido, propostas e escolha**
-- Cartões de resultado ganham selecção (caixa), barra fixa em baixo "Pedir a N profissionais" (activa com ≥ 3, ou todos se houver menos de 3; máx. 5) → `pages/NewServiceRequest.tsx` (título, descrição, localização — reaproveita `LocationForm`) → `POST /service_requests` com `category_id` + `professional_ids`.
+- Cartões de resultado ganham selecção (caixa), barra fixa em baixo "Pedir a N" (activa com exatamente 3 escolhidos, ou todos se houver menos de 3) → `pages/NewServiceRequest.tsx` (título, descrição, local do perfil) → `POST /service_requests` com `category_id` + `professional_ids`.
 - Profissional: `pages/ReceivedInvitations.tsx` (`/pedidos-recebidos`, link em `Home.tsx`) — convites com estado, formulário de proposta (preço em MZN + mensagem) ou recusar; se não elegível, mostra porquê com link para KYC/subscrição.
 - Cliente: `pages/MyServiceRequests.tsx` mostra, por pedido, nº de propostas; novo `pages/RequestProposals.tsx` (`/os-meus-pedidos/:id/propostas`) compara propostas lado a lado (preço, mensagem, média e nº de avaliações, link para o catálogo) e permite **escolher** (confirmação em duas etapas, mesma convenção de "Apagar conta"). Depois de escolhido mostra o telefone do profissional.
-- `hooks/useInvitations.ts`, `hooks/useProposals.ts`, `services/invitations.ts`; todas as mutações invalidam as queries afectadas.
+- `hooks/useInvitations.ts`, `services/invitations.ts`; todas as mutações invalidam as queries afectadas.
 
 **Bloco C — Histórico**
 - `pages/MyProfessionals.tsx` (`/os-meus-profissionais`, link em `Home.tsx` do cliente): "Profissionais com quem já trabalhaste" — nº de trabalhos, último, a tua avaliação, atalho "Pedir outra vez" (abre o catálogo). `MyServiceRequests.tsx` mostra o profissional escolhido por pedido.
 
 **Critérios de Entrega:**
-- [ ] Bloco A: pesquisar "canalizador" lista os canalizadores, os próximos primeiro, depois os restantes, com os quatro estados de UI tratados.
-- [ ] Bloco A: profissional escolhe e guarda vários serviços; aparecem no catálogo e na pesquisa.
-- [ ] Bloco B: não deixa enviar com menos de 3 (excepto categoria com menos de 3 profissionais) nem com mais de 5.
-- [ ] Bloco B: profissional convidado vê o convite, propõe ou recusa; não elegível vê o motivo e o caminho para resolver.
-- [ ] Bloco B: cliente compara propostas e escolhe uma; só depois vê o telefone do profissional.
+- [x] Bloco A: pesquisar "canalizador" lista os canalizadores, os próximos primeiro, depois os restantes, com os quatro estados de UI tratados — por teste de componente (`FindProfessionals.test.tsx`); não visto no browser.
+- [x] Bloco A: profissional escolhe e guarda vários serviços; aparecem no catálogo e na pesquisa — implementado em `MyCatalog.tsx`/`ProfessionalCatalog.tsx`; **sem teste de componente e não visto no browser**.
+- [x] Bloco B: só deixa enviar com exatamente 3 escolhidos (ou todos, se houver menos de 3 profissionais para o serviço), bloqueia as restantes caixas aos 3 e leva ao novo pedido com o serviço e os profissionais certos — por teste de componente.
+- [x] Bloco B: profissional convidado vê o convite, propõe (preço com vírgula decimal, mensagem opcional) ou recusa; preço inválido não envia; não elegível vê o motivo e o caminho para resolver, sem formulário — por teste de componente.
+- [x] Bloco B: cliente compara propostas e escolhe uma com confirmação em duas etapas; só depois vê o telefone do profissional — por teste de componente. **Fluxo completo contra o backend real por validar** (o backend do Bloco B ainda não está em produção).
 - [ ] Bloco C: histórico lista só profissionais de pedidos concluídos; "Pedir outra vez" abre o catálogo certo.
-- [ ] `tsc -b`, `eslint` e `vite build` limpos (os 2 problemas de lint pré-existentes em `Logo.tsx`/`AuthContext.tsx` não contam).
+- [ ] `tsc -b`, `eslint` e `vite build` limpos (os 2 problemas de lint pré-existentes em `Logo.tsx`/`AuthContext.tsx` não contam). Blocos A e B: `tsc -b`, `eslint` e `vite build` limpos (57 testes de frontend a passar). Fica por marcar até o Bloco C estar feito.
 
 ---
 

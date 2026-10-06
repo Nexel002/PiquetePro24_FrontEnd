@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useProfessionalSearch } from '../hooks/useProfessionalSearch'
 import { useServiceCategories } from '../hooks/useServiceCategories'
-import { useCreateServiceRequest } from '../hooks/useServiceRequests'
-import { useProfile } from '../hooks/useProfile'
+import { INVITATIONS_PER_REQUEST } from '../services/invitations'
 import type { SearchedProfessional } from '../services/professionalSearch'
+import type { NewServiceRequestState } from './NewServiceRequest'
 import { BackButton } from '../components/BackButton'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
@@ -40,18 +40,20 @@ function ResultSkeleton() {
 
 interface ProfessionalCardProps {
   professional: SearchedProfessional
-  canRequest: boolean
-  isRequesting: boolean
-  onStartRequest: () => void
-  children?: React.ReactNode
+  // Só há caixa de selecção quando já se sabe que serviço se está a pedir.
+  selectable: boolean
+  selected: boolean
+  // Já escolhidos os que o pedido leva: as outras caixas ficam bloqueadas.
+  blocked: boolean
+  onToggle: () => void
 }
 
-function ProfessionalCard({ professional, canRequest, isRequesting, onStartRequest, children }: ProfessionalCardProps) {
+function ProfessionalCard({ professional, selectable, selected, blocked, onToggle }: ProfessionalCardProps) {
   const visibleServices = professional.services.slice(0, 2)
   const hiddenServices = professional.services.length - visibleServices.length
 
   return (
-    <Card className="p-4">
+    <Card className={`p-4 transition-shadow ${selected ? 'ring-2 ring-piquete-blue' : ''}`}>
       <div className="flex items-center gap-4">
         <Link to={`/profissionais/${professional.id}`} className="flex min-w-0 flex-1 items-center gap-4">
           {professional.avatar_url ? (
@@ -98,14 +100,17 @@ function ProfessionalCard({ professional, canRequest, isRequesting, onStartReque
           </div>
         </Link>
 
-        {canRequest && !isRequesting && (
-          <Button type="button" variant="outline" size="sm" onClick={onStartRequest}>
-            Pedir
-          </Button>
+        {selectable && (
+          <input
+            type="checkbox"
+            checked={selected}
+            disabled={blocked && !selected}
+            onChange={onToggle}
+            aria-label={`Escolher ${professional.full_name}`}
+            className="h-6 w-6 shrink-0 cursor-pointer accent-piquete-blue disabled:cursor-not-allowed disabled:opacity-40"
+          />
         )}
       </div>
-
-      {children}
     </Card>
   )
 }
@@ -114,21 +119,22 @@ function ProfessionalCard({ professional, canRequest, isRequesting, onStartReque
 // o cliente escreve "canalizador" e vê primeiro os mais próximos e depois os outros.
 // Texto e categoria vivem no URL (?q=&category=) — é assim que o campo de pesquisa da
 // Home chega aqui, e que um refresh ou o botão "voltar" não perdem a pesquisa.
+//
+// Bloco B: o cliente escolhe os profissionais que recebem o pedido (exatamente 3, ou
+// todos se houver menos) e segue para /novo-pedido.
 export function FindProfessionals() {
-  const { data: profile } = useProfile()
+  const navigate = useNavigate()
   const geolocation = useGeolocation()
   const [searchParams, setSearchParams] = useSearchParams()
   const q = searchParams.get('q') ?? ''
   const category = searchParams.get('category') ?? ''
 
   const [text, setText] = useState(q)
-  const [creatingForId, setCreatingForId] = useState<string | null>(null)
-  const [title, setTitle] = useState('')
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   const coordinates = geolocation.state.status === 'success' ? geolocation.state.coordinates : null
   const categories = useServiceCategories()
   const search = useProfessionalSearch({ q, category, coordinates })
-  const createRequest = useCreateServiceRequest()
 
   // Debounce: escrever "canalizador" não pode disparar uma pesquisa por letra (o backend
   // limita a 30 pesquisas/min por utilizador).
@@ -182,26 +188,38 @@ export function FindProfessionals() {
   const hasLocation = coordinates !== null
   const hasFilters = q !== '' || category !== ''
 
-  function handleSubmitRequest(event: FormEvent) {
-    event.preventDefault()
-    if (!coordinates || !profile || !title.trim()) return
-
-    createRequest.mutate(
-      {
-        title,
-        location: {
-          latitude: coordinates.latitude,
-          longitude: coordinates.longitude,
-          province: profile.province ?? '',
-        },
-      },
-      {
-        onSuccess: () => {
-          setCreatingForId(null)
-          setTitle('')
-        },
-      },
+  // Que serviço se está a pedir: o chip escolhido; sem chip, o único serviço comum a
+  // todos os resultados (quem pesquisa "canalizador" só vê canalizadores). Com mais do
+  // que um serviço em comum — ou resultados misturados — é preciso escolher o chip.
+  const requestedService = useMemo(() => {
+    if (category) return categories.data?.find((service) => service.slug === category) ?? null
+    if (professionals.length === 0) return null
+    const common = professionals[0].services.filter((service) =>
+      professionals.every((professional) => professional.services.some((s) => s.id === service.id)),
     )
+    return common.length === 1 ? common[0] : null
+  }, [category, categories.data, professionals])
+
+  // Exatamente 3, ou todos os que existirem. Com mais páginas por carregar não se sabe
+  // ainda quantos há — pede-se 3 e o backend confirma.
+  const required = search.hasNextPage ? INVITATIONS_PER_REQUEST : Math.min(INVITATIONS_PER_REQUEST, professionals.length)
+  const chosen = professionals.filter((professional) => selectedIds.includes(professional.id))
+  const canSend = requestedService !== null && required > 0 && chosen.length === required
+
+  function toggle(professionalId: string) {
+    setSelectedIds((current) =>
+      current.includes(professionalId) ? current.filter((id) => id !== professionalId) : [...current, professionalId],
+    )
+  }
+
+  function handleSend() {
+    if (!requestedService || !canSend) return
+    const state: NewServiceRequestState = {
+      categoryId: requestedService.id,
+      categoryName: requestedService.name,
+      professionals: chosen.map((professional) => ({ id: professional.id, full_name: professional.full_name })),
+    }
+    navigate('/novo-pedido', { state })
   }
 
   function renderCard(professional: SearchedProfessional) {
@@ -209,37 +227,17 @@ export function FindProfessionals() {
       <li key={professional.id}>
         <ProfessionalCard
           professional={professional}
-          canRequest={hasLocation}
-          isRequesting={creatingForId === professional.id}
-          onStartRequest={() => setCreatingForId(professional.id)}
-        >
-          {creatingForId === professional.id && (
-            <form onSubmit={handleSubmitRequest} className="mt-4 flex flex-col gap-3 border-t border-gray-100 pt-4">
-              <Input
-                label="O que precisas?"
-                type="text"
-                value={title}
-                onChange={(event) => setTitle(event.target.value)}
-                required
-                placeholder="Ex: Reparar torneira"
-              />
-              <div className="mt-1 flex gap-2">
-                <Button type="submit" disabled={createRequest.isPending} isLoading={createRequest.isPending} className="flex-1">
-                  Enviar
-                </Button>
-                <Button type="button" variant="secondary" onClick={() => setCreatingForId(null)} className="flex-1">
-                  Cancelar
-                </Button>
-              </div>
-            </form>
-          )}
-        </ProfessionalCard>
+          selectable={requestedService !== null}
+          selected={selectedIds.includes(professional.id)}
+          blocked={chosen.length >= required}
+          onToggle={() => toggle(professional.id)}
+        />
       </li>
     )
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-5 p-4 pb-12 sm:p-6">
+    <main className={`mx-auto flex min-h-dvh max-w-lg flex-col gap-5 p-4 sm:p-6 ${professionals.length > 0 ? 'pb-32' : 'pb-12'}`}>
       <header className="flex items-center gap-3">
         <BackButton />
         <h1 className="flex-1 font-heading text-xl font-bold text-piquete-blue">Procurar profissionais</h1>
@@ -331,6 +329,12 @@ export function FindProfessionals() {
 
       {search.isSuccess && professionals.length > 0 && (
         <>
+          {requestedService === null && (
+            <p className="rounded-2xl bg-piquete-blue/5 p-3 text-xs text-piquete-gray-dark">
+              Para enviares um pedido, escolhe primeiro o serviço nos botões acima.
+            </p>
+          )}
+
           {hasLocation && nearby.length > 0 && (
             <section className="flex flex-col gap-3">
               <h2 className="px-1 font-heading text-sm font-bold uppercase tracking-wider text-piquete-blue">Perto de ti</h2>
@@ -360,6 +364,24 @@ export function FindProfessionals() {
             </Button>
           )}
         </>
+      )}
+
+      {requestedService !== null && professionals.length > 0 && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-gray-100 bg-white/95 p-4 backdrop-blur">
+          <div className="mx-auto flex max-w-lg items-center gap-3">
+            <p className="flex-1 text-sm text-piquete-gray-dark" aria-live="polite">
+              <span className="font-bold text-piquete-blue">
+                {chosen.length}/{required}
+              </span>{' '}
+              {required === INVITATIONS_PER_REQUEST
+                ? `profissionais escolhidos para ${requestedService.name}`
+                : `escolhidos (só há ${required} para ${requestedService.name})`}
+            </p>
+            <Button type="button" onClick={handleSend} disabled={!canSend}>
+              Pedir a {required}
+            </Button>
+          </div>
+        </div>
       )}
     </main>
   )
