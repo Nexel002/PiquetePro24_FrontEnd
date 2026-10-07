@@ -4,7 +4,8 @@ import { useAuth } from '../store/AuthContext'
 import { useBecomeProfessional } from '../hooks/useProfile'
 import type { ProfessionalType } from '../services/profile'
 import { sendWelcomeNotification } from '../services/notifications'
-import { INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY, INTENDED_ROLE_STORAGE_KEY } from './Login'
+import { INTENDED_PROFESSIONAL_TYPE_STORAGE_KEY, INTENDED_ROLE_STORAGE_KEY } from '../lib/authIntent'
+import { consumirDestinoPosLogin } from '../lib/postLoginRedirect'
 
 // Destino do redirectTo em signInWithOAuth (ver Login.tsx). O supabase-js processa o
 // `code` da URL automaticamente ao carregar esta página (PKCE, detectSessionInUrl por
@@ -20,6 +21,9 @@ export function AuthCallback() {
   const { session, isLoading } = useAuth()
   const becomeProfessional = useBecomeProfessional()
   const [hasAppliedIntendedRole, setHasAppliedIntendedRole] = useState(false)
+  // Lido uma só vez, ao montar: o login guardou aqui para onde o utilizador queria ir antes de
+  // sair para o Google (o `?next=` perde-se nessa viagem). Voltar a ler depois de o apagar daria null.
+  const [destino] = useState(consumirDestinoPosLogin)
 
   useEffect(() => {
     if (isLoading || !session || hasAppliedIntendedRole) return
@@ -58,7 +62,7 @@ export function AuthCallback() {
   }, [isLoading, session, hasAppliedIntendedRole])
 
   if (!isLoading && session && hasAppliedIntendedRole) {
-    return <Navigate to="/" replace />
+    return <Navigate to={destino ?? '/'} replace />
   }
 
   if (!isLoading && !session) {

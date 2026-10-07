@@ -3,6 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { Home } from './pages/Home'
 import { Login } from './pages/Login'
+import { Terms } from './pages/Terms'
 import { AuthCallback } from './pages/AuthCallback'
 import { Profile } from './pages/Profile'
 import { CompletePhone } from './pages/onboarding/CompletePhone'
@@ -42,6 +43,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/entrar" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/termos" element={<Terms />} />
 
             {/* TRD Adendo v1.7 (backend): destino do link de recuperação de
                 password. Sem ProtectedRoute de propósito — ver comentário em

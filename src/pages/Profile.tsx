@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useProfile, useUpdateProfileDetails, useUploadAvatar } from '../hooks/useProfile'
 import { useMyServiceRequests, useCancelServiceRequest, useCompleteServiceRequest } from '../hooks/useServiceRequests'
 import { LocationForm } from '../components/LocationForm'
+import { DeleteAccountSection } from '../components/profile/DeleteAccountSection'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
@@ -346,6 +347,10 @@ export function Profile() {
                   </button>
                 </div>
               )}
+
+              {/* Corrigir os dados (acima) e eliminar a conta ficam no mesmo sítio, como os
+                  termos de utilização prometem. Não se mostra a administradores. */}
+              {profile.role !== 'ADMIN' && <DeleteAccountSection papel={profile.role} />}
             </div>
           ) : (
             <div className="flex flex-col gap-2 rounded-2xl bg-gray-50 border border-gray-100 p-4">

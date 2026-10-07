@@ -1,9 +1,11 @@
 import type { ReactNode } from 'react'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useLocation } from 'react-router-dom'
+import { caminhoDoLogin } from '../lib/postLoginRedirect'
 import { useAuth } from '../store/AuthContext'
 
 export function ProtectedRoute({ children }: { children: ReactNode }) {
   const { session, isLoading } = useAuth()
+  const location = useLocation()
 
   if (isLoading) {
     return (
@@ -14,7 +16,9 @@ export function ProtectedRoute({ children }: { children: ReactNode }) {
   }
 
   if (!session) {
-    return <Navigate to="/entrar" replace />
+    // Leva o destino: quem toca num cartão da Home sem sessão entra e chega ao que queria,
+    // em vez de cair na Home outra vez.
+    return <Navigate to={caminhoDoLogin(location.pathname + location.search)} replace />
   }
 
   return <>{children}</>

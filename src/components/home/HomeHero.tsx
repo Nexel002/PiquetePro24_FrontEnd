@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { UserRole } from '../../services/profile'
+import { caminhoDoLogin } from '../../lib/postLoginRedirect'
 import { ROTULO_PAPEL } from './papeis'
 import { UserAvatar } from './UserAvatar'
 
@@ -21,7 +22,7 @@ export function HomeHero({ temSessao, primeiroNome, nomeCompleto, avatarUrl, pap
         <h1 className="font-heading font-bold text-2xl sm:text-3xl text-slate-900 text-balance">Bem-vindo ao PiquetePro24</h1>
         <p className="mt-1 text-sm sm:text-base text-slate-600 max-w-xl">
           Encontra canalizadores, eletricistas e outros profissionais qualificados em Moçambique.{' '}
-          <Link to="/entrar" className="font-bold text-emerald-700 underline underline-offset-2 hover:text-emerald-800">
+          <Link to={caminhoDoLogin(undefined, 'criar-conta')} className="font-bold text-emerald-700 underline underline-offset-2 hover:text-emerald-800">
             Criar conta
           </Link>
         </p>
