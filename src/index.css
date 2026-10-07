@@ -79,5 +79,14 @@
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
     background: rgba(255, 199, 0, 0.4);
   }
+
+  /* No Scrollbar Utility */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
 

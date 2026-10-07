@@ -1,116 +1,126 @@
-import { Link } from 'react-router-dom'
-import { useAuth } from '../store/AuthContext'
-import { useProfile } from '../hooks/useProfile'
-import { Card } from '../components/ui/Card'
-import { Button } from '../components/ui/Button'
-import { Badge } from '../components/ui/Badge'
-import { Logo } from '../components/ui/Logo'
-import { ServiceSearch } from '../components/ServiceSearch'
+import { useEffect, type FormEvent } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { BottomNav } from '../components/BottomNav'
+import { CategoryFilter } from '../components/home/CategoryFilter'
+import { COLUNA } from '../components/home/layout'
+import { HomeHeader } from '../components/home/HomeHeader'
+import { HomeHero } from '../components/home/HomeHero'
+import { HomeShortcuts } from '../components/home/HomeShortcuts'
+import { SearchResults } from '../components/home/SearchResults'
+import { WorkSlider } from '../components/home/WorkSlider'
+import { useFavorites } from '../hooks/useFavorites'
+import { useHomeFeed } from '../hooks/useHomeFeed'
+import { useHomeUser } from '../hooks/useHomeUser'
 
+// Esta página só compõe: quem é o utilizador (useHomeUser), o que se mostra (useHomeFeed) e
+// os blocos visuais (components/home). Fundo branco e conteúdo plano, no estilo das
+// plataformas de catálogo; o cabeçalho e a barra de categorias ocupam a largura toda, o
+// resto vive numa coluna centrada.
 export function Home() {
-  const { session, signOut } = useAuth()
-  const { data: profile } = useProfile()
+  const navigate = useNavigate()
+  const { temSessao, profile, primeiroNome, localizacao, terminarSessao } = useHomeUser()
+  const feed = useHomeFeed()
+  const { isFavorite, toggleFavorite } = useFavorites()
+
+  function aoPesquisar(event: FormEvent) {
+    event.preventDefault()
+    const termo = feed.pesquisa.trim()
+    navigate(termo ? `/profissionais?q=${encodeURIComponent(termo)}` : '/profissionais')
+  }
+
+  function aoClicarNotificacoes() {
+    if (profile?.role === 'PROFESSIONAL') navigate('/pedidos-recebidos')
+    else if (profile?.role === 'CLIENT') navigate('/os-meus-pedidos')
+    else toast.info('Não tens novas notificações no momento.')
+  }
+
+  // O `body` é cinzento (gray-50) para os restantes ecrãs. Aqui passa a branco enquanto a Home
+  // está montada, para nenhuma faixa cinzenta aparecer atrás do conteúdo (ao esticar o ecrã,
+  // no "rubber-band" do telemóvel ou quando o conteúdo é mais curto que a janela).
+  useEffect(() => {
+    const anterior = document.body.style.backgroundColor
+    document.body.style.backgroundColor = '#ffffff'
+    return () => {
+      document.body.style.backgroundColor = anterior
+    }
+  }, [])
+
+  const slider = { isFavorite, onToggleFavorite: toggleFavorite }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-center p-4 sm:p-6 animate-fade-in">
-      <Card variant="glass" className="p-6 sm:p-8 relative overflow-hidden border-white/15">
-        {/* Glow ambient background sphere */}
-        <div className="absolute -top-12 -right-12 w-40 h-40 bg-piquete-yellow/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-12 -left-12 w-40 h-40 bg-piquete-blue-bright/20 rounded-full blur-3xl pointer-events-none" />
+    <div className="min-h-dvh bg-white text-slate-900 antialiased selection:bg-emerald-500 selection:text-white">
+      <HomeHeader
+        temSessao={temSessao}
+        primeiroNome={primeiroNome}
+        nomeCompleto={profile?.full_name ?? undefined}
+        avatarUrl={profile?.avatar_url}
+        papel={profile?.role}
+        pesquisa={feed.pesquisa}
+        aoMudarPesquisa={feed.setPesquisa}
+        aoPesquisar={aoPesquisar}
+        aoClicarNotificacoes={aoClicarNotificacoes}
+        aoTerminarSessao={() => void terminarSessao()}
+      />
+      <CategoryFilter categorias={feed.categorias} selecionada={feed.categoria} aoSeleccionar={feed.setCategoria} />
 
-        <header className="mb-8 text-center relative z-10 flex flex-col items-center">
-          <div className="mb-3">
-            <Logo variant="stacked" size="lg" showSubtitle />
-          </div>
+      {/* O espaço em baixo cobre a barra de navegação flutuante (só em telemóvel) e a área
+          segura dos telemóveis com barra de gestos. */}
+      <main className={`${COLUNA} pb-[calc(7rem+env(safe-area-inset-bottom))]`}>
+        <HomeHero
+          temSessao={temSessao}
+          primeiroNome={primeiroNome}
+          nomeCompleto={profile?.full_name ?? undefined}
+          avatarUrl={profile?.avatar_url}
+          papel={profile?.role}
+          localizacao={localizacao}
+        />
 
-          {profile && (
-            <div className="mt-4 flex justify-center">
-              <Badge variant={profile.role === 'ADMIN' ? 'warning' : profile.role === 'PROFESSIONAL' ? 'approved' : 'info'}>
-                {profile.role === 'ADMIN' ? 'Administrador' : profile.role === 'PROFESSIONAL' ? 'Profissional' : 'Cliente'}
-              </Badge>
-            </div>
-          )}
-        </header>
-
-
-        {session ? (
-          <div className="flex flex-col gap-3.5 relative z-10">
-            {profile?.role === 'ADMIN' ? (
-              <>
-                <Link to="/admin/kyc" className="w-full">
-                  <Button variant="primary" className="w-full">Revisão de KYC</Button>
-                </Link>
-                <Link to="/admin/utilizadores" className="w-full">
-                  <Button variant="glass" className="w-full">Utilizadores</Button>
-                </Link>
-                <Link to="/admin/pedidos-servico" className="w-full">
-                  <Button variant="glass" className="w-full">Pedidos de serviço</Button>
-                </Link>
-                <Link to="/admin/metricas" className="w-full">
-                  <Button variant="glass" className="w-full">Métricas</Button>
-                </Link>
-                <Link to="/admin/audit-log" className="w-full">
-                  <Button variant="glass" className="w-full">Histórico de ações</Button>
-                </Link>
-              </>
-            ) : profile?.role === 'PROFESSIONAL' ? (
-              <>
-                <Link to="/pedidos-recebidos" className="w-full">
-                  <Button variant="primary" className="w-full">Pedidos recebidos</Button>
-                </Link>
-                <Link to="/pedidos-proximos" className="w-full">
-                  <Button variant="glass" className="w-full">Pedidos perto de ti</Button>
-                </Link>
-                <Link to="/trabalhos-aceites" className="w-full">
-                  <Button variant="glass" className="w-full">Trabalhos aceites</Button>
-                </Link>
-                <Link to="/catalogo" className="w-full">
-                  <Button variant="glass" className="w-full">O meu catálogo</Button>
-                </Link>
-                <Link to="/verificacao-identidade" className="w-full">
-                  <Button variant="glass" className="w-full">Verificação de identidade</Button>
-                </Link>
-                <Link to="/subscricao" className="w-full">
-                  <Button variant="glass" className="w-full">Subscrição</Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <ServiceSearch />
-                <Link to="/os-meus-pedidos" className="w-full">
-                  <Button variant="glass" className="w-full">Os meus pedidos</Button>
-                </Link>
-                <Link to="/os-meus-profissionais" className="w-full">
-                  <Button variant="glass" className="w-full">Os meus profissionais</Button>
-                </Link>
-              </>
-            )}
-
-            <div className="flex items-center gap-3 my-1">
-              <span className="h-px flex-1 bg-white/10" />
-            </div>
-
-            <Link to="/perfil" className="w-full">
-              <Button variant="ghost" className="w-full">O meu perfil</Button>
-            </Link>
-            
-            <button
-              type="button"
-              onClick={() => void signOut()}
-              className="text-xs font-semibold text-rose-400 hover:text-rose-300 transition-colors py-2 mt-1 text-center"
-            >
-              Terminar sessão
-            </button>
-          </div>
+        {feed.filtroActivo ? (
+          <SearchResults
+            works={feed.trabalhosFiltrados}
+            isFavorite={isFavorite}
+            onToggleFavorite={toggleFavorite}
+            aoLimpar={feed.limparFiltros}
+          />
         ) : (
-          <div className="relative z-10">
-            <Link to="/entrar" className="w-full block">
-              <Button variant="primary" size="lg" className="w-full">Entrar na Aplicação</Button>
-            </Link>
-          </div>
+          <>
+            {temSessao && <HomeShortcuts papel={profile?.role} />}
+            <div className="space-y-12 sm:space-y-14">
+              <WorkSlider
+                id="destaques"
+                titulo="Trabalhos em destaque"
+                ligacao={{ to: '/profissionais', texto: 'Ver todos' }}
+                works={feed.destaques}
+                {...slider}
+              />
+              <WorkSlider
+                id="canalizacao"
+                titulo="Canalização e reparações hidráulicas"
+                ligacao={{ to: '/profissionais?category=canalizacao', texto: 'Ver canalizadores' }}
+                works={feed.canalizacao}
+                {...slider}
+              />
+              <WorkSlider
+                id="eletricidade"
+                titulo="Eletricidade e instalações de energia"
+                ligacao={{ to: '/profissionais?category=eletricidade', texto: 'Ver eletricistas' }}
+                works={feed.eletricidade}
+                {...slider}
+              />
+              <WorkSlider
+                id="exteriores"
+                titulo="Pintura, acabamentos e espaços verdes"
+                ligacao={{ to: '/profissionais', texto: 'Explorar todos' }}
+                works={feed.exteriores}
+                {...slider}
+              />
+            </div>
+          </>
         )}
-      </Card>
-    </main>
+      </main>
+
+      <BottomNav />
+    </div>
   )
 }
-
