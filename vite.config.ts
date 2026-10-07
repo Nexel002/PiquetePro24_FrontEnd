@@ -7,7 +7,10 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' e não 'autoUpdate': a versão nova só é activada quando o utilizador aceita o
+      // aviso (ver src/lib/pwaUpdate.ts). Com 'autoUpdate' e sem recarregar, quem deixava a
+      // app aberta ficava na versão antiga indefinidamente.
+      registerType: 'prompt',
       manifest: {
         name: 'PiquetePro24',
         short_name: 'PiquetePro24',

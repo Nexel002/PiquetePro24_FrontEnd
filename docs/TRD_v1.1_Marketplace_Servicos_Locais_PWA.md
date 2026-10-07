@@ -1009,3 +1009,22 @@ Além disso: `/service_requests/nearby` passa a exigir `PROFESSIONAL` e deixa de
 **Validação:** `tsc -b`, `eslint` (só o aviso pré-existente de `AuthContext.tsx`) e `vite build` limpos; Vitest 81 testes (eram 62): `useHomeFeed.test.ts` (8), `UserMenu.test.tsx` (7) e `useFavorites.test.ts` (4, incluindo o toast único em StrictMode). **Não verificado em browser nesta sessão** (sem ferramenta de automação); o utilizador viu e aprovou o aspeto no browser durante as iterações.
 
 **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6.
+
+
+---
+
+## Adendo v1.20
+
+### Aviso de "nova versão" da PWA — só frontend (07/10/2026)
+
+**Contexto:** depois do deploy da Home redesenhada (Adendo v1.19), o utilizador continuou a ver o ecrã antigo no site publicado, com o login por email e por Google. O Vercel servia a versão nova (confirmado a descarregar o bundle de produção); quem a escondia era o service worker da PWA no browser. **Sem alteração de API, de contrato ou de variáveis de ambiente**; sem componente de backend (cópia sincronizada por regra).
+
+**Causa:** o `vite-plugin-pwa` estava em `registerType: 'autoUpdate'` com o registo automático por omissão, que não recarrega a página. A sequência real era: o service worker antigo serve o shell antigo; o novo descarrega em segundo plano; só um segundo carregamento mostra a versão nova — e quem deixa o separador ou a PWA instalada aberta nunca recarrega, ficando na versão antiga indefinidamente. Não é algo que o utilizador final deva resolver à mão (limpar dados do site, desregistar o service worker).
+
+**Decisão:** `registerType: 'prompt'` e registo explícito em `main.tsx` (`virtual:pwa-register`, lógica em `src/lib/pwaUpdate.ts`). Quando há versão nova aparece um aviso persistente («Há uma nova versão disponível — Actualizar», `sonner`) e só ao aceitar é que o service worker novo é activado (`SKIP_WAITING`) e a página recarrega. **Alternativa rejeitada:** recarregar sozinho — apagaria um formulário a meio (pedido de serviço, KYC) a um utilizador em rede instável. Quem não aceita fica na versão actual, sem perder nada. **Verificação periódica** (de hora a hora, só com rede) com `registration.update()`, porque o browser só procura um service worker novo quando a página carrega.
+
+**Notas:** (1) o registo passa a vir do bundle da aplicação e já não de um `registerSW.js` injectado; (2) `tsconfig.app.json` ganha `vite-plugin-pwa/client` nos tipos; (3) a **primeira** vez que esta versão chega a um browser que ainda tem o service worker antigo, o aviso não pode aparecer (o código antigo não o tem) — esses utilizadores precisam de um carregamento extra, uma única vez; a partir daí os avisos funcionam; (4) sem nova dependência.
+
+**Validação:** `tsc -b`, `eslint` (só o aviso pré-existente de `AuthContext.tsx`) e `vite build` limpos (`sw.js` só chama `skipWaiting` na mensagem `SKIP_WAITING`, ou seja, não força a activação); Vitest 88 testes (eram 81): `pwaUpdate.test.ts` (7) — aviso só com versão nova, só actualiza se o utilizador aceitar, verificação periódica só com rede, falha de rede sem rejeição por tratar. **Não verificado num browser real:** o fluxo completo (aviso → Actualizar → recarga) só se vê com dois deploys seguidos.
+
+**Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 5.

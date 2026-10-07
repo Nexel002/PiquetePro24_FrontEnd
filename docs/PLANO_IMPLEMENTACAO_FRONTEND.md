@@ -207,7 +207,8 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - [ ] Última localização conhecida é reutilizada corretamente quando GPS falha.
 - [ ] Criar um pedido em modo offline não perde os dados — é enfileirado e sincronizado ao reconectar, sem duplicação.
 - [ ] Indicador de conectividade reflete o estado real da rede.
-- [ ] Lighthouse PWA audit mantém pontuação alta (>90) após as mudanças desta fase.
+- [ ] Lighthouse PWA audit mantém pontuação alta (>90) após as mudanças desta fase.
+- [x] **(Adendo v1.20, 07/10/2026 — branch `feat/pwa-aviso-nova-versao`, descoberto em produção)** Aviso de nova versão da PWA: o site publicado mostrava o ecrã antigo porque o service worker (`autoUpdate` sem recarregar) mantinha a versão antiga em quem deixava a app aberta. `registerType: 'prompt'` + `src/lib/pwaUpdate.ts` + registo em `main.tsx`: aviso persistente «Há uma nova versão disponível — Actualizar» (só activa e recarrega ao aceitar, para não apagar formulários a meio) e verificação de hora a hora com rede. 7 testes novos (suite a 88). `tsc -b`, `eslint` e `vite build` limpos. **Fluxo completo não verificado num browser real** (precisa de dois deploys seguidos); o primeiro browser com o service worker antigo precisa de um carregamento extra, uma única vez.
 
 ---
 
