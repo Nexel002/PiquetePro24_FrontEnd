@@ -70,12 +70,17 @@ export function useBecomeProfessional() {
 // limpa-a explicitamente e a UI (ver Profile.tsx) redireciona para fora de qualquer
 // rota protegida. queryClient.clear() evita que dados do utilizador apagado
 // sobrevivam na cache do TanStack Query.
-export function useDeleteAccount() {
+//
+// `aoApagar` corre ANTES de terminar a sessão: quem chama navega primeiro para uma rota
+// pública. Se a sessão caísse primeiro, o ProtectedRoute mandava a pessoa para o login com
+// "voltar ao perfil" — uma página de uma conta que já não existe.
+export function useDeleteAccount({ aoApagar }: { aoApagar?: () => void } = {}) {
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: deleteAccount,
     onSuccess: async () => {
+      aoApagar?.()
       await supabase.auth.signOut()
       queryClient.clear()
     },

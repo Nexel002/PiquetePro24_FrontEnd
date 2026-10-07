@@ -2,6 +2,7 @@ import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import type { UserRole } from '../../services/profile'
 import { Logo } from '../ui/Logo'
+import { caminhoDoLogin } from '../../lib/postLoginRedirect'
 import { COLUNA } from './layout'
 import { NotificationButton } from './NotificationButton'
 import { LIGACAO_DO_PAPEL } from './papeis'
@@ -89,7 +90,7 @@ export function HomeHeader({
                 Entrar
               </Link>
               <Link
-                to="/entrar"
+                to={caminhoDoLogin(undefined, 'criar-conta')}
                 className="hidden min-h-11 items-center border border-slate-900 bg-slate-900 px-4 text-sm font-bold text-white transition-colors hover:bg-slate-800 md:inline-flex"
               >
                 Criar conta
