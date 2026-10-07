@@ -1,0 +1,138 @@
+export interface FeaturedWork {
+  id: string
+  title: string
+  professionalId: string
+  professionalName: string
+  professionalAvatar?: string
+  serviceSlug: string
+  serviceName: string
+  location: string
+  rating: number
+  reviewsCount: number
+  completedJobsCount: number
+  badgeText: string
+  imageUrl: string
+}
+
+export const FEATURED_WORKS: FeaturedWork[] = [
+  {
+    id: 'work-1',
+    title: 'Instalação Hidráulica & Louças Sanitárias',
+    professionalId: 'pro-carlos',
+    professionalName: 'Carlos Macamo',
+    professionalAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
+    serviceSlug: 'canalizacao',
+    serviceName: 'Canalização',
+    location: 'Maputo · Polana Cimento',
+    rating: 4.9,
+    reviewsCount: 28,
+    completedJobsCount: 54,
+    badgeText: 'Destaque',
+    imageUrl: 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'work-2',
+    title: 'Manutenção Elétrica & Quadro Geral Trifásico',
+    professionalId: 'pro-joana',
+    professionalName: 'Joana Sitoe',
+    professionalAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=150&auto=format&fit=crop&q=80',
+    serviceSlug: 'eletricidade',
+    serviceName: 'Eletricidade',
+    location: 'Matola · Fomento',
+    rating: 5.0,
+    reviewsCount: 34,
+    completedJobsCount: 68,
+    badgeText: 'Top Avaliado',
+    imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'work-3',
+    title: 'Pintura Texturada & Acabamento Premium',
+    professionalId: 'pro-bento',
+    professionalName: 'Bento Cossa',
+    professionalAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
+    serviceSlug: 'pintura',
+    serviceName: 'Pintura',
+    location: 'Maputo · Sommerschield',
+    rating: 4.85,
+    reviewsCount: 19,
+    completedJobsCount: 42,
+    badgeText: 'Verificado',
+    imageUrl: 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'work-4',
+    title: 'Paisagismo Tropical & Sistema de Rega',
+    professionalId: 'pro-amelia',
+    professionalName: 'Amélia Nhantumbo',
+    professionalAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&auto=format&fit=crop&q=80',
+    serviceSlug: 'jardinagem',
+    serviceName: 'Jardinagem',
+    location: 'Maputo · Costa do Sol',
+    rating: 4.95,
+    reviewsCount: 41,
+    completedJobsCount: 77,
+    badgeText: 'Recomendado',
+    imageUrl: 'https://images.unsplash.com/photo-1558904541-efa8c4a08931?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'work-5',
+    title: 'Instalação de Ar Condicionado Inverter',
+    professionalId: 'pro-mateus',
+    professionalName: 'Mateus Tembe',
+    professionalAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80',
+    serviceSlug: 'climatizacao',
+    serviceName: 'Climatização',
+    location: 'Maputo · Triunfo',
+    rating: 4.9,
+    reviewsCount: 22,
+    completedJobsCount: 39,
+    badgeText: 'Verificado',
+    imageUrl: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'work-6',
+    title: 'Armários de Cozinha Embutidos & Bancada',
+    professionalId: 'pro-sergio',
+    professionalName: 'Sérgio Mondlane',
+    professionalAvatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=150&auto=format&fit=crop&q=80',
+    serviceSlug: 'carpintaria',
+    serviceName: 'Carpintaria',
+    location: 'Matola · Malhampsene',
+    rating: 4.88,
+    reviewsCount: 16,
+    completedJobsCount: 31,
+    badgeText: 'Artesanal',
+    imageUrl: 'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'work-7',
+    title: 'Limpeza Profunda Residencial & Pós-Obras',
+    professionalId: 'pro-sara',
+    professionalName: 'Sara Mabunda',
+    professionalAvatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=150&auto=format&fit=crop&q=80',
+    serviceSlug: 'limpeza-domestica',
+    serviceName: 'Limpeza',
+    location: 'Maputo · Bairro Central',
+    rating: 4.92,
+    reviewsCount: 35,
+    completedJobsCount: 88,
+    badgeText: 'Mais Pedido',
+    imageUrl: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&auto=format&fit=crop&q=80',
+  },
+  {
+    id: 'work-8',
+    title: 'Portão Deslizante & Grade de Segurança',
+    professionalId: 'pro-antonio',
+    professionalName: 'António Langa',
+    professionalAvatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&auto=format&fit=crop&q=80',
+    serviceSlug: 'serralharia',
+    serviceName: 'Serralharia',
+    location: 'Maputo · Zimpeto',
+    rating: 4.8,
+    reviewsCount: 14,
+    completedJobsCount: 26,
+    badgeText: 'Segurança',
+    imageUrl: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?w=800&auto=format&fit=crop&q=80',
+  },
+]

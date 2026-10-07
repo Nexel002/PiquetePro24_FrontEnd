@@ -978,3 +978,34 @@ Além disso: `/service_requests/nearby` passa a exigir `PROFESSIONAL` e deixa de
 **Extensão da Secção 5 (implementada no Bloco B):** o dono do pedido vê o nome e o telefone do profissional escolhido (`GET /service_requests/:id/professional`), e só depois de o escolher — antes disso o endpoint responde `409`, e nunca a outro cliente (`403`). O contacto e a morada exacta do cliente continuam reservados ao profissional escolhido, com KYC aprovado e subscrição ativa. O convite recebido por um profissional (email e ecrã) só leva o título, a descrição e a hierarquia de localização escrita pelo cliente.
 
 **Critérios de entrega correspondentes:** ver `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 11, e `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 10.
+
+
+---
+
+## Adendo v1.19
+
+### Ecrã inicial (`Home`) redesenhado e decomposto — só frontend (07/10/2026)
+
+**Contexto:** o utilizador pediu o refinamento do ecrã inicial a partir de capturas de uma plataforma de catálogo de referência: fundo branco, barra de navegação em largura total, barra de categorias em texto, linha de boas-vindas com os dados de quem entrou, cartões planos e carrosséis. O `Home.tsx` tinha crescido para um único componente de 860 linhas e foi decomposto. **Sem alteração de contrato, de API, de dependências ou de variáveis de ambiente** — não há componente de backend; esta cópia do TRD existe nos dois repositórios só porque os dois TRDs são mantidos idênticos.
+
+**Decisões:**
+
+**A. Estrutura.** `pages/Home.tsx` (~120 linhas) só compõe. A lógica vive em dois hooks — `hooks/useHomeUser.ts` (nome, localização e papel já prontos a apresentar) e `hooks/useHomeFeed.ts` (categorias, pesquisa, filtro e os grupos de cada carrossel) — e a apresentação em `components/home/`: `HomeHeader`, `CategoryFilter`, `HomeHero`, `HomeShortcuts`, `WorkSlider`, `WorkCard`, `SearchResults`, `SearchForm`, `NotificationButton`, `UserMenu`, `UserAvatar`. Os atalhos de cada papel são dados (`acoesRapidas.ts`) e os rótulos/ligações de cada papel estão num só sítio (`papeis.ts`). A largura da coluna de conteúdo (`layout.ts`, 105 rem) é partilhada pelo cabeçalho e pelo corpo para ficarem alinhados.
+
+**B. Responsividade.** Mobile-first. O cabeçalho é uma única árvore DOM (antes havia um bloco para telemóvel e outro para desktop, com dois formulários de pesquisa e dois botões de notificações): o CSS Grid põe a pesquisa por baixo em ecrã estreito e ao centro a partir de `md`. Larguras dos cartões em fracção da fila (78 % no telemóvel, depois 2, 3, 4 e 5 por fila) em vez de pixéis fixos; alvos de toque de pelo menos 44 px (inclui a barra inferior); campo de pesquisa a 16 px no telemóvel (o iOS faz zoom abaixo disso); `min-h-dvh` e `env(safe-area-inset-bottom)` na barra inferior; `motion-reduce` nas animações; barra de categorias que centra quando cabe e desliza com o dedo quando não cabe.
+
+**C. Menu do avatar.** O "Sair" só existia a partir de `md`; no telemóvel só se saía passando pelo perfil. O avatar abre agora um menu (perfil, a ligação do papel, "Sair") que serve todos os tamanhos. Padrão de botão com `aria-expanded` e painel de ligações, não `role="menu"`; fecha com Esc (devolvendo o foco), ao clicar fora e ao escolher uma opção.
+
+**D. Correcções de comportamento.** (1) Os carrosséis completavam a fila com `concat(slice(...))`, repetindo o mesmo cartão — e o coração de um acendia o do outro; cada carrossel mostra agora só os trabalhos do seu tema e esconde-se se não tiver nenhum. (2) O toast de favoritos estava dentro do updater do `setState`, que o React corre duas vezes em StrictMode — duas notificações por toque; saiu para fora. (3) O ponto vermelho do sino estava sempre visível sem dados que o justificassem; **removido** até existir uma contagem real (para o profissional, os convites pendentes seriam a fonte natural — fica no backlog).
+
+**E. Fundo.** O `body` é `gray-50` para os restantes ecrãs; a Home põe-no a branco enquanto está montada (e repõe o valor anterior ao sair), para não aparecer cinzento atrás do conteúdo no "rubber-band" do telemóvel nem quando o conteúdo é mais curto que a janela.
+
+**F. Dados ainda fixos.** Os "trabalhos em destaque" continuam a vir de `src/data/featuredWorks.ts` (16 trabalhos com fotos do Unsplash; a CSP já permite imagens `https:`). **Para produção precisam de um endpoint do backend** (trabalhos concluídos e avaliados, por serviço) — por decidir e fora desta entrega. As categorias vêm da API com as de reserva como fallback.
+
+**G. Removido.** `components/ServiceSearch.tsx` (campo de pesquisa + atalhos de categoria do Bloco A da Fase 10): deixou de ser usado — a pesquisa vive agora no cabeçalho (`SearchForm`, mesmo contrato: o texto viaja em `/profissionais?q=`, a categoria em `?category=`).
+
+**Fora do cabeçalho de propósito:** a localização (já aparece na linha de boas-vindas, e a pesquisa ganhou o espaço) e o coração de favoritos (não existe ecrã de favoritos — seria um botão sem destino). Os favoritos continuam só em `localStorage`.
+
+**Validação:** `tsc -b`, `eslint` (só o aviso pré-existente de `AuthContext.tsx`) e `vite build` limpos; Vitest 81 testes (eram 62): `useHomeFeed.test.ts` (8), `UserMenu.test.tsx` (7) e `useFavorites.test.ts` (4, incluindo o toast único em StrictMode). **Não verificado em browser nesta sessão** (sem ferramenta de automação); o utilizador viu e aprovou o aspeto no browser durante as iterações.
+
+**Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6.

@@ -40,7 +40,11 @@ export function Logo({
   const isLight = theme === 'light';
 
   if (variant === 'icon') {
-    return <LogoIcon size={iconSizes[size]} className={className} {...(props as any)} />;
+    return (
+      <div className={`inline-flex items-center justify-center ${className}`} {...props}>
+        <LogoIcon size={iconSizes[size]} />
+      </div>
+    );
   }
 
   return (
