@@ -1060,3 +1060,32 @@ Além disso: `/service_requests/nearby` passa a exigir `PROFESSIONAL` e deixa de
 **Validação:** `tsc -b`, `eslint` (só o aviso pré-existente de `AuthContext.tsx`) e `vite build` limpos; Vitest 138 testes: `DeleteAccountSection.test.tsx` (9 — fechada por omissão, aviso por papel, confirmação escrita, cancelar, erro, navegação antes de terminar a sessão), `Terms.test.tsx` (6 — ids únicos, índice, data, contactos só depois da escolha, quem opera e onde se corrige), `Login.test.tsx` reescrito (14 — incluindo a ligação aos termos — português sem texto inglês, canal, ver palavra-passe, registo e papel, recuperação, `?modo=`, `?next=` válido e malicioso, destino guardado para o Google, envio com email, metadados do registo, erro, "lembrar"), `postLoginRedirect.test.ts` (destinos seguros e inseguros) e `ProtectedRoute.test.tsx`. **Não verificado num browser real nesta sessão.**
 
 **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (e Fase 1, Autenticação).
+
+
+## Adendo v1.22
+
+### Geocodificação reversa em cascata: Nominatim → OpenRouteService → Google — só backend (11/10/2026)
+
+**Contexto:** o utilizador quis saber se podia deixar de usar o Google Maps (pago) na geocodificação reversa e se o OpenRouteService (grátis) o substituía. Em vez de decidir por palpite, comparou-se o resultado dos três serviços em 10 pontos reais de Maputo (Zimpeto, Baixa/Central "B" e "C", Coop, Sommerschield; script pontual, fora do repositório). Resultado, contando pontos com rua ou bairro: **Nominatim 10/10, OpenRouteService 7/10, Google 7/10**; só rua: **Nominatim 8, ORS 7, Google 4**. O Nominatim e o ORS juntos deram rua ou ponto próximo nos 10. O utilizador esclareceu o critério: o cliente pede o serviço a partir de onde está, e o que importa é a **rua (ou o ponto mais próximo)** — o bairro é um extra que quase nenhum serviço (nem o Yango) dá de forma fiável.
+
+**Decisões:**
+
+**A. Ordem da cascata (`src/services/geocodingService.ts`).** (1) **Nominatim** (OpenStreetMap, sem chave); (2) **OpenRouteService** (`ORS_API_KEY`), o lugar mais próximo; (3) **Google** (`GOOGLE_MAPS_API_KEY`), só se os anteriores não deram rua. Pára no primeiro que dê rua — o pedido pago raramente acontece. Sem rua em ninguém, devolve o melhor que houver (bairro, depois cidade) em vez de falhar. Um bairro conhecido do OSM é preferido ao «Maputo, Moçambique» do Google.
+
+**B. Falhar não é não saber.** Um fornecedor que lança (rede, 429 de cota, chave recusada) passa a vez ao seguinte; um «não conheço este sítio» devolve `null`. A resposta é `502` só se **todos** falharam, `404` se algum respondeu e ninguém conhecia.
+
+**C. Contrato inalterado.** `GET /geocode/reverse` continua a devolver `{ placeName, province, district, neighborhood }`; o frontend não muda. `placeName` passa a ser montado das partes («Rua, Bairro, Cidade, Província», sem repetir) em vez do `formatted_address` do Google.
+
+**D. Província.** Na cidade de Maputo o Nominatim não devolve `state` (em 9 dos 10 pontos); devolve o código `ISO3166-2-lvl4`. `services/geocoding/provincias.ts` traduz o código nas 11 províncias. O `state` do serviço tem sempre prioridade.
+
+**E. Política do Nominatim.** Máximo **1 pedido por segundo** e uso moderado: os pedidos são serializados por um limitador (`criarLimitador`, 1,1 s), há **cache em memória** (1 h, por coordenadas a 4 casas decimais ≈ 11 m, máx. 5 000 entradas) e o pedido leva um `User-Agent` identificado (`GEOCODING_USER_AGENT`). O limite e a cache são **por máquina Fly**; se o tráfego crescer a sério, passar a um servidor Nominatim próprio ou pago.
+
+**F. Configuração.** `GOOGLE_MAPS_API_KEY` deixa de ser obrigatória (era `z.string().min(1)`): sem ela a cascata acaba no Nominatim/ORS. `ORS_API_KEY` e `GEOCODING_USER_AGENT` são opcionais. Nenhuma das chaves vai para o frontend.
+
+**Ficheiros:** `services/geocoding/{tipos,provincias,nominatim,openrouteservice,google}.ts` (o antigo `geocodingService.ts` passou para `google.ts`, mantendo os seus testes) e o orquestrador `services/geocodingService.ts`; `config/env.ts`; `controllers/geocodingController.ts`; `.env.example`.
+
+**Fora de âmbito / por fazer:** a comparação foi só em **Maputo** — fora dela (Beira, Nampula, zonas rurais) o OpenStreetMap pode ter menos dados; convém repetir o teste com pontos de outras cidades. A cota e os termos do plano gratuito do ORS **não foram confirmados**. Para **desligar o Google por completo** basta retirar `GOOGLE_MAPS_API_KEY` dos `fly secrets` — decisão do utilizador, depois de validar noutras cidades. As chaves do Google e do ORS foram coladas numa conversa: restringir/substituir.
+
+**Validação:** `tsc`, `eslint` e `tsc -p` (build) limpos; Vitest 447 testes (+~40: leitura do Nominatim e província por código ISO, limitador de 1 pedido/s com tempo simulado, ORS com 401/403/429/503, a cascata — pára na rua, falha do Nominatim passa ao ORS, bairro do OSM vs Google, 502 só com todos a falhar, cache, erro não guardado — e a rota `/geocode/reverse`). Corrida real da cascata nos 10 pontos de Maputo (Nominatim + ORS, sem Google): **rua em 10/10**.
+
+**Critérios de entrega correspondentes:** `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 2 (geocodificação reversa).
