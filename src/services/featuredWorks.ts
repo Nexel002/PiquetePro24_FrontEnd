@@ -2,12 +2,11 @@ import { api } from '../lib/api'
 
 // Espelha FeaturedWork de PiquePro24_Backend/src/services/featuredWorksService.ts.
 export interface FeaturedWork {
-  // Id do trabalho do portfólio.
+  // Id do trabalho do portfólio (não o do profissional: a resposta é pública e não o inclui).
   id: string
   title: string
-  professional_id: string
+  // Abreviado pelo backend: «Carlos M.».
   professional_name: string
-  professional_avatar: string | null
   service_slug: string
   service_name: string
   // «Província · Distrito» — o backend nunca devolve o bairro nem coordenadas.
@@ -15,8 +14,8 @@ export interface FeaturedWork {
   rating_avg: number | null
   rating_count: number
   completed_jobs_count: number
-  // null quando não há nada verdadeiro a dizer: o cartão fica sem selo.
-  badge: 'Top Avaliado' | 'Verificado' | null
+  // Só há profissionais com KYC aprovado, por isso há sempre um selo verdadeiro.
+  badge: 'Top Avaliado' | 'Verificado'
   image_url: string
 }
 
@@ -24,7 +23,7 @@ export interface FeaturedWork {
 // pede-se uma vez só e filtra-se no cliente.
 export const FEATURED_WORKS_LIMIT = 40
 
-// GET /portfolio/featured — autenticado (a Home sem sessão não o chama).
+// GET /portfolio/featured — PÚBLICO: é a montra da Home, vista também por visitantes sem sessão.
 export async function fetchFeaturedWorks(): Promise<FeaturedWork[]> {
   const response = await api.get<FeaturedWork[]>('/portfolio/featured', { params: { limit: FEATURED_WORKS_LIMIT } })
   return response.data

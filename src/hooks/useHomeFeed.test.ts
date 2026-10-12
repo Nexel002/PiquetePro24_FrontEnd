@@ -7,7 +7,6 @@ import { useHomeFeed } from './useHomeFeed'
 // com as de reserva, como filtra e em que estado fica a montra, não o pedido de rede.
 const mocks = vi.hoisted(() => ({
   categorias: { data: undefined as { slug: string; name: string }[] | undefined },
-  sessao: { valor: {} as object | null },
   trabalhos: { data: undefined as unknown, isLoading: false, isError: false, refetch: vi.fn() },
 }))
 
@@ -17,24 +16,19 @@ vi.mock('./useServiceCategories', () => ({
 vi.mock('./useFeaturedWorks', () => ({
   useFeaturedWorks: () => mocks.trabalhos,
 }))
-vi.mock('../store/AuthContext', () => ({
-  useAuth: () => ({ session: mocks.sessao.valor }),
-}))
 
 function trabalho(id: string, service_slug: string, extra: Partial<FeaturedWork> = {}): FeaturedWork {
   return {
     id,
     title: `Trabalho ${id}`,
-    professional_id: `pro-${id}`,
     professional_name: `Profissional ${id}`,
-    professional_avatar: null,
     service_slug,
     service_name: service_slug,
     location: 'Maputo Cidade · KaMpfumo',
     rating_avg: null,
     rating_count: 0,
     completed_jobs_count: 0,
-    badge: null,
+    badge: 'Verificado',
     image_url: `https://x/${id}.webp`,
     ...extra,
   }
@@ -51,7 +45,6 @@ const TRABALHOS = [
 
 beforeEach(() => {
   mocks.categorias.data = undefined
-  mocks.sessao.valor = {}
   mocks.trabalhos.data = TRABALHOS
   mocks.trabalhos.isLoading = false
   mocks.trabalhos.isError = false
@@ -152,13 +145,6 @@ describe('useHomeFeed — estado da montra', () => {
     const { result } = renderHook(() => useHomeFeed())
 
     expect(result.current.estado).toBe('pronto')
-  })
-
-  it('sem sessão: «sem-sessao», mesmo que haja dados em cache', () => {
-    mocks.sessao.valor = null
-    const { result } = renderHook(() => useHomeFeed())
-
-    expect(result.current.estado).toBe('sem-sessao')
   })
 
   it('a carregar', () => {

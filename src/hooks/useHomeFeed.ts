@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react'
 import type { FeaturedWork } from '../services/featuredWorks'
-import { useAuth } from '../store/AuthContext'
 import { useFeaturedWorks } from './useFeaturedWorks'
 import { useServiceCategories } from './useServiceCategories'
 
@@ -21,11 +20,10 @@ const CATEGORIAS_POR_OMISSAO = [
 const doTema = (works: FeaturedWork[], ...slugs: string[]) => works.filter((w) => slugs.includes(w.service_slug))
 
 // O que a montra de trabalhos pode estar a mostrar. Cada estado tem texto próprio no ecrã:
-// «sem sessão», «a carregar», «erro» e «vazio» não são a mesma coisa (CLAUDE.md, Secção 3).
-export type EstadoDaMontra = 'sem-sessao' | 'a-carregar' | 'erro' | 'vazio' | 'pronto'
+// «a carregar», «erro» e «vazio» não são a mesma coisa (CLAUDE.md, Secção 3).
+export type EstadoDaMontra = 'a-carregar' | 'erro' | 'vazio' | 'pronto'
 
 export function useHomeFeed() {
-  const { session } = useAuth()
   const categoriasQuery = useServiceCategories()
   const trabalhosQuery = useFeaturedWorks()
   const [pesquisa, setPesquisa] = useState('')
@@ -34,15 +32,7 @@ export function useHomeFeed() {
   const trabalhos = useMemo(() => trabalhosQuery.data ?? [], [trabalhosQuery.data])
 
   const estado: EstadoDaMontra =
-    session === null
-      ? 'sem-sessao'
-      : trabalhosQuery.isLoading
-        ? 'a-carregar'
-        : trabalhosQuery.isError
-          ? 'erro'
-          : trabalhos.length === 0
-            ? 'vazio'
-            : 'pronto'
+    trabalhosQuery.isLoading ? 'a-carregar' : trabalhosQuery.isError ? 'erro' : trabalhos.length === 0 ? 'vazio' : 'pronto'
 
   const categorias = useMemo(() => {
     const daApi = categoriasQuery.data?.map(({ slug, name }) => ({ slug, name }))

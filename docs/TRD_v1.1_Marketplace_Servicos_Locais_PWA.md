@@ -1332,3 +1332,30 @@ rollback;
 **Notas de deploy:** **backend primeiro** (rota nova; rotas legadas removidas), depois o frontend. Sem migrations nem variáveis de ambiente novas. O CI do frontend passa a instalar o Chromium do Playwright (`npx playwright install --with-deps chromium`) e a correr `npm run test:e2e` — mais ~2 minutos por execução; em falha guarda os `traces` como artefacto. Dependência nova (dev): `@playwright/test`. Não afecta o bundle.
 
 **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md` (Fases 1, 3, 5, 6, 10 e 11) e `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` (Fase 12 e Fase 14).
+
+---
+
+## Adendo v1.32
+
+### Montra de trabalhos em destaque pública — frontend e backend (12/10/2026)
+
+**Contexto.** O Adendo v1.31 (item E) deixou `GET /portfolio/featured` autenticado, com a decisão por confirmar: um visitante sem sessão via «Entra para ver trabalhos» em vez da montra. Decisão do utilizador (12/10/2026): **tornar a montra pública**, com os cuidados abaixo. **Este adendo substitui o ponto «Decisão por confirmar» do item E do v1.31.**
+
+**A. O que é público — e só isto.** A rota passa a não exigir sessão. É uma **excepção deliberada** à regra «sem rotas públicas sem necessidade» (Adendo v1.17, item B), limitada a esta lista de cartões: o catálogo completo (`/professionals/:id/catalog`), a pesquisa, os contactos e os pedidos continuam com sessão.
+
+**B. Cuidados implementados.**
+- **Resposta mínima:** sem `professional_id` e sem `professional_avatar`; o nome sai **abreviado** («Carlos M.», `nomePublico`; nome de uma só palavra fica como está). Mantém-se «Província · Distrito», nunca bairro nem coordenadas. O `id` do cartão é o do **trabalho**, não o do profissional.
+- **Só profissionais com KYC aprovado:** quem não está verificado não aparece em público (nem como «Verificado», que seria falso). O tipo `badge` deixa de ser `null`: é «Top Avaliado» ou «Verificado».
+- **Rate limit por IP, 20/min** (era por utilizador, 30/min); `trust proxy` já estava activo para o IP real atrás do Fly.
+- **Cache:** 5 minutos em memória do processo (chave = serviço × limite, tecto de 200 entradas) e `Cache-Control: public, max-age=300`. Em várias máquinas cada uma tem a sua cópia: o pior caso é uma leitura à base por máquina e por janela.
+- OpenAPI: `acesso: 'publico'`.
+
+**C. Frontend.** `useFeaturedWorks` deixa de depender da sessão; o estado `sem-sessao` da montra deixou de existir (`EstadoDaMontra` só tem carregar, erro e vazio). Como a resposta já não traz o id do profissional, o cartão volta a levar à **pesquisa do serviço** (`/profissionais?category=`), que exige sessão: o visitante passa pelo login e regressa a ela (`?next=`). Perde-se o atalho directo ao catálogo do v1.31.
+
+**D. Consequências a conhecer.** (1) Qualquer pessoa, sem conta, lê nome abreviado, província/distrito, avaliação e foto de trabalhos de profissionais verificados — as fotos do bucket `portfolio-photos` já eram URLs públicas, e o profissional publica-as para serem vistas. (2) Os profissionais são avisados nos termos de utilização (`data/termosDeUtilizacao.ts`, secções 4 e 7, actualizados a 12/10/2026): o que se mostra, o que nunca se mostra e como retirar um trabalho (apagá-lo ou eliminar a conta; até 5 minutos por causa da cache). **Rascunho a rever por um jurista**, como o resto dos termos; quem já aceitou os termos antigos não foi notificado da alteração. (3) O rate limit por IP atrás do NAT de um operador móvel agrupa muitos utilizadores num só IP: 20/min é folgado para uma Home que pede uma vez e guarda 5 minutos, mas vigiar se aparecerem 429 a utilizadores reais.
+
+**Verificação.** Backend: `tsc`, `eslint`, 505 testes (rota sem sessão, nome abreviado, só KYC aprovado, ausência de ids no corpo, cache, 429 ao 21.º pedido). Frontend: `tsc -b`, `eslint`, 323 testes, 15 E2E (o do visitante confirma que o pedido sai **sem** `Authorization` e que o clique leva ao login com o destino guardado). **Não visto contra o Supabase real nem em browser real.**
+
+**Notas de deploy:** **backend primeiro** (a rota passa a responder 200 sem sessão; o frontend antigo, que só a chamava com sessão, continua a funcionar), depois o frontend. Sem migrations nem variáveis novas. `public/novidades.json` não mudou.
+
+**Critérios de entrega correspondentes:** `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 14; `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6.

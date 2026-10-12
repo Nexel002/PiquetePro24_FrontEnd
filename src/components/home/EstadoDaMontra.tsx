@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { caminhoDoLogin } from '../../lib/postLoginRedirect'
 import type { EstadoDaMontra as Estado } from '../../hooks/useHomeFeed'
 
 interface EstadoDaMontraProps {
@@ -38,30 +37,16 @@ export function EstadoDaMontra({ estado, aoTentarDeNovo }: EstadoDaMontraProps) 
     )
   }
 
-  if (estado === 'vazio') {
-    return (
-      <div className={CAIXA}>
-        <p className="text-base font-bold text-slate-900">Ainda não há trabalhos publicados.</p>
-        <p className="mt-1 text-sm text-slate-600">Os trabalhos dos profissionais aparecem aqui assim que os publicarem.</p>
-        <Link
-          to="/profissionais"
-          className="mt-4 inline-flex min-h-11 items-center rounded-full bg-slate-900 px-5 text-sm font-bold text-white transition-colors hover:bg-slate-800"
-        >
-          Procurar profissionais
-        </Link>
-      </div>
-    )
-  }
-
+  // estado === 'vazio'
   return (
     <div className={CAIXA}>
-      <p className="text-base font-bold text-slate-900">Entra para ver trabalhos de profissionais.</p>
-      <p className="mt-1 text-sm text-slate-600">Fotos de trabalhos reais, com as avaliações de quem os contratou.</p>
+      <p className="text-base font-bold text-slate-900">Ainda não há trabalhos publicados.</p>
+      <p className="mt-1 text-sm text-slate-600">Os trabalhos dos profissionais aparecem aqui assim que os publicarem.</p>
       <Link
-        to={caminhoDoLogin()}
+        to="/profissionais"
         className="mt-4 inline-flex min-h-11 items-center rounded-full bg-slate-900 px-5 text-sm font-bold text-white transition-colors hover:bg-slate-800"
       >
-        Entrar
+        Procurar profissionais
       </Link>
     </div>
   )

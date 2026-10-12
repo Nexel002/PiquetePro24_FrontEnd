@@ -4,9 +4,7 @@ import { CATEGORIAS, CLIENTE, entrarComo, simularApi } from './ajudas'
 const TRABALHO = {
   id: 'w1',
   title: 'Casa de banho completa',
-  professional_id: 'pro-1',
-  professional_name: 'Carlos Macamo',
-  professional_avatar: null,
+  professional_name: 'Carlos M.',
   service_slug: 'canalizacao',
   service_name: 'Canalização',
   location: 'Maputo Cidade · KaMpfumo',
@@ -19,13 +17,18 @@ const TRABALHO = {
 }
 
 test.describe('Home: trabalhos em destaque', () => {
-  test('visitante sem sessão: convida a entrar e não chama a API de trabalhos', async ({ page }) => {
-    const api = await simularApi(page, {})
+  test('visitante sem sessão: vê a montra (rota pública) e o pedido não leva credenciais', async ({ page }) => {
+    const api = await simularApi(page, { 'GET /portfolio/featured': () => ({ data: [TRABALHO] }) })
 
     await page.goto('/')
 
-    await expect(page.getByText('Entra para ver trabalhos de profissionais.')).toBeVisible()
-    expect(api.chamadasA('GET /portfolio/featured')).toHaveLength(0)
+    await expect(page.getByRole('link', { name: 'Casa de banho completa' }).first()).toBeVisible()
+    await expect(page.getByText('Carlos M.').first()).toBeVisible()
+    const [pedido] = api.chamadasA('GET /portfolio/featured')
+    expect(pedido.headers()['authorization']).toBeUndefined()
+    // Sem id do profissional, o cartão leva à pesquisa do serviço — que exige sessão e leva ao login.
+    await page.getByRole('link', { name: 'Casa de banho completa' }).first().click()
+    await expect(page).toHaveURL(/\/entrar\?next=%2Fprofissionais%3Fcategory%3Dcanalizacao/)
   })
 
   test('cliente com sessão: vê os trabalhos reais devolvidos pela API', async ({ page }) => {
@@ -39,9 +42,8 @@ test.describe('Home: trabalhos em destaque', () => {
     await page.goto('/')
 
     await expect(page.getByRole('link', { name: 'Casa de banho completa' }).first()).toBeVisible()
-    await expect(page.getByText('Carlos Macamo').first()).toBeVisible()
+    await expect(page.getByText('Carlos M.').first()).toBeVisible()
     await expect(page.getByText('Verificado').first()).toBeVisible()
-    await expect(page.getByText('Entra para ver trabalhos')).toHaveCount(0)
   })
 
   test('erro no servidor: mensagem própria (não «sem trabalhos») e «Tentar de novo» recupera', async ({ page }) => {
