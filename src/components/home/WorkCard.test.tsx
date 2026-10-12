@@ -11,9 +11,7 @@ function trabalho(extra: Partial<FeaturedWork> = {}): FeaturedWork {
   return {
     id: 'w1',
     title: 'Casa de banho completa',
-    professional_id: 'pro-1',
-    professional_name: 'Carlos Macamo',
-    professional_avatar: null,
+    professional_name: 'Carlos M.',
     service_slug: 'canalizacao',
     service_name: 'Canalização',
     location: 'Maputo Cidade · KaMpfumo',
@@ -40,7 +38,7 @@ describe('WorkCard', () => {
     cartao(trabalho())
 
     expect(screen.getByText('Casa de banho completa')).toBeTruthy()
-    expect(screen.getByText('Carlos Macamo')).toBeTruthy()
+    expect(screen.getByText('Carlos M.')).toBeTruthy()
     expect(screen.getByText('Canalização')).toBeTruthy()
     expect(screen.getByText('Maputo Cidade · KaMpfumo')).toBeTruthy()
     expect(screen.getByText('★ 4,5')).toBeTruthy()
@@ -49,10 +47,10 @@ describe('WorkCard', () => {
     expect(screen.getByText('Top Avaliado')).toBeTruthy()
   })
 
-  it('abre o catálogo do profissional', () => {
+  it('leva à pesquisa do serviço (a resposta pública não traz o id do profissional)', () => {
     cartao(trabalho())
 
-    expect(screen.getByRole('link', { name: 'Casa de banho completa' }).getAttribute('href')).toBe('/profissionais/pro-1')
+    expect(screen.getByRole('link', { name: 'Casa de banho completa' }).getAttribute('href')).toBe('/profissionais?category=canalizacao')
   })
 
   it('sem avaliações não inventa nota: diz «Sem avaliações»', () => {
@@ -62,11 +60,11 @@ describe('WorkCard', () => {
     expect(screen.queryByText(/★/)).toBeNull()
   })
 
-  it('sem selo não desenha o selo; um trabalho diz «trabalho» no singular', () => {
-    cartao(trabalho({ badge: null, completed_jobs_count: 1 }))
+  it('mostra o selo «Verificado» e um trabalho diz «trabalho» no singular', () => {
+    cartao(trabalho({ badge: 'Verificado', completed_jobs_count: 1 }))
 
+    expect(screen.getByText('Verificado')).toBeTruthy()
     expect(screen.queryByText('Top Avaliado')).toBeNull()
-    expect(screen.queryByText('Verificado')).toBeNull()
     expect(screen.getByText('1 trabalho')).toBeTruthy()
   })
 
@@ -75,12 +73,12 @@ describe('WorkCard', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Adicionar aos favoritos' }))
 
-    expect(onToggleFavorite).toHaveBeenCalledWith('w1', 'Carlos Macamo')
+    expect(onToggleFavorite).toHaveBeenCalledWith('w1', 'Carlos M.')
   })
 })
 
 describe('EstadoDaMontra', () => {
-  function estado(valor: 'sem-sessao' | 'a-carregar' | 'erro' | 'vazio', aoTentarDeNovo = vi.fn()) {
+  function estado(valor: 'a-carregar' | 'erro' | 'vazio', aoTentarDeNovo = vi.fn()) {
     render(
       <MemoryRouter>
         <EstadoDaMontra estado={valor} aoTentarDeNovo={aoTentarDeNovo} />
@@ -88,12 +86,6 @@ describe('EstadoDaMontra', () => {
     )
     return { aoTentarDeNovo }
   }
-
-  it('sem sessão: convida a entrar', () => {
-    estado('sem-sessao')
-
-    expect(screen.getByRole('link', { name: 'Entrar' }).getAttribute('href')).toBe('/entrar')
-  })
 
   it('a carregar: esqueleto marcado como ocupado', () => {
     estado('a-carregar')

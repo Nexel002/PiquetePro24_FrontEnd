@@ -20,11 +20,9 @@ export function WorkCard({ work, isFavorite, onToggleFavorite }: WorkCardProps) 
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
         />
-        {work.badge && (
-          <span className="absolute left-2 top-2 rounded bg-white/95 px-2 py-0.5 text-[11px] font-bold text-slate-900 shadow-sm">
-            {work.badge}
-          </span>
-        )}
+        <span className="absolute left-2 top-2 rounded bg-white/95 px-2 py-0.5 text-[11px] font-bold text-slate-900 shadow-sm">
+          {work.badge}
+        </span>
         <button
           type="button"
           onClick={() => onToggleFavorite(work.id, work.professional_name)}
@@ -47,7 +45,9 @@ export function WorkCard({ work, isFavorite, onToggleFavorite }: WorkCardProps) 
 
       <div className="flex flex-1 flex-col gap-1 p-4">
         <h3 className="font-heading text-base font-bold leading-snug text-slate-900 line-clamp-2">
-          <Link to={`/profissionais/${work.professional_id}`} className="after:absolute after:inset-0">
+          {/* Pesquisa por serviço, como antes: a resposta pública não traz o id do profissional, e a pesquisa
+              já exige sessão (leva ao login a quem não a tem, e regressa depois). */}
+          <Link to={`/profissionais?category=${encodeURIComponent(work.service_slug)}`} className="after:absolute after:inset-0">
             {work.title}
           </Link>
         </h3>
