@@ -1152,3 +1152,23 @@ Além disso: `/service_requests/nearby` passa a exigir `PROFESSIONAL` e deixa de
 **Verificação em produção (12/10/2026).** Deploy do backend concluído; `npm run smoke` contra `piquetepro24-backend.fly.dev`: 7/7 (sem passos autenticados). O smoke apanhou um problema de configuração e não de código: o frontend passou a ser servido num domínio novo da Vercel e o CORS, correctamente, recusou-o. **Decisão do utilizador:** o domínio oficial do frontend passa a ser `https://piquete-pro24-front-end-beta.vercel.app`; `CORS_ORIGIN` e `FRONTEND_URL` (Fly), o *Site URL* e os *Redirect URLs* (Supabase Auth) apontam só para ele, e o domínio antigo (`piquete-pro24-front-end.vercel.app`) redirecciona para o novo na Vercel. Confirmado: o login volta ao domínio novo e a origem antiga é recusada pela API. Efeito para os utilizadores: sessões abertas no domínio antigo perdem-se (a sessão é por origem).
 
 **Critérios de entrega correspondentes:** `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 7.
+
+---
+
+## Adendo v1.25
+
+### Fase 5 do frontend — última localização conhecida e indicador de ligação — só frontend (12/10/2026)
+
+**Contexto:** a Fase 5 pede resiliência a rede instável. Entraram os dois itens que não dependem do backend; a fila offline fica à espera de uma decisão (item C).
+
+**A. Última localização conhecida.** `useGeolocation` guarda a posição em `localStorage` (`lib/ultimaLocalizacao.ts`) sempre que o GPS responde e, quando falha (recusado, indisponível, timeout de 10 s, dispositivo sem GPS), devolve-a em `coordinates` para os ecrãs que **pesquisam** (`FindProfessionals`, `NearbyServiceRequests`) com um aviso «a usar a tua última localização conhecida (há X)». **Não** a devolve como `success`: `LocationForm` grava no perfil quando o GPS responde, e gravar uma posição antiga como se fosse a actual seria um dado errado. Só se usa se tiver menos de 30 dias e estiver dentro dos limites de Moçambique que o backend aplica (um valor adulterado em `localStorage` seria recusado com 400). `localStorage` indisponível não é erro.
+
+**B. Indicador de ligação.** Faixa fixa no topo, só visível com problema. Dois sinais, porque nenhum chega sozinho: `navigator.onLine` apanha o modo avião mas diz «online» com Wi-Fi sem dados (o caso comum em redes móveis); o resultado dos pedidos à API apanha esse caso (o interceptor de `lib/api.ts` marca o servidor como inalcançável quando um pedido nem obtém resposta, e como alcançável com qualquer resposta HTTP, mesmo 4xx/5xx). Estados: ligado / sem internet / servidor sem resposta. `role="status"` (polite), para o leitor de ecrã não interromper a cada perda de rede.
+
+**C. Fila offline — decisão pendente.** `POST /service_requests` não é idempotente: se o pedido chega ao servidor mas a resposta se perde, o reenvio cria um segundo pedido. O frontend sozinho não consegue distinguir «nunca chegou» de «chegou e a resposta perdeu-se». Correcção proposta (backend, **primeiro**): coluna `idempotency_key uuid` em `service_requests` com índice único `(client_id, idempotency_key)`, cabeçalho opcional `Idempotency-Key`, e em repetição devolver o pedido já criado em vez de criar outro. Exige migration (aplicada pelo utilizador no SQL Editor) e deploy do backend antes do frontend. Depois, no frontend: fila em IndexedDB com a chave gerada ao enfileirar, reenvio ao reconectar.
+
+**Fora de âmbito:** fila para outras acções além de criar pedido; sincronização em segundo plano com o separador fechado (Background Sync não existe em Safari/iOS).
+
+**Notas de deploy:** sem variáveis de ambiente nem alterações ao backend. **Não verificado em browser real.**
+
+**Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 5.

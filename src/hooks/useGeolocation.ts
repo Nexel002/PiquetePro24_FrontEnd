@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { guardarUltimaLocalizacao, lerUltimaLocalizacao, type UltimaLocalizacao } from '../lib/ultimaLocalizacao'
 
 interface Coordinates {
   latitude: number
@@ -9,7 +10,10 @@ type GeolocationState =
   | { status: 'idle' }
   | { status: 'locating' }
   | { status: 'success'; coordinates: Coordinates }
-  | { status: 'error'; message: string }
+  // `ultimaConhecida`: a posição do último GPS que respondeu, se existir e ainda for recente.
+  // Fica FORA de 'success' de propósito: quem grava a localização no perfil (LocationForm)
+  // reage a 'success', e gravar uma posição antiga como se fosse a actual seria um dado errado.
+  | { status: 'error'; message: string; ultimaConhecida: UltimaLocalizacao | null }
 
 // Traduz os três casos de GeolocationPositionError em mensagens que a UI pode mostrar
 // diretamente — nenhum deles deve chegar ao utilizador como "GeolocationPositionError".
@@ -31,7 +35,7 @@ export function useGeolocation() {
 
   const locate = useCallback(() => {
     if (!('geolocation' in navigator)) {
-      setState({ status: 'error', message: 'Este dispositivo não suporta geolocalização.' })
+      setState({ status: 'error', message: 'Este dispositivo não suporta geolocalização.', ultimaConhecida: lerUltimaLocalizacao() })
       return
     }
 
@@ -39,17 +43,26 @@ export function useGeolocation() {
 
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setState({
-          status: 'success',
-          coordinates: { latitude: position.coords.latitude, longitude: position.coords.longitude },
-        })
+        const coordinates = { latitude: position.coords.latitude, longitude: position.coords.longitude }
+        guardarUltimaLocalizacao(coordinates)
+        setState({ status: 'success', coordinates })
       },
       (error) => {
-        setState({ status: 'error', message: describeError(error) })
+        setState({ status: 'error', message: describeError(error), ultimaConhecida: lerUltimaLocalizacao() })
       },
       { enableHighAccuracy: true, timeout: 10_000 },
     )
   }, [])
 
-  return { state, locate }
+  // Para os ecrãs que só PESQUISAM (não gravam): GPS se respondeu, senão a última posição
+  // conhecida. `ultimaConhecidaEmUso` diz à UI que tem de avisar — nunca usar uma posição antiga em silêncio.
+  const coordinates: Coordinates | null =
+    state.status === 'success'
+      ? state.coordinates
+      : state.status === 'error' && state.ultimaConhecida
+        ? { latitude: state.ultimaConhecida.latitude, longitude: state.ultimaConhecida.longitude }
+        : null
+  const ultimaConhecidaEmUso = state.status === 'error' ? state.ultimaConhecida : null
+
+  return { state, locate, coordinates, ultimaConhecidaEmUso }
 }
