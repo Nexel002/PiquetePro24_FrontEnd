@@ -33,7 +33,7 @@ const orderDateFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'medium
 export function Profile() {
   const { data: profile, isLoading, isError } = useProfile()
 
-  const { data: requests, isLoading: isLoadingRequests } = useMyServiceRequests()
+  const { data: requests, isLoading: isLoadingRequests, isError: isErrorRequests, refetch: refetchRequests } = useMyServiceRequests()
   const completeRequest = useCompleteServiceRequest()
   const cancelRequest = useCancelServiceRequest()
 
@@ -391,6 +391,15 @@ export function Profile() {
           <div className="flex flex-col gap-3">
             <div className="h-20 animate-pulse rounded-2xl bg-gray-200" />
             <div className="h-20 animate-pulse rounded-2xl bg-gray-200" />
+          </div>
+        ) : isErrorRequests ? (
+          // Sem este ramo, uma falha de rede caía no estado vazio e dizia «Nenhum pedido realizado»
+          // a quem tem pedidos — um erro que parece um dado.
+          <div role="alert" className="flex flex-col items-center gap-3 rounded-3xl border border-amber-200 bg-amber-50 p-6 text-center">
+            <p className="text-sm text-amber-800">Não foi possível carregar os teus pedidos. Verifica a tua ligação e tenta novamente.</p>
+            <Button type="button" variant="outline" size="sm" onClick={() => void refetchRequests()}>
+              Tentar de novo
+            </Button>
           </div>
         ) : requests && requests.length > 0 ? (
           <ul className="flex flex-col gap-3">

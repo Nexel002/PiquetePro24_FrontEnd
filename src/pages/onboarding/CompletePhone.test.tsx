@@ -74,11 +74,15 @@ describe('CompletePhone', () => {
     expect(screen.getByText('ecrã do perfil')).toBeTruthy()
   })
 
-  it('erro ao carregar o perfil: mensagem compreensível e sem formulário', () => {
-    mostrar({ data: undefined, isLoading: false, isError: true })
+  it('erro ao carregar o perfil: mensagem, sem formulário e «Tentar de novo» repete o pedido', () => {
+    const refetch = vi.fn()
+    mostrar({ data: undefined, isLoading: false, isError: true, refetch })
 
     expect(screen.getByText(/Não foi possível carregar o teu perfil/)).toBeTruthy()
     expect(screen.queryByLabelText('Telefone')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+
+    expect(refetch).toHaveBeenCalledTimes(1)
   })
 
   it('a carregar: sem formulário', () => {

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { UserProfile } from '../services/profile'
@@ -91,10 +91,14 @@ describe('OnboardingGate', () => {
     expect(screen.queryByText('passo do telefone')).toBeNull()
   })
 
-  it('erro ao carregar o perfil: mensagem compreensível e nada de conteúdo protegido', () => {
-    mostrar({ data: undefined, isLoading: false, isError: true })
+  it('erro ao carregar o perfil: mensagem, nada de conteúdo protegido e «Tentar de novo» repete o pedido', () => {
+    const refetch = vi.fn()
+    mostrar({ data: undefined, isLoading: false, isError: true, refetch })
 
     expect(screen.getByText(/Não foi possível carregar o teu perfil/)).toBeTruthy()
     expect(screen.queryByText('conteúdo protegido')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+
+    expect(refetch).toHaveBeenCalledTimes(1)
   })
 })

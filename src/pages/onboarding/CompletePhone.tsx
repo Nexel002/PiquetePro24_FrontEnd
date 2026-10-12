@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useProfile, useUpdateProfileDetails } from '../../hooks/useProfile'
+import { ErroAoCarregarPerfil } from '../../components/ErroAoCarregarPerfil'
 import { getOnboardingStep } from '../../services/profile'
 import { PHONE_PREFIX } from '../../lib/phone'
 import { Card } from '../../components/ui/Card'
@@ -10,7 +11,7 @@ import { Button } from '../../components/ui/Button'
 // phone null, o que hoje só acontece a quem se regista via Google. Sem opção de
 // "saltar": o botão só existe para submeter, sem link de "mais tarde".
 export function CompletePhone() {
-  const { data: profile, isLoading, isError } = useProfile()
+  const { data: profile, isLoading, isError, refetch } = useProfile()
   const updateDetails = useUpdateProfileDetails()
   const [phoneDraft, setPhoneDraft] = useState('')
 
@@ -23,13 +24,7 @@ export function CompletePhone() {
   }
 
   if (isError || !profile) {
-    return (
-      <main className="flex min-h-dvh flex-col items-center justify-center gap-2 p-6 text-center">
-        <p className="text-sm text-gray-600">
-          Não foi possível carregar o teu perfil. Verifica a tua ligação e tenta novamente.
-        </p>
-      </main>
-    )
+    return <ErroAoCarregarPerfil aoTentarDeNovo={() => void refetch()} />
   }
 
   // Já tem telefone: nada a fazer aqui — segue para o próximo passo em falta, ou para
