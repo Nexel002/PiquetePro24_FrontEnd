@@ -1242,3 +1242,18 @@ rollback;
 **Notas de deploy:** sem variáveis de ambiente nem alterações ao backend (já em produção). **Não verificado em browser real.**
 
 **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 5.
+
+---
+
+## Adendo v1.28
+
+### Verificação em produção do frontend: `VITE_API_URL` errada no build e meta `mobile-web-app-capable` — só frontend (13/10/2026)
+
+**A. `VITE_API_URL` gravada como `http://localhost:3000` no build de produção.** Descoberto pelo utilizador a 13/10/2026: o `-beta` ficava no spinner, com a faixa «Sem resposta do servidor» e 5 erros de CSP na consola («Connecting to … violates connect-src»). Confirmado ao descarregar o JavaScript publicado: tinha `baseURL:"http://localhost:3000"` e **nenhuma** referência a `piquetepro24-backend.fly.dev`. Como a CSP do `vercel.json` só permite `*.supabase.co` e `*.fly.dev`, o browser bloqueava todos os pedidos. **Causa:** o valor de `VITE_API_URL` usado no build era o do `.env` local. O painel da Vercel não foi visto antes da correcção, por isso não se sabe se a variável lá estava com esse valor ou se o build usou outro ambiente. **Correcção (pelo utilizador):** `VITE_API_URL=https://piquetepro24-backend.fly.dev` em Production e Preview, e redeploy **sem cache**. Confirmado depois ao descarregar o novo JavaScript (`baseURL` correcto, 0 ocorrências de `localhost:3000`) e a API a aceitar a origem e o cabeçalho `Idempotency-Key` em CORS.
+**Regra a reter:** as variáveis `VITE_*` são substituídas **no build**, não lidas em runtime; alterar uma variável no painel não muda o site já publicado — é preciso um novo deploy, sem cache. **Como verificar um deploy:** descarregar o `index-*.js` do site e procurar o endereço da API (`curl -s <site>/ | grep -o '/assets/index-[^"]*[.]js'`, depois `curl -s <site>/assets/index-XXXX.js | grep -o 'baseURL:"[^"]*"'`). O indicador de ligação da Fase 5 (Adendo v1.25) acusou o problema à vista do utilizador — um bom sinal de que cumpre o que promete.
+
+**B. Meta `mobile-web-app-capable`.** O Chrome avisava que `apple-mobile-web-app-capable` está obsoleto. Acrescentada `<meta name="mobile-web-app-capable">` (a norma) em `index.html`, **mantendo** a da Apple, que o Safari/iOS continua a ler. Sem alteração de comportamento.
+
+**Notas de deploy:** sem variáveis novas; `VITE_API_URL` já existia (ver `.env.example`) e passou a estar correcta em produção. Backend sem alterações.
+
+**Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 7 (nota de estado).
