@@ -69,8 +69,19 @@ export interface NearbyServiceRequestsParams {
 }
 
 // POST /service_requests (Backend Fase 3) — cliente cria um pedido, status inicial OPEN.
-export async function createServiceRequest(payload: CreateServiceRequestPayload): Promise<ServiceRequest> {
-  const response = await api.post<ServiceRequest>('/service_requests', payload)
+// idempotencyKey (Backend Fase 13, Adendo v1.26): o mesmo valor em todas as tentativas do mesmo
+// pedido — se uma resposta se perder e o pedido for reenviado, o servidor devolve o original
+// em vez de criar outro. Tem de ser um UUID.
+export async function createServiceRequest(
+  payload: CreateServiceRequestPayload,
+  idempotencyKey?: string,
+): Promise<ServiceRequest> {
+  const response = await api.post<ServiceRequest>('/service_requests', payload, {
+    headers: idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : undefined,
+    // Sem limite, uma rede que aceita a ligação mas não responde deixa o botão a rodar para
+    // sempre e o pedido nunca chega à fila. 20 s: acima disto, em 3G, é melhor guardar e reenviar.
+    timeout: 20_000,
+  })
   return response.data
 }
 
