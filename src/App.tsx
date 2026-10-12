@@ -1,38 +1,44 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { Toaster } from 'sonner'
 import { Home } from './pages/Home'
 import { Login } from './pages/Login'
-import { Terms } from './pages/Terms'
 import { AuthCallback } from './pages/AuthCallback'
-import { Profile } from './pages/Profile'
-import { CompletePhone } from './pages/onboarding/CompletePhone'
-import { CompleteLocation } from './pages/onboarding/CompleteLocation'
-import { FindProfessionals } from './pages/FindProfessionals'
-import { MyProfessionals } from './pages/MyProfessionals'
-import { MyServiceRequests } from './pages/MyServiceRequests'
-import { NearbyServiceRequests } from './pages/NearbyServiceRequests'
-import { Kyc } from './pages/Kyc'
-import { Subscription } from './pages/Subscription'
-import { AssignedServiceRequests } from './pages/AssignedServiceRequests'
-import { MyCatalog } from './pages/MyCatalog'
-import { NewServiceRequest } from './pages/NewServiceRequest'
-import { ReceivedInvitations } from './pages/ReceivedInvitations'
-import { RequestProposals } from './pages/RequestProposals'
-import { ProfessionalCatalog } from './pages/ProfessionalCatalog'
-import { AdminKyc } from './pages/AdminKyc'
-import { AdminAuditLog } from './pages/AdminAuditLog'
-import { AdminUsers } from './pages/AdminUsers'
-import { AdminUserDetail } from './pages/AdminUserDetail'
-import { AdminServiceRequests } from './pages/AdminServiceRequests'
-import { AdminMetrics } from './pages/AdminMetrics'
-import { DefinirNovaPassword } from './pages/DefinirNovaPassword'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { OnboardingGate } from './components/OnboardingGate'
 import { AuthProvider } from './store/AuthContext'
 import { IndicadorDeLigacao } from './components/IndicadorDeLigacao'
 import { AvisoDeNovaVersao } from './components/AvisoDeNovaVersao'
+import { PaginaACarregar } from './components/PaginaACarregar'
+import { ErroDeEcraPorRota } from './components/ErroDeEcra'
 import { ProcessadorDaFila } from './components/ProcessadorDaFila'
+
+// Code-splitting por rota (Fase 6): cada ecrã é descarregado ao entrar nele, em vez de o
+// telemóvel receber os ~30 de uma vez — o painel de admin, por exemplo, só interessa a quem é admin.
+const Terms = lazy(() => import('./pages/Terms').then((m) => ({ default: m.Terms })))
+const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })))
+const CompletePhone = lazy(() => import('./pages/onboarding/CompletePhone').then((m) => ({ default: m.CompletePhone })))
+const CompleteLocation = lazy(() => import('./pages/onboarding/CompleteLocation').then((m) => ({ default: m.CompleteLocation })))
+const FindProfessionals = lazy(() => import('./pages/FindProfessionals').then((m) => ({ default: m.FindProfessionals })))
+const MyProfessionals = lazy(() => import('./pages/MyProfessionals').then((m) => ({ default: m.MyProfessionals })))
+const MyServiceRequests = lazy(() => import('./pages/MyServiceRequests').then((m) => ({ default: m.MyServiceRequests })))
+const NearbyServiceRequests = lazy(() => import('./pages/NearbyServiceRequests').then((m) => ({ default: m.NearbyServiceRequests })))
+const Kyc = lazy(() => import('./pages/Kyc').then((m) => ({ default: m.Kyc })))
+const Subscription = lazy(() => import('./pages/Subscription').then((m) => ({ default: m.Subscription })))
+const AssignedServiceRequests = lazy(() => import('./pages/AssignedServiceRequests').then((m) => ({ default: m.AssignedServiceRequests })))
+const MyCatalog = lazy(() => import('./pages/MyCatalog').then((m) => ({ default: m.MyCatalog })))
+const NewServiceRequest = lazy(() => import('./pages/NewServiceRequest').then((m) => ({ default: m.NewServiceRequest })))
+const ReceivedInvitations = lazy(() => import('./pages/ReceivedInvitations').then((m) => ({ default: m.ReceivedInvitations })))
+const RequestProposals = lazy(() => import('./pages/RequestProposals').then((m) => ({ default: m.RequestProposals })))
+const ProfessionalCatalog = lazy(() => import('./pages/ProfessionalCatalog').then((m) => ({ default: m.ProfessionalCatalog })))
+const AdminKyc = lazy(() => import('./pages/AdminKyc').then((m) => ({ default: m.AdminKyc })))
+const AdminAuditLog = lazy(() => import('./pages/AdminAuditLog').then((m) => ({ default: m.AdminAuditLog })))
+const AdminUsers = lazy(() => import('./pages/AdminUsers').then((m) => ({ default: m.AdminUsers })))
+const AdminUserDetail = lazy(() => import('./pages/AdminUserDetail').then((m) => ({ default: m.AdminUserDetail })))
+const AdminServiceRequests = lazy(() => import('./pages/AdminServiceRequests').then((m) => ({ default: m.AdminServiceRequests })))
+const AdminMetrics = lazy(() => import('./pages/AdminMetrics').then((m) => ({ default: m.AdminMetrics })))
+const DefinirNovaPassword = lazy(() => import('./pages/DefinirNovaPassword').then((m) => ({ default: m.DefinirNovaPassword })))
 
 const queryClient = new QueryClient()
 
@@ -45,6 +51,8 @@ function App() {
       <AuthProvider>
         <ProcessadorDaFila />
         <BrowserRouter>
+          <ErroDeEcraPorRota>
+          <Suspense fallback={<PaginaACarregar />}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/entrar" element={<Login />} />
@@ -292,6 +300,8 @@ function App() {
 
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
+          </ErroDeEcraPorRota>
         </BrowserRouter>
       </AuthProvider>
     </QueryClientProvider>

@@ -42,4 +42,22 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        // Bibliotecas em ficheiros próprios, separadas do código da app. Não encolhem o primeiro
+        // download; evitam repeti-lo: o código da app muda a cada deploy e as bibliotecas quase nunca,
+        // por isso, com o hash no nome, o telemóvel (e o precache do service worker) só volta a
+        // descarregar o que mudou. Em 3G, cada actualização deixa de custar ~150 KB de bibliotecas.
+        manualChunks(id) {
+          if (!id.includes('node_modules')) return undefined
+          const pacote = id.split('node_modules/').pop()?.split('/')
+          const nome = pacote?.[0]?.startsWith('@') ? `${pacote[0]}/${pacote[1]}` : pacote?.[0]
+          if (nome?.startsWith('@supabase/') || nome === 'iceberg-js') return 'vendor-supabase'
+          if (nome && ['react', 'react-dom', 'react-router', 'react-router-dom', 'scheduler'].includes(nome)) return 'vendor-react'
+          return undefined
+        },
+      },
+    },
+  },
 })

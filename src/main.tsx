@@ -17,6 +17,10 @@ import './index.css'
 import App from './App.tsx'
 import { iniciarAvisoDeVersao } from './lib/pwaUpdate'
 import { anunciarNovaVersao } from './lib/novaVersao'
+import { iniciarTratamentoDeFalhaDeCarregamento } from './lib/falhaDeCarregamento'
+
+// Antes de renderizar: uma falha ao descarregar um ecrã (deploy novo a meio) recarrega uma vez.
+iniciarTratamentoDeFalhaDeCarregamento()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
