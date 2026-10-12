@@ -365,6 +365,31 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 11 — Portfólio por Trabalho (carrossel)
+
+**Estado: implementada em `feat/portfolio-por-projeto` (12/10/2026); a migration da Fase 12 do backend já está aplicada ao Supabase real (12/10/2026).** Ver Adendo v1.23 do TRD.
+
+**Objetivo:** o profissional cria **trabalhos** (serviço + descrição + 1 a 10 fotos) e o cliente vê cada um como um carrossel, como um post com várias imagens.
+
+**Nota de dependência:** consome os endpoints `/professionals/me/projects*` e o campo `projects` do catálogo (Backend Fase 12). Backend primeiro, frontend depois.
+
+**Escopo:**
+- `services/portfolio.ts`: tipos `PortfolioProject`/`ProjectPhoto`; `uploadPortfolioPhotos` (WebP, 3 em paralelo, ordem preservada, pára à primeira falha, progresso); chamadas à API dos trabalhos. Removidos `uploadPortfolioPhoto`, `addPortfolioPhoto` e `removePortfolioPhoto` (fotos soltas), sem consumo.
+- `hooks/useCatalog.ts`: `useCreateProject`, `useUpdateProject`, `useAddProjectPhotos`, `useRemoveProjectPhoto`, `useRemoveProject`.
+- `components/portfolio/`: `ProjectCarousel` (`scroll-snap` em CSS, contador, pontos, setas só com rato), `PhotoLightbox` (setas, teclado e deslize, só entre as fotos do trabalho), `ProjectCard`, `NewProjectForm` (serviço → fotos com capa e reordenação → descrição), `ProjectEditor` (serviço, descrição, fotos e apagar).
+- `pages/MyCatalog.tsx`: secção «Os teus trabalhos». `pages/ProfessionalCatalog.tsx`: lista de cartões, filtro por serviço (2 ou mais serviços), contador «Trabalhos» por trabalho, capa a partir do trabalho mais recente.
+
+**Critérios de Entrega:**
+- [x] Os 4 estados (loading, erro, vazio, dados) em «Os teus trabalhos» e em «Trabalhos realizados»; sem serviços guardados o botão «Novo trabalho» fica desactivado com a explicação.
+- [x] Upload de várias fotos: ordem preservada, máx. 3 em simultâneo, pára à primeira falha, ficheiro inválido rejeitado antes do Storage — por teste (`portfolio.test.ts`). Carrossel (contador só com 2+ fotos, abrir foto por índice) e lightbox (navegação limitada ao trabalho, teclado, deslize, fechar) — por teste (`ProjectCarousel.test.tsx`).
+- [x] Lint (`oxlint`), `npm run build` e 152 testes (eram 138) limpos. Sem dependência nova.
+- [ ] **Não validado no browser real nem em telemóvel** (deslize do carrossel com o dedo, `scroll-snap` em Safari/iOS, pré-visualizações, fluxo completo contra o backend). `NewProjectForm` e `ProjectEditor` **não têm teste de componente**.
+- [ ] Reordenar fotos de um trabalho já publicado: fora de âmbito (só se ordena ao criar).
+
+**Consumo do backend:** Fase 12 do `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

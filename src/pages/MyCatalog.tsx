@@ -2,10 +2,11 @@ import { useState } from 'react'
 import { Link, Navigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useProfile, useUpdateProfileDetails } from '../hooks/useProfile'
-import { useAddPortfolioPhoto, useProfessionalCatalog, useRemovePortfolioPhoto } from '../hooks/useCatalog'
+import { useProfessionalCatalog } from '../hooks/useCatalog'
 import { useReplaceMyServices, useServiceCategories } from '../hooks/useServiceCategories'
 import { MAX_SERVICES_PER_PROFESSIONAL } from '../services/serviceCategories'
-import { PortfolioUploadError } from '../services/portfolio'
+import { NewProjectForm } from '../components/portfolio/NewProjectForm'
+import { ProjectEditor } from '../components/portfolio/ProjectEditor'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
 import { Card, CardContent } from '../components/ui/Card'
@@ -18,8 +19,7 @@ export function MyCatalog() {
   const { data: profile, isLoading: isProfileLoading } = useProfile()
   const catalog = useProfessionalCatalog(profile?.role === 'PROFESSIONAL' ? profile.id : undefined)
   const updateProfile = useUpdateProfileDetails()
-  const addPhoto = useAddPortfolioPhoto(profile?.id)
-  const removePhoto = useRemovePortfolioPhoto(profile?.id)
+  const [showNewProject, setShowNewProject] = useState(false)
 
   const categories = useServiceCategories()
   const replaceServices = useReplaceMyServices(profile?.id)
@@ -73,19 +73,6 @@ export function MyCatalog() {
         toast.success('Serviços atualizados.')
       },
       onError: () => toast.error('Não foi possível guardar os serviços. Tenta novamente.'),
-    })
-  }
-
-  function handleAddPhoto(event: React.ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0]
-    event.target.value = ''
-    if (!file) return
-
-    addPhoto.mutate(file, {
-      onError: (err) => {
-        const message = err instanceof PortfolioUploadError ? err.message : 'Não foi possível enviar a foto.'
-        toast.error(message)
-      },
     })
   }
 
@@ -196,45 +183,46 @@ export function MyCatalog() {
 
       <Card variant="solid">
         <CardContent className="flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-bold text-piquete-blue">Fotos dos trabalhos</p>
-            <label className="cursor-pointer text-xs font-semibold text-piquete-blue hover:underline">
-              {addPhoto.isPending ? 'A enviar...' : 'Adicionar foto'}
-              <input type="file" accept="image/*" className="hidden" disabled={addPhoto.isPending} onChange={handleAddPhoto} />
-            </label>
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-sm font-bold text-piquete-blue">Os teus trabalhos</p>
+            {!showNewProject && (
+              <Button type="button" size="sm" onClick={() => setShowNewProject(true)} disabled={savedServiceIds.length === 0}>
+                Novo trabalho
+              </Button>
+            )}
           </div>
+          <p className="text-xs text-gray-500">
+            Cada trabalho é um serviço que fizeste, com as suas fotos e uma descrição — os clientes veem-no como um carrossel.
+          </p>
 
           {catalog.isLoading && (
-            <div className="grid grid-cols-3 gap-2">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="aspect-square animate-pulse rounded-2xl bg-gray-200" />
+            <div className="flex flex-col gap-3">
+              {[0, 1].map((i) => (
+                <div key={i} className="aspect-[4/3] animate-pulse rounded-2xl bg-gray-200" />
               ))}
             </div>
           )}
 
-          {catalog.isError && (
-            <p className="text-sm text-gray-600">Não foi possível carregar as tuas fotos. Tenta novamente.</p>
+          {catalog.isError && <p className="text-sm text-gray-600">Não foi possível carregar os teus trabalhos. Tenta novamente.</p>}
+
+          {catalog.data && savedServiceIds.length === 0 && (
+            <p className="rounded-xl bg-amber-50 p-2.5 text-xs text-amber-700">
+              Escolhe e guarda primeiro os serviços que prestas (acima): cada trabalho tem de estar ligado a um deles.
+            </p>
           )}
 
-          {catalog.data && catalog.data.portfolio.length === 0 && (
-            <p className="text-sm text-gray-500">Ainda não adicionaste nenhuma foto de trabalho.</p>
+          {catalog.data && showNewProject && (
+            <NewProjectForm professionalId={profile.id} services={catalog.data.services} onDone={() => setShowNewProject(false)} />
           )}
 
-          {catalog.data && catalog.data.portfolio.length > 0 && (
-            <div className="grid grid-cols-3 gap-2">
-              {catalog.data.portfolio.map((photo) => (
-                <div key={photo.id} className="group relative aspect-square overflow-hidden rounded-2xl">
-                  <img src={photo.photo_url} alt="" className="h-full w-full object-cover" />
-                  <button
-                    type="button"
-                    onClick={() => removePhoto.mutate(photo.id)}
-                    disabled={removePhoto.isPending}
-                    aria-label="Remover foto"
-                    className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full bg-piquete-blue-deep/70 text-base font-bold leading-none text-white backdrop-blur transition-colors hover:bg-rose-600 disabled:opacity-50"
-                  >
-                    ×
-                  </button>
-                </div>
+          {catalog.data && catalog.data.projects.length === 0 && !showNewProject && (
+            <p className="text-sm text-gray-500">Ainda não adicionaste nenhum trabalho.</p>
+          )}
+
+          {catalog.data && catalog.data.projects.length > 0 && (
+            <div className="flex flex-col gap-4">
+              {catalog.data.projects.map((project) => (
+                <ProjectEditor key={project.id} professionalId={profile.id} project={project} services={catalog.data.services} />
               ))}
             </div>
           )}
