@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { TRABALHOS_DE_DEMONSTRACAO } from '../data/trabalhosDeDemonstracao'
 import type { FeaturedWork } from '../services/featuredWorks'
 import { useHomeFeed } from './useHomeFeed'
 
@@ -177,5 +178,66 @@ describe('useHomeFeed — estado da montra', () => {
     result.current.aoTentarDeNovo()
 
     expect(mocks.trabalhos.refetch).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('useHomeFeed — trabalhos de demonstração (opção de avaliação visual)', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
+  it('desligada (por omissão): sem trabalhos reais, a montra fica «vazio» e não inventa nada', () => {
+    mocks.trabalhos.data = []
+    const { result } = renderHook(() => useHomeFeed())
+
+    expect(result.current.estado).toBe('vazio')
+    expect(result.current.emDemonstracao).toBe(false)
+  })
+
+  it('ligada e sem trabalhos reais: mostra os de demonstração e diz que o são', () => {
+    vi.stubEnv('VITE_MONTRA_DE_DEMONSTRACAO', 'true')
+    mocks.trabalhos.data = []
+    const { result } = renderHook(() => useHomeFeed())
+
+    expect(result.current.estado).toBe('pronto')
+    expect(result.current.emDemonstracao).toBe(true)
+    expect(result.current.destaques).toEqual(TRABALHOS_DE_DEMONSTRACAO)
+    expect(result.current.canalizacao.length).toBeGreaterThan(0)
+  })
+
+  it('ligada mas com trabalhos reais: mostram-se só os reais', () => {
+    vi.stubEnv('VITE_MONTRA_DE_DEMONSTRACAO', 'true')
+    const { result } = renderHook(() => useHomeFeed())
+
+    expect(result.current.emDemonstracao).toBe(false)
+    expect(result.current.destaques).toEqual(TRABALHOS)
+  })
+
+  it('ligada mas ainda a carregar: espera pela API em vez de piscar dados inventados', () => {
+    vi.stubEnv('VITE_MONTRA_DE_DEMONSTRACAO', 'true')
+    mocks.trabalhos.data = undefined
+    mocks.trabalhos.isLoading = true
+    const { result } = renderHook(() => useHomeFeed())
+
+    expect(result.current.estado).toBe('a-carregar')
+    expect(result.current.emDemonstracao).toBe(false)
+  })
+
+  it('só o valor «true» liga a opção', () => {
+    vi.stubEnv('VITE_MONTRA_DE_DEMONSTRACAO', 'sim')
+    mocks.trabalhos.data = []
+    const { result } = renderHook(() => useHomeFeed())
+
+    expect(result.current.emDemonstracao).toBe(false)
+  })
+
+  it('os dados de demonstração têm o formato da API e ids únicos', () => {
+    const ids = TRABALHOS_DE_DEMONSTRACAO.map((w) => w.id)
+
+    expect(new Set(ids).size).toBe(ids.length)
+    for (const w of TRABALHOS_DE_DEMONSTRACAO) {
+      expect(['Top Avaliado', 'Verificado']).toContain(w.badge)
+      expect(w).not.toHaveProperty('professional_id')
+    }
   })
 })

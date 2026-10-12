@@ -1377,3 +1377,23 @@ rollback;
 **Notas de deploy:** só frontend; sem variáveis, migrations nem alterações ao backend. **Não verificado em browser real.**
 
 **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (item de estados de carregamento/erro).
+
+---
+
+## Adendo v1.34
+
+### Opção de montra de demonstração na Home — só frontend (12/10/2026)
+
+**Contexto.** Com a montra pública (Adendo v1.32) e ainda sem profissionais verificados com trabalhos, a Home mostra «Ainda não há trabalhos publicados». O utilizador pediu os dados inventados de volta, para avaliar o aspecto final com a montra cheia.
+
+**A. Como funciona.** `VITE_MONTRA_DE_DEMONSTRACAO=true` (opcional, **desligada por omissão**): quando a API não devolve trabalhos, a Home mostra os 8 trabalhos de `src/data/trabalhosDeDemonstracao.ts` (os dados fixos de antes do Adendo v1.31, convertidos para o formato da API pública). Regras: (1) **com trabalhos reais mostram-se sempre só os reais**; (2) enquanto a API responde mostra-se o esqueleto, nunca dados inventados a piscar; (3) a Home mostra sempre o aviso «Dados de demonstração: estes profissionais, notas e fotos são inventados…»; (4) só o valor exacto `true` liga a opção. Os selos antigos («Artesanal», «Mais Pedido»…) já não existem na API: o cartão só sabe «Top Avaliado» e «Verificado», e os dados de demonstração foram mapeados para um destes.
+
+**B. Porque não está sempre ligada.** Os dados são inventados (nomes, notas, números, fotos do Unsplash). Mostrados a visitantes sem aviso seriam publicidade enganosa; o aviso mitiga mas não elimina: **não ligar em produção aberta ao público**. Foi para isso que o Adendo v1.31 os removeu.
+
+**C. Como usar.** Local: `VITE_MONTRA_DE_DEMONSTRACAO=true` no `.env` e `npm run dev`. Vercel (só para avaliar, num ambiente que não seja o público): definir a variável e fazer novo deploy — as `VITE_*` são lidas no build, não em runtime. Para acabar a avaliação, retirar a variável e voltar a fazer deploy. Documentada no `.env.example` com o que acontece se faltar.
+
+**D. Testes.** A suite fixa a opção a vazio em `vitest.config.ts`, para um `.env` local com ela ligada não mudar os resultados. 6 testes novos em `useHomeFeed.test.ts` (desligada, ligada sem reais, ligada com reais, ainda a carregar, só `true` liga, formato dos dados). Suite a 335 testes.
+
+**Notas de deploy:** variável nova, opcional (`VITE_MONTRA_DE_DEMONSTRACAO`); sem ela nada muda. Sem alterações ao backend.
+
+**Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (trabalhos em destaque da Home).
