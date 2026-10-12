@@ -1121,3 +1121,32 @@ Além disso: `/service_requests/nearby` passa a exigir `PROFESSIONAL` e deixa de
 **Notas de deploy:** a migration `20261012090000_portfolio_por_projeto.sql` tem de estar aplicada à base **antes** do deploy do backend; backend primeiro, frontend depois. Sem variáveis de ambiente novas. **Migration aplicada ao Supabase real em 12/10/2026 (pelo SQL Editor) e validada** por um bloco `DO` com rollback: `fotos_sem_projecto=0`, criação com posições 0,1, `PF001` (0 e 11 fotos), `PF002` (serviço alheio), `PF003` (outro profissional), `PF005` (foto inexistente), `PF004` (última foto), total de 10 fotos após acrescentar e cascata ao apagar o trabalho. **Não exercido:** a corrida real entre dois pedidos simultâneos (`FOR UPDATE`) e o `verificar:rls`.
 
 **Critérios de entrega correspondentes:** `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 12; `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 11.
+
+
+---
+
+## Adendo v1.24
+
+### Fase 7 — contrato OpenAPI, jornada E2E em CI, CORS multi-origem, smoke e carga — só backend (12/10/2026)
+
+**Contexto:** a Fase 7 pede a API pronta para o PWA em produção. Entrou em `feat/fase-7-preparacao-integracao` o que se faz por código; o que exige infra ou medição fora desta máquina (staging, latência desde Maputo, smoke em produção) fica registado como pendente no plano.
+
+**A. Contrato OpenAPI 3.0, gerado dos schemas Zod.** `GET /openapi.json` e `GET /docs` (Swagger UI) — **públicos de propósito**: descrevem o contrato, não expõem dados, e o repositório do frontend precisa de os ler sem sessão. O documento (`src/docs/openapi.ts`) usa os **mesmos objectos Zod** que os controllers passam a `validate(...)`, por isso mudar uma validação muda a documentação sem segunda edição. O que não se deriva (que rotas existem, quem as pode chamar) é declarado numa lista, e `src/docs/openapi.test.ts` **falha se a lista e as rotas registadas em `app.ts` divergirem em qualquer sentido** — rota nova sem documentação, ou documentação de rota que já não existe. `POST /webhooks/payment` só consta com `ENABLE_PAYMENT_MOCK=true`, tal como só existe nessa condição. Dependências novas: `@asteasolutions/zod-to-openapi@7` (a v8 exige Zod 4) e `swagger-ui-express`.
+**Limitação assumida:** os schemas de **entrada** são exactos; as **respostas** só descrevem o envelope (`{ success, data }`) e os códigos de erro — o formato de `data` continua descrito neste TRD, não no OpenAPI. Modelar as respostas exigiria schemas de saída que hoje não existem no código; não se inventaram à mão porque desactualizariam.
+
+**B. Jornada E2E em CI** (`src/e2e/jornada.test.ts`, `npm run test:e2e`, passo próprio em `ci.yml` e `deploy.yml`): registo (linha criada pela trigger de signup) → localização → tornar-se profissional → KYC (incluindo recusa de documento alheio) → aprovação (só ADMIN) → subscrição por webhook do mock → busca por proximidade → pedido → pedidos abertos (só PROFESSIONAL) → atribuição (2.ª tentativa = 409) → contacto só depois de atribuído → conclusão (só o dono) → avaliação. Atravessa rotas, guards, validação e services reais contra o `fakeSupabase`.
+**O que NÃO prova:** o SQL. `ST_DWithin`, índices, funções plpgsql e RLS só se provam contra um Postgres real (staging) e, para o RLS, com `npm run verificar:rls`. As RPC são simuladas por handlers que espelham as migrations — como já acontecia em `confirmPaymentTransactionRpc`. O `fakeSupabase` ganhou `upsert`, `rpc(...).maybeSingle()/single()` e `padroes` (DEFAULTs de coluna nos inserts).
+
+**C. CORS multi-origem.** `CORS_ORIGIN` passa a lista separada por vírgulas (`src/config/cors.ts`); uma entrada pode levar `*` **dentro de um segmento do anfitrião** (`https://piquetepro24-*.vercel.app`) para os previews da Vercel, cujo URL muda a cada PR. O `*` casa `[a-z0-9-]+` e nunca um ponto. Em produção o arranque **aborta** com um padrão cujo segmento é só `*` (`https://*.vercel.app` casaria o projecto de qualquer pessoa na Vercel — com credenciais equivale a `*`), além da recusa de `*` que já existia. Origem recusada: o pedido segue sem cabeçalhos CORS e é o browser que o bloqueia (passar um `Error` daria 500). Pedidos sem `Origin` (curl, health-check do Fly) passam. Compatível com o valor actual em produção (uma única origem).
+
+**D. Smoke e carga.** `npm run smoke` (`scripts/smoke.mjs`) verifica um ambiente já no ar: `/health`, `/openapi.json`, 401 sem token, 404 em JSON, **`POST /webhooks/payment` = 404** (mock desligado), CORS (origem do frontend aceite, outra recusada) e, com `SMOKE_TOKEN`, a validação do JWT contra o JWKS. `npm run carga` (`scripts/carga.mjs`, `autocannon`) só faz **leituras** nos endpoints críticos, recusa-se a correr contra um `*.fly.dev` que não pareça staging, e separa 2xx de 429 — os endpoints têm rate limit por utilizador, e um 429 é rápido: contá-lo na média esconderia a latência real.
+
+**E. Runbook.** `Doc's/RUNBOOK_DEPLOY.md`: deploy, lista de verificação pré-merge, smoke, rollback de código (`fly deploy --image`) e de base de dados (migrations só para a frente; compensar com migration nova), segredos expostos, diagnóstico, e o procedimento de medição de latência. **Escrito, não testado.**
+
+**F. Caching de listagens:** já existia desde a Fase 3 (`GET /professionals/nearby` em Redis com degradação sem `REDIS_URL`); nada a acrescentar. `GET /service_requests/nearby` continua sem cache de propósito (Fase 3: os pedidos mudam de estado depressa demais).
+
+**Por fazer (não é código):** ambiente de staging (app Fly + projecto Supabase); medição de latência desde Maputo e decisão fra/jnb; correr `npm run smoke` e `npm run carga` contra staging/produção; testar o rollback do runbook.
+
+**Notas de deploy:** sem migrations nem variáveis de ambiente novas. `CORS_ORIGIN` já aceita lista, mas o valor actual (uma origem) continua válido. Dependências novas em `package.json`: `@asteasolutions/zod-to-openapi`, `swagger-ui-express` (produção); `autocannon` e os `@types` (desenvolvimento). Backend primeiro; o frontend não precisa de alteração.
+
+**Critérios de entrega correspondentes:** `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 7.
