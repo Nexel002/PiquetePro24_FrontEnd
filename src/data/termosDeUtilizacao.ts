@@ -9,12 +9,12 @@ export interface SeccaoLegal {
 
 // "Última actualização" mostra-se na página e conta para o utilizador: mudar o texto sem mudar
 // esta data é dizer-lhe que nada mudou.
-export const TERMOS_ACTUALIZADOS_EM = '7 de outubro de 2026'
+export const TERMOS_ACTUALIZADOS_EM = '12 de outubro de 2026'
 
 // Texto redigido a partir do que a plataforma faz hoje (identidade verificada, subscrição do
 // profissional, pedido a 3 profissionais, partilha de contactos só depois da escolha,
 // localização aproximada). É um rascunho de produto, não um parecer jurídico: **tem de ser
-// revisto por um jurista** antes de se tornar vinculativo, em especial as secções 8 (o que se guarda e por quanto tempo), 9, 10 e 12.
+// revisto por um jurista** antes de se tornar vinculativo, em especial as secções 7 (montra pública de trabalhos), 8 (o que se guarda e por quanto tempo), 9, 10 e 12.
 // Quando uma funcionalidade mudar (ex.: pagamento do serviço dentro da app), as secções 3 e 4
 // têm de mudar com ela.
 export const TERMOS_DE_UTILIZACAO: SeccaoLegal[] = [
@@ -53,6 +53,7 @@ export const TERMOS_DE_UTILIZACAO: SeccaoLegal[] = [
       'A subscrição paga-se por M-Pesa ou e-Mola. Sem subscrição ativa, ou com a verificação por aprovar, não podes propor nem aceitar pedidos.',
       'Tens de indicar apenas serviços que sabes e podes fazer, e manter o perfil e as fotos do portfólio verdadeiros. Só carregues fotos que tens o direito de usar.',
       'Deves cumprir o que propões. Propostas que não pensas honrar prejudicam os clientes e a tua reputação.',
+      'Os trabalhos que publicas no portfólio podem aparecer na página inicial, visíveis a qualquer pessoa, mesmo sem conta (ver a secção 7).',
     ],
   },
   {
@@ -81,6 +82,8 @@ export const TERMOS_DE_UTILIZACAO: SeccaoLegal[] = [
     paragrafos: [
       'As avaliações, comentários e fotos que publicas continuam a ser teus, mas deixas-nos mostrá-los na plataforma para o serviço funcionar (por exemplo, no perfil público de um profissional).',
       'Podemos remover conteúdo que quebre estes termos ou que seja ilegal ou ofensivo.',
+      'Se és profissional, os trabalhos que publicas no teu portfólio podem aparecer, na página inicial, a qualquer pessoa, mesmo sem conta. Só mostramos trabalhos de profissionais com a identidade verificada, e só isto: a foto de capa, a descrição, o serviço, o teu primeiro nome e a inicial do último, a província e o distrito, a tua avaliação média e o número de trabalhos concluídos. Nunca mostramos o teu contacto, a tua morada nem a tua fotografia de perfil.',
+      'Podes retirar um trabalho da página inicial apagando-o em O meu catálogo, ou eliminando a tua conta; como a lista é guardada alguns minutos, a retirada pode demorar até 5 minutos a notar-se.',
     ],
   },
   {
