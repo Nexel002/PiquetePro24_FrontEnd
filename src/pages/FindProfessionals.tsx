@@ -9,6 +9,7 @@ import type { NewServiceRequestState } from './NewServiceRequest'
 import { BackButton } from '../components/BackButton'
 import { Card } from '../components/ui/Card'
 import { Button } from '../components/ui/Button'
+import { AvisoUltimaLocalizacao } from '../components/AvisoUltimaLocalizacao'
 import { Input } from '../components/ui/Input'
 
 const PROFESSIONAL_TYPE_LABELS = { SINGULAR: 'Singular', COMPANY: 'Empresa' } as const
@@ -132,7 +133,7 @@ export function FindProfessionals() {
   const [text, setText] = useState(q)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
-  const coordinates = geolocation.state.status === 'success' ? geolocation.state.coordinates : null
+  const { coordinates, ultimaConhecidaEmUso } = geolocation
   const categories = useServiceCategories()
   const search = useProfessionalSearch({ q, category, coordinates })
 
@@ -276,6 +277,8 @@ export function FindProfessionals() {
             ))}
           </div>
         )}
+
+        {ultimaConhecidaEmUso && <AvisoUltimaLocalizacao ultima={ultimaConhecidaEmUso} />}
 
         {!hasLocation && (
           <div className="flex items-center justify-between gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-card">

@@ -204,9 +204,9 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - Testes com throttling de rede (DevTools) e modo avião.
 
 **Critérios de Entrega:**
-- [ ] Última localização conhecida é reutilizada corretamente quando GPS falha.
-- [ ] Criar um pedido em modo offline não perde os dados — é enfileirado e sincronizado ao reconectar, sem duplicação.
-- [ ] Indicador de conectividade reflete o estado real da rede.
+- [ ] Última localização conhecida é reutilizada corretamente quando GPS falha. **Implementado** (`lib/ultimaLocalizacao.ts`, `useGeolocation`, aviso em `FindProfessionals` e `NearbyServiceRequests`; Adendo v1.25): 18 testes novos. **Falta verificar num browser/telemóvel real** com o GPS recusado ou em modo avião.
+- [ ] Criar um pedido em modo offline não perde os dados — é enfileirado e sincronizado ao reconectar, sem duplicação. **NÃO iniciado — backend pronto (Fase 13 do backend, `Idempotency-Key`, Adendo v1.26), falta a migration em produção e depois a fila no frontend. Antes:** `POST /service_requests` não tem idempotência no backend; sem ela, um reenvio depois de uma resposta perdida duplica o pedido e o frontend não o evita sozinho. Proposta: coluna `idempotency_key` com índice único `(client_id, idempotency_key)` + cabeçalho `Idempotency-Key` (migration + deploy do backend primeiro). Ver Adendo v1.25, item C.
+- [ ] Indicador de conectividade reflete o estado real da rede. **Implementado** (`lib/conectividade.ts`, `IndicadorDeLigacao`, ligado ao interceptor de `lib/api.ts`; Adendo v1.25): distingue «sem internet» de «servidor sem resposta». 6 testes. **Falta verificar com o modo avião e com throttling no DevTools.**
 - [ ] Lighthouse PWA audit mantém pontuação alta (>90) após as mudanças desta fase.
 - [x] **(Adendo v1.20, 07/10/2026 — branch `feat/pwa-aviso-nova-versao`, descoberto em produção)** Aviso de nova versão da PWA: o site publicado mostrava o ecrã antigo porque o service worker (`autoUpdate` sem recarregar) mantinha a versão antiga em quem deixava a app aberta. `registerType: 'prompt'` + `src/lib/pwaUpdate.ts` + registo em `main.tsx`: aviso persistente «Há uma nova versão disponível — Actualizar» (só activa e recarrega ao aceitar, para não apagar formulários a meio) e verificação de hora a hora com rede. 7 testes novos (suite a 88). `tsc -b`, `eslint` e `vite build` limpos. **Fluxo completo não verificado num browser real** (precisa de dois deploys seguidos); o primeiro browser com o service worker antigo precisa de um carregamento extra, uma única vez.
 

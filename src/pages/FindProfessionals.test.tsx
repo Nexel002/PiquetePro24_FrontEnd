@@ -17,7 +17,15 @@ const estado = vi.hoisted(() => ({
 
 vi.mock('../hooks/useProfessionalSearch', () => ({ useProfessionalSearch: () => estado.pesquisa }))
 vi.mock('../hooks/useServiceCategories', () => ({ useServiceCategories: () => ({ data: estado.categorias }) }))
-vi.mock('../hooks/useGeolocation', () => ({ useGeolocation: () => ({ state: estado.geolocalizacao, locate: vi.fn() }) }))
+// Espelha o retorno real do hook: coordinates = GPS actual, ou a última conhecida quando o GPS falhou.
+vi.mock('../hooks/useGeolocation', () => ({
+  useGeolocation: () => ({
+    state: estado.geolocalizacao,
+    locate: vi.fn(),
+    coordinates: estado.geolocalizacao.status === 'success' ? estado.geolocalizacao.coordinates : null,
+    ultimaConhecidaEmUso: null,
+  }),
+}))
 
 function profissional(extra: Partial<SearchedProfessional> & { id: string; full_name: string }): SearchedProfessional {
   return {

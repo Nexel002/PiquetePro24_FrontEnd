@@ -30,6 +30,7 @@ import { DefinirNovaPassword } from './pages/DefinirNovaPassword'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { OnboardingGate } from './components/OnboardingGate'
 import { AuthProvider } from './store/AuthContext'
+import { IndicadorDeLigacao } from './components/IndicadorDeLigacao'
 
 const queryClient = new QueryClient()
 
@@ -37,6 +38,7 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <Toaster position="top-center" richColors closeButton />
+      <IndicadorDeLigacao />
       <AuthProvider>
         <BrowserRouter>
           <Routes>

@@ -1152,3 +1152,63 @@ Além disso: `/service_requests/nearby` passa a exigir `PROFESSIONAL` e deixa de
 **Verificação em produção (12/10/2026).** Deploy do backend concluído; `npm run smoke` contra `piquetepro24-backend.fly.dev`: 7/7 (sem passos autenticados). O smoke apanhou um problema de configuração e não de código: o frontend passou a ser servido num domínio novo da Vercel e o CORS, correctamente, recusou-o. **Decisão do utilizador:** o domínio oficial do frontend passa a ser `https://piquete-pro24-front-end-beta.vercel.app`; `CORS_ORIGIN` e `FRONTEND_URL` (Fly), o *Site URL* e os *Redirect URLs* (Supabase Auth) apontam só para ele, e o domínio antigo (`piquete-pro24-front-end.vercel.app`) redirecciona para o novo na Vercel. Confirmado: o login volta ao domínio novo e a origem antiga é recusada pela API. Efeito para os utilizadores: sessões abertas no domínio antigo perdem-se (a sessão é por origem).
 
 **Critérios de entrega correspondentes:** `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 7.
+
+---
+
+## Adendo v1.25
+
+### Fase 5 do frontend — última localização conhecida e indicador de ligação — só frontend (12/10/2026)
+
+**Contexto:** a Fase 5 pede resiliência a rede instável. Entraram os dois itens que não dependem do backend; a fila offline fica à espera de uma decisão (item C).
+
+**A. Última localização conhecida.** `useGeolocation` guarda a posição em `localStorage` (`lib/ultimaLocalizacao.ts`) sempre que o GPS responde e, quando falha (recusado, indisponível, timeout de 10 s, dispositivo sem GPS), devolve-a em `coordinates` para os ecrãs que **pesquisam** (`FindProfessionals`, `NearbyServiceRequests`) com um aviso «a usar a tua última localização conhecida (há X)». **Não** a devolve como `success`: `LocationForm` grava no perfil quando o GPS responde, e gravar uma posição antiga como se fosse a actual seria um dado errado. Só se usa se tiver menos de 30 dias e estiver dentro dos limites de Moçambique que o backend aplica (um valor adulterado em `localStorage` seria recusado com 400). `localStorage` indisponível não é erro.
+
+**B. Indicador de ligação.** Faixa fixa no topo, só visível com problema. Dois sinais, porque nenhum chega sozinho: `navigator.onLine` apanha o modo avião mas diz «online» com Wi-Fi sem dados (o caso comum em redes móveis); o resultado dos pedidos à API apanha esse caso (o interceptor de `lib/api.ts` marca o servidor como inalcançável quando um pedido nem obtém resposta, e como alcançável com qualquer resposta HTTP, mesmo 4xx/5xx). Estados: ligado / sem internet / servidor sem resposta. `role="status"` (polite), para o leitor de ecrã não interromper a cada perda de rede.
+
+**C. Fila offline — decisão pendente.** `POST /service_requests` não é idempotente: se o pedido chega ao servidor mas a resposta se perde, o reenvio cria um segundo pedido. O frontend sozinho não consegue distinguir «nunca chegou» de «chegou e a resposta perdeu-se». Correcção proposta (backend, **primeiro**): coluna `idempotency_key uuid` em `service_requests` com índice único `(client_id, idempotency_key)`, cabeçalho opcional `Idempotency-Key`, e em repetição devolver o pedido já criado em vez de criar outro. Exige migration (aplicada pelo utilizador no SQL Editor) e deploy do backend antes do frontend. Depois, no frontend: fila em IndexedDB com a chave gerada ao enfileirar, reenvio ao reconectar.
+
+**Fora de âmbito:** fila para outras acções além de criar pedido; sincronização em segundo plano com o separador fechado (Background Sync não existe em Safari/iOS).
+
+**Notas de deploy:** sem variáveis de ambiente nem alterações ao backend. **Não verificado em browser real.**
+
+**Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 5.
+
+---
+
+## Adendo v1.26
+
+### Idempotência da criação de pedidos (suporta a fila offline da Fase 5 do frontend) — só backend (13/10/2026)
+
+**Contexto:** `POST /service_requests` não era idempotente. Se o pedido chegava ao servidor mas a resposta se perdia (rede móvel a cair), o cliente reenviava e criava um segundo pedido; o frontend sozinho não distingue «nunca chegou» de «chegou e a resposta perdeu-se». Decisão do utilizador (12/10/2026): resolver no backend, primeiro.
+
+**A. Contrato.** Cabeçalho opcional `Idempotency-Key: <uuid>`, gerado pelo cliente ao decidir criar o pedido e reutilizado em todas as tentativas. Primeira vez: `201`. Repetição pelo mesmo cliente: `200` com o pedido original, **sem** nova notificação, auditoria nem convites. Chave que não é UUID: `400` (ignorá-la devolvia um `201` que não protege de nada e o cliente julgava-se a salvo). Aplica-se ao pedido aberto e ao dirigido. O corpo do reenvio não é comparado com o original.
+
+**B. Escopo por cliente.** O índice único é `(client_id, idempotency_key)`, não global: a chave é escolhida por quem chama, e uma global deixaria um utilizador provocar colisões ou ver o pedido de outro ao adivinhá-la. A chave não é devolvida (não consta de `SERVICE_REQUEST_COLUMNS`).
+
+**C. Atomicidade.** No pedido dirigido a chave vai para dentro de `create_service_request_with_invitations` (`INSERT ... ON CONFLICT DO NOTHING`), por isso dois reenvios simultâneos não criam dois pedidos. A função foi **substituída** (drop + create) e não alterada com `create or replace`, porque acrescentar um parâmetro cria um overload e a chamada por nome ficaria ambígua. No pedido aberto o `23505` é tratado no service, que devolve o vencedor. **Limite assumido:** se dois reenvios *simultâneos* do pedido dirigido chegarem antes de qualquer um existir, o perdedor também notifica os convidados (o pré-lookup do controller não vê o pedido ainda); o pedido, esse, não duplica. É o caso raro de corrida, não o do reenvio normal depois de uma resposta perdida.
+
+**D. Ordem de deploy — crítico.** A migration tem de estar aplicada **antes** do deploy do backend. O código novo chama a função com 10 parâmetros; contra a função antiga (9) falha com «function does not exist» e **parte toda a criação de pedidos dirigidos**. O contrário é seguro: o código antigo em produção chama a função com 9 argumentos e a nova aceita-os (o décimo tem `default null`). Migration aditiva e compatível com o código anterior.
+
+**E. Verificação da migration (a correr no SQL Editor do Supabase; faz rollback).** O SQL não foi executado pelo autor:
+
+```sql
+begin;
+do $$
+declare v_cliente uuid; v_cat uuid; v_pro uuid; a uuid; b uuid; n_pedidos int; n_convites int;
+begin
+  select id into v_cliente from users_profile where role = 'CLIENT' limit 1;
+  select psc.professional_id, psc.category_id into v_pro, v_cat from professional_service_categories psc limit 1;
+  a := public.create_service_request_with_invitations(v_cliente, 'teste', null, 'Maputo', null, null, null, v_cat, array[v_pro], gen_random_uuid());
+  -- mesma chave: tem de devolver o mesmo id e não criar convites novos
+  select idempotency_key into strict b from service_requests where id = a;
+  b := public.create_service_request_with_invitations(v_cliente, 'teste', null, 'Maputo', null, null, null, v_cat, array[v_pro], b);
+  select count(*) into n_pedidos from service_requests where client_id = v_cliente and title = 'teste';
+  select count(*) into n_convites from service_request_invitations where service_request_id = a;
+  raise notice 'mesmo_id=% pedidos=% convites=%', (a = b), n_pedidos, n_convites;  -- esperado: true / 1 / 1
+end $$;
+rollback;
+```
+
+**Notas de deploy:** 1) aplicar `supabase/migrations/20261013090000_idempotencia_criacao_pedido.sql`; 2) correr o bloco acima; 3) só então fazer o merge do backend. Sem variáveis de ambiente novas. Backend primeiro, frontend depois (o frontend ainda não envia o cabeçalho).
+
+**Critérios de entrega correspondentes:** `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 13; `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 5 (fila offline).
