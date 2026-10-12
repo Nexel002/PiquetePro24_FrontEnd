@@ -1,4 +1,4 @@
-import type { FeaturedWork } from '../../data/featuredWorks'
+import type { FeaturedWork } from '../../services/featuredWorks'
 import { WorkCard } from './WorkCard'
 
 interface SearchResultsProps {

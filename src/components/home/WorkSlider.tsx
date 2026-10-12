@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { FeaturedWork } from '../../data/featuredWorks'
+import type { FeaturedWork } from '../../services/featuredWorks'
 import { WorkCard } from './WorkCard'
 
 interface WorkSliderProps {

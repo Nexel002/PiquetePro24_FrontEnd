@@ -22,6 +22,8 @@ interface HomeHeaderProps {
   aoMudarPesquisa: (valor: string) => void
   aoPesquisar: (event: FormEvent) => void
   aoClicarNotificacoes: () => void
+  /** Convites por responder (só profissionais); alimenta o ponto do sino. */
+  notificacoesPorLer?: number
   aoTerminarSessao: () => void
 }
 
@@ -41,6 +43,7 @@ export function HomeHeader({
   aoMudarPesquisa,
   aoPesquisar,
   aoClicarNotificacoes,
+  notificacoesPorLer,
   aoTerminarSessao,
 }: HomeHeaderProps) {
   const ligacaoDoPapel = temSessao && papel ? LIGACAO_DO_PAPEL[papel] : null
@@ -71,7 +74,7 @@ export function HomeHeader({
             </Link>
           ) : null}
 
-          <NotificationButton onClick={aoClicarNotificacoes} />
+          <NotificationButton onClick={aoClicarNotificacoes} porLer={notificacoesPorLer} />
 
           {temSessao ? (
             <UserMenu

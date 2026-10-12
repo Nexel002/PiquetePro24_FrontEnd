@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import type { FeaturedWork } from '../../data/featuredWorks'
+import type { FeaturedWork } from '../../services/featuredWorks'
 
 interface WorkCardProps {
   work: FeaturedWork
@@ -15,17 +15,19 @@ export function WorkCard({ work, isFavorite, onToggleFavorite }: WorkCardProps) 
     <article className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-300 bg-white transition-colors hover:bg-slate-50">
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-slate-100">
         <img
-          src={work.imageUrl}
+          src={work.image_url}
           alt=""
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
         />
-        <span className="absolute left-2 top-2 rounded bg-white/95 px-2 py-0.5 text-[11px] font-bold text-slate-900 shadow-sm">
-          {work.badgeText}
-        </span>
+        {work.badge && (
+          <span className="absolute left-2 top-2 rounded bg-white/95 px-2 py-0.5 text-[11px] font-bold text-slate-900 shadow-sm">
+            {work.badge}
+          </span>
+        )}
         <button
           type="button"
-          onClick={() => onToggleFavorite(work.id, work.professionalName)}
+          onClick={() => onToggleFavorite(work.id, work.professional_name)}
           title={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
           aria-label={isFavorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
           aria-pressed={isFavorite}
@@ -45,19 +47,27 @@ export function WorkCard({ work, isFavorite, onToggleFavorite }: WorkCardProps) 
 
       <div className="flex flex-1 flex-col gap-1 p-4">
         <h3 className="font-heading text-base font-bold leading-snug text-slate-900 line-clamp-2">
-          <Link to={`/profissionais?category=${encodeURIComponent(work.serviceSlug)}`} className="after:absolute after:inset-0">
+          <Link to={`/profissionais/${work.professional_id}`} className="after:absolute after:inset-0">
             {work.title}
           </Link>
         </h3>
-        <p className="truncate text-xs text-slate-600">{work.professionalName}</p>
+        <p className="truncate text-xs text-slate-600">{work.professional_name}</p>
         <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-slate-600">
-          <span className="font-bold text-amber-700">★ {work.rating}</span>
-          <span>({work.reviewsCount})</span>
+          {work.rating_avg !== null ? (
+            <>
+              <span className="font-bold text-amber-700">★ {work.rating_avg.toLocaleString('pt-PT', { minimumFractionDigits: 1 })}</span>
+              <span>({work.rating_count})</span>
+            </>
+          ) : (
+            <span>Sem avaliações</span>
+          )}
           <span aria-hidden="true">·</span>
-          <span>{work.completedJobsCount} trabalhos</span>
+          <span>
+            {work.completed_jobs_count} {work.completed_jobs_count === 1 ? 'trabalho' : 'trabalhos'}
+          </span>
         </p>
         <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-2">
-          <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[11px] font-bold text-emerald-900">{work.serviceName}</span>
+          <span className="rounded bg-emerald-100 px-1.5 py-0.5 text-[11px] font-bold text-emerald-900">{work.service_name}</span>
           <span className="truncate rounded border border-slate-300 px-1.5 py-0.5 text-[11px] text-slate-600">{work.location}</span>
         </div>
       </div>
