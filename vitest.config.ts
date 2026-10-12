@@ -14,6 +14,10 @@ export default defineConfig({
       VITE_API_URL: 'http://localhost:3050',
       VITE_SUPABASE_URL: 'http://localhost:54321',
       VITE_SUPABASE_ANON_KEY: 'chave-de-teste',
+      // Desligada de propósito: quem a tenha ligada no .env local (para ver a Home com dados de
+      // demonstração) não pode ver os testes mudarem de resultado. Os testes que a querem ligada
+      // usam vi.stubEnv.
+      VITE_MONTRA_DE_DEMONSTRACAO: '',
     },
   },
 })

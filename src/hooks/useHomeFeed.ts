@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { TRABALHOS_DE_DEMONSTRACAO } from '../data/trabalhosDeDemonstracao'
 import type { FeaturedWork } from '../services/featuredWorks'
 import { useFeaturedWorks } from './useFeaturedWorks'
 import { useServiceCategories } from './useServiceCategories'
@@ -29,10 +30,15 @@ export function useHomeFeed() {
   const [pesquisa, setPesquisa] = useState('')
   const [categoria, setCategoria] = useState('all')
 
-  const trabalhos = useMemo(() => trabalhosQuery.data ?? [], [trabalhosQuery.data])
+  // Opção de avaliação visual (ver data/trabalhosDeDemonstracao.ts): só quando está ligada E a API
+  // não trouxe trabalhos reais — com trabalhos reais mostram-se sempre os reais.
+  const demonstracaoLigada = import.meta.env.VITE_MONTRA_DE_DEMONSTRACAO === 'true'
+  const reais = useMemo(() => trabalhosQuery.data ?? [], [trabalhosQuery.data])
+  const emDemonstracao = demonstracaoLigada && !trabalhosQuery.isLoading && reais.length === 0
+  const trabalhos = emDemonstracao ? TRABALHOS_DE_DEMONSTRACAO : reais
 
   const estado: EstadoDaMontra =
-    trabalhosQuery.isLoading ? 'a-carregar' : trabalhosQuery.isError ? 'erro' : trabalhos.length === 0 ? 'vazio' : 'pronto'
+    trabalhosQuery.isLoading ? 'a-carregar' : trabalhos.length > 0 ? 'pronto' : trabalhosQuery.isError ? 'erro' : 'vazio'
 
   const categorias = useMemo(() => {
     const daApi = categoriasQuery.data?.map(({ slug, name }) => ({ slug, name }))
@@ -65,6 +71,7 @@ export function useHomeFeed() {
     trabalhosFiltrados,
     limparFiltros,
     estado,
+    emDemonstracao,
     aoTentarDeNovo: () => void trabalhosQuery.refetch(),
     destaques: trabalhos,
     canalizacao: doTema(trabalhos, 'canalizacao'),

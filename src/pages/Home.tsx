@@ -84,6 +84,12 @@ export function Home() {
           localizacao={localizacao}
         />
 
+        {feed.emDemonstracao && (
+          <p role="note" className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-3 text-center text-sm font-medium text-amber-900">
+            Dados de demonstração: estes profissionais, notas e fotos são inventados, só para avaliar o aspecto da página.
+          </p>
+        )}
+
         {feed.estado !== 'pronto' ? (
           <>
             {temSessao && <HomeShortcuts papel={profile?.role} />}
