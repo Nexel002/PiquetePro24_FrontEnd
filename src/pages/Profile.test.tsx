@@ -238,6 +238,17 @@ describe('Profile — histórico de pedidos', () => {
     expect(screen.getByRole('link', { name: 'Fazer o meu primeiro pedido' }).getAttribute('href')).toBe('/profissionais')
   })
 
+  it('erro ao carregar os pedidos: aviso próprio (não «Nenhum pedido realizado») e «Tentar de novo»', () => {
+    const refetch = vi.fn()
+    mostrar({ pedidos: { data: undefined, isLoading: false, isError: true, refetch } })
+
+    expect(screen.getByRole('alert').textContent).toMatch(/Não foi possível carregar os teus pedidos/)
+    expect(screen.queryByText('Nenhum pedido realizado')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Tentar de novo' }))
+
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
   it('lista os pedidos com o estado em português e o total', () => {
     mostrar({ pedidos: { data: [pedido(), pedido({ id: 'r2', title: 'Pintar sala', status: 'COMPLETED' })], isLoading: false } })
 

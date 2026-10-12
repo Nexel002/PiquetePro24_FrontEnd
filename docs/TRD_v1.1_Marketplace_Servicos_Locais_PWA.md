@@ -1359,3 +1359,21 @@ rollback;
 **Notas de deploy:** **backend primeiro** (a rota passa a responder 200 sem sessão; o frontend antigo, que só a chamava com sessão, continua a funcionar), depois o frontend. Sem migrations nem variáveis novas. `public/novidades.json` não mudou.
 
 **Critérios de entrega correspondentes:** `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 14; `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6.
+
+---
+
+## Adendo v1.33
+
+### Estados de erro do perfil e do onboarding — só frontend (12/10/2026)
+
+**Contexto.** A auditoria do Adendo v1.31 (item C) encontrou, fora dos três ecrãs críticos, dois sítios onde um erro de rede não tinha tratamento à altura. Corrigidos agora.
+
+**A. Histórico de pedidos em `Profile.tsx`.** Uma falha ao carregar os pedidos caía no estado vazio e mostrava «Nenhum pedido realizado» a quem tem pedidos — um erro que parece um dado. Passa a mostrar «Não foi possível carregar os teus pedidos…» com «Tentar de novo» (`refetch` da própria consulta).
+
+**B. Onboarding (`OnboardingGate`, `CompletePhone`, `CompleteLocation`).** O erro ao carregar o perfil dizia «tenta novamente» sem forma de o fazer: quem estava ali ficava preso até recarregar a página à mão. Os três usam agora `components/ErroAoCarregarPerfil.tsx` (`role="alert"` + «Tentar de novo», que repete só o pedido do perfil). O bloco estava copiado três vezes; ficou num só componente.
+
+**C. Testes.** `CompleteLocation.test.tsx` (novo: formulário, ordem do onboarding, não fica preso, carregar, erro com repetição); casos de repetição em `OnboardingGate` e `CompletePhone`; caso de erro do histórico em `Profile`. Suite a 329 testes; os 5 E2E de acesso continuam a passar.
+
+**Notas de deploy:** só frontend; sem variáveis, migrations nem alterações ao backend. **Não verificado em browser real.**
+
+**Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (item de estados de carregamento/erro).

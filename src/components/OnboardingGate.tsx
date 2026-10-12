@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router-dom'
 import { useProfile } from '../hooks/useProfile'
+import { ErroAoCarregarPerfil } from './ErroAoCarregarPerfil'
 import { getOnboardingStep } from '../services/profile'
 
 const ONBOARDING_PATHS = {
@@ -13,7 +14,7 @@ const ONBOARDING_PATHS = {
 // localização — pedido explícito: quem se regista via Google não tem telefone) e
 // nunca deixa "saltar": as duas telas de onboarding não têm link de "mais tarde".
 export function OnboardingGate({ children }: { children: ReactNode }) {
-  const { data: profile, isLoading, isError } = useProfile()
+  const { data: profile, isLoading, isError, refetch } = useProfile()
   const location = useLocation()
 
   if (isLoading) {
@@ -25,13 +26,7 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
   }
 
   if (isError || !profile) {
-    return (
-      <main className="flex min-h-dvh flex-col items-center justify-center gap-2 p-6 text-center">
-        <p className="text-sm text-gray-600">
-          Não foi possível carregar o teu perfil. Verifica a tua ligação e tenta novamente.
-        </p>
-      </main>
-    )
+    return <ErroAoCarregarPerfil aoTentarDeNovo={() => void refetch()} />
   }
 
   const step = getOnboardingStep(profile)
