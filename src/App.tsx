@@ -31,6 +31,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { OnboardingGate } from './components/OnboardingGate'
 import { AuthProvider } from './store/AuthContext'
 import { IndicadorDeLigacao } from './components/IndicadorDeLigacao'
+import { AvisoDeNovaVersao } from './components/AvisoDeNovaVersao'
 import { ProcessadorDaFila } from './components/ProcessadorDaFila'
 
 const queryClient = new QueryClient()
@@ -40,6 +41,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <Toaster position="top-center" richColors closeButton />
       <IndicadorDeLigacao />
+      <AvisoDeNovaVersao />
       <AuthProvider>
         <ProcessadorDaFila />
         <BrowserRouter>

@@ -1257,3 +1257,23 @@ rollback;
 **Notas de deploy:** sem variáveis novas; `VITE_API_URL` já existia (ver `.env.example`) e passou a estar correcta em produção. Backend sem alterações.
 
 **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 7 (nota de estado).
+
+---
+
+## Adendo v1.29
+
+### Aviso de nova versão ao centro do ecrã, com data e resumo das novidades — só frontend (13/10/2026)
+
+**Contexto:** o aviso do Adendo v1.20 era um pequeno toast com o botão «Actualizar» no topo, que quem deixa a app aberta raramente via, e sem dizer o que mudava ninguém tinha motivo para carregar nele. Pedido do utilizador: um aviso moderno **ao centro do ecrã**, com a data da actualização e um resumo do que foi implementado, **sem termos técnicos**.
+
+**A. O aviso.** `AvisoDeNovaVersao` (montado em `App`): cartão centrado com fundo desfocado, título «Nova versão disponível», «Actualização de 13 de outubro de 2026», lista «O que há de novo» (até 4 itens) e dois botões: **Actualizar agora** e **Mais tarde**. Mantém a regra do Adendo v1.20: **nunca recarrega sozinho** (um formulário a meio perder-se-ia); o cartão avisa que a página vai recarregar. «Mais tarde», Escape ou clicar fora fecham-no sem actualizar; volta a aparecer da próxima vez que a app abrir. Acessível: `role="dialog"`, `aria-modal`, foco no botão principal ao abrir, Tab preso dentro do cartão, `motion-reduce` respeitado.
+
+**B. De onde vêm as novidades — e porque não do código.** Quem vê o aviso está a correr a versão **antiga**, que não conhece as novidades da nova. Por isso o texto vem de `public/novidades.json`, lido da rede **sem cache** (`cache: "no-store"`) só quando o aviso aparece, e por isso reflecte a versão que acabou de ser publicada. Formato: `{ "atualizadoEm": "AAAA-MM-DD", "novidades": ["...", "..."] }`. Até 4 itens, 140 caracteres cada. Qualquer falha (rede, JSON inválido, ficheiro em falta) mostra o aviso na mesma, com «Melhorámos a aplicação», **sem data nem lista** — um texto nunca impede a actualização.
+
+**C. Processo de publicação (novo).** `public/novidades.json` é **editado à mão em cada versão que o utilizador deva ver anunciada**, com frases curtas, em português, sem termos técnicos, e a data de publicação. Se ninguém o actualizar, o aviso mostra as novidades da versão anterior com a data antiga — visível, mas enganador. Não há automatismo para isto de propósito: um texto gerado a partir de commits seria técnico.
+
+**D. Limite assumido.** O aviso novo só aparece a partir da versão **seguinte** à que o traz: a versão que o introduz é anunciada ainda pelo toast antigo (quem está a correr o código antigo mostra o aviso antigo). Para o ver, tem de haver dois deploys seguidos.
+
+**Notas de deploy:** sem variáveis de ambiente nem alterações ao backend; `public/novidades.json` é um ficheiro estático novo (não entra no precache do service worker, de propósito). **Não verificado em browser real.**
+
+**Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 5 (item do aviso de nova versão).
