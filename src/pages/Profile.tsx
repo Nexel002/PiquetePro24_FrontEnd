@@ -288,7 +288,7 @@ export function Profile() {
 
                 <label className="flex flex-col gap-1 text-xs font-semibold text-gray-600">
                   Telefone
-                  <div className="flex overflow-hidden rounded-xl border border-gray-200 bg-white">
+                  <div className="flex overflow-hidden rounded-xl border border-gray-200 bg-white focus-within:border-piquete-blue focus-within:ring-2 focus-within:ring-piquete-blue/20">
                     <span className="flex items-center bg-gray-100 px-3 text-sm text-gray-500 font-mono">
                       {PHONE_PREFIX}
                     </span>

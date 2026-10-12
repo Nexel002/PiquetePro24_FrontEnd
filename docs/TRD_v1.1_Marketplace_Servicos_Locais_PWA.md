@@ -1277,3 +1277,27 @@ rollback;
 **Notas de deploy:** sem variáveis de ambiente nem alterações ao backend; `public/novidades.json` é um ficheiro estático novo (não entra no precache do service worker, de propósito). **Não verificado em browser real.**
 
 **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 5 (item do aviso de nova versão).
+
+---
+
+## Adendo v1.30
+
+### Fase 6 do frontend — code-splitting, ecrã de erro, bibliotecas em ficheiros próprios e medição Lighthouse — só frontend (13/10/2026)
+
+**A. Medição (Lighthouse 12, Chrome, emulação móvel com rede 4G lenta, sobre o build local e sem sessão).** Login antes → depois: Performance 82 → **86**, Acessibilidade 96 → 96, TBT 220 → 150 ms, 348 → 316 KB. Início depois: Performance **89**, Acessibilidade **100**, CLS 0,011. **Limites:** só se mediram ecrãs sem sessão; os ecrãs autenticados (perfil, pedidos, admin, ...) não foram medidos; a medição é local, não a de produção (Vercel, rede real), e o Lighthouse varia entre corridas. O PWA já não é uma categoria do Lighthouse 12; o critério «PWA > 90» da Fase 5 não se pode medir assim.
+
+**B. Code-splitting por rota.** Todos os ecrãs, excepto `Home`, `Login` e `AuthCallback` (as entradas), passam a `React.lazy` com um esqueleto de fallback (`PaginaACarregar`, `role="status"`). Antes, as ~30 páginas iam num só ficheiro (218 KB gzip); agora cada ecrã é descarregado ao entrar nele (o painel de admin, por exemplo, só custa a quem o abre). O precache do service worker continua a incluir todos os ficheiros, por isso offline os ecrãs já visitados e os que ainda não foram abertos continuam a funcionar.
+
+**C. Bibliotecas em ficheiros próprios** (`manualChunks` em `vite.config.ts`): `vendor-react` (60 KB gzip) e `vendor-supabase` (59 KB gzip) separados do código da app (66 KB gzip). **Não encolhe o primeiro download** (o total é o mesmo, ~185 KB gzip); evita repeti-lo: o código da app muda a cada deploy e as bibliotecas quase nunca, por isso cada actualização deixa de custar ~120 KB.
+
+**D. Falha ao carregar um ecrã.** Duas camadas, porque o code-splitting traz um modo de falha novo. (1) `vite:preloadError` (`lib/falhaDeCarregamento.ts`): depois de um deploy novo, um separador aberto aponta para ficheiros que já não existem; recarrega **uma vez por minuto**, no máximo — sem rede, recarregar em ciclo seria pior do que o erro. (2) `ErroDeEcra` (por rota, repõe-se ao navegar): em vez de uma página em branco, «Não foi possível abrir este ecrã», com «Tentar de novo» e «Voltar ao início».
+
+**E. Acessibilidade.** A auditoria ao código encontrou pouco: rótulos, `focus-within`, `alt` e alvos de toque já estavam correctos. Corrigido o campo de telefone do perfil, que perdia o contorno de foco (`outline-none` sem o equivalente no contentor). **Não corrigido, por decisão pendente:** o «24» amarelo do logótipo sobre fundo branco tem contraste 1,56 e é a única falha do Lighthouse. Um logótipo é isento pelo WCAG e mudar a cor da marca é decisão do utilizador.
+
+**F. Desvio ao plano — dois itens da Home já estavam cobertos.** «`width`/`height` nas imagens» serve para evitar saltos de layout; os cartões já reservam o espaço com `aspect-ratio` (CLS medido 0,011). «Esqueleto enquanto as categorias carregam»: a barra já mostra a lista por omissão enquanto a API responde, nunca fica vazia. Não se acrescentou código para os dois. **Continuam fora desta fase** (precisam de backend): trabalhos em destaque com dados reais e o ponto de «por ler» do sino.
+
+**G. Não feito.** `framer-motion` continua nas dependências sem ser importado em lado nenhum (não entra no bundle, mas é lixo no `package.json`): fica para decisão. O `@supabase/supabase-js` traz `realtime`, `storage`, `postgrest` e `functions` e a app só usa autenticação e *storage*; reduzir isto exige trocar de cliente e é um refactor que não foi pedido.
+
+**Notas de deploy:** sem variáveis de ambiente nem alterações ao backend. **Não verificado em browser real:** a navegação entre ecrãs com o esqueleto, e o ecrã de erro com um ficheiro realmente em falta.
+
+**Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6.
