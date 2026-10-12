@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useRef } from 'react'
 import { toast } from 'sonner'
 import {
   assignServiceRequest,
@@ -13,6 +14,11 @@ import {
   type NearbyServiceRequestsParams,
 } from '../services/serviceRequests'
 import { workedWithProfessionalsKey } from './useWorkedWithProfessionals'
+import { ErroDeApi } from '../lib/api'
+import { enfileirar, filaDisponivel } from '../lib/filaOffline'
+import { gerarUuid } from '../lib/uuid'
+import { useEstadoDeLigacao } from '../lib/conectividade'
+import { useAuth } from '../store/AuthContext'
 
 // O interceptor de lib/api.ts já desempacota error.response.data.error num Error
 // simples — a mensagem do backend (ex. "Este pedido já não está disponível para
@@ -21,7 +27,7 @@ function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback
 }
 
-const myServiceRequestsKey = ['service_requests', 'mine'] as const
+export const myServiceRequestsKey = ['service_requests', 'mine'] as const
 const assignedServiceRequestsKey = ['service_requests', 'assigned'] as const
 
 // Pedidos que o profissional aceitou (Backend TRD Adendo v1.12, item G).
@@ -71,14 +77,55 @@ export function useNearbyServiceRequests(
   })
 }
 
+// Criar um pedido sem perder dados em rede instável (Fase 5, TRD Adendo v1.27):
+//  - sem ligação à partida, ou sem resposta do servidor, o pedido vai para a fila local e é
+//    enviado quando a ligação volta (ProcessadorDaFila);
+//  - a Idempotency-Key é gerada UMA vez por formulário e reutilizada em todas as tentativas
+//    (inclusive o reenvio manual depois de um erro), por isso um pedido que chegou ao servidor
+//    mas cuja resposta se perdeu nunca é criado duas vezes.
+// Só a falta de resposta vai para a fila. Um erro do servidor (400, 403, ...) é mostrado já:
+// guardar um pedido inválido só o faria falhar mais tarde, longe do formulário.
+export type ResultadoDaCriacao = { estado: 'enviado' } | { estado: 'guardado' }
+
 export function useCreateServiceRequest() {
   const queryClient = useQueryClient()
+  const { session } = useAuth()
+  const ligacao = useEstadoDeLigacao()
+  const chave = useRef(gerarUuid())
 
   return useMutation({
-    mutationFn: (payload: CreateServiceRequestPayload) => createServiceRequest(payload),
-    onSuccess: () => {
+    // 'always': por omissão o TanStack Query PAUSA as mutações sem rede e o botão ficava a
+    // rodar para sempre — o contrário do que esta fase quer.
+    networkMode: 'always',
+    mutationFn: async (payload: CreateServiceRequestPayload): Promise<ResultadoDaCriacao> => {
+      const userId = session?.user.id
+      const guardar = async (): Promise<ResultadoDaCriacao> => {
+        if (!userId || !filaDisponivel()) {
+          throw new Error('Sem ligação e sem forma de guardar o pedido neste dispositivo. Tenta novamente quando tiveres rede.')
+        }
+        await enfileirar({ id: chave.current, userId, payload })
+        chave.current = gerarUuid()
+        return { estado: 'guardado' }
+      }
+
+      if (ligacao === 'sem-rede') return guardar()
+
+      try {
+        await createServiceRequest(payload, chave.current)
+        chave.current = gerarUuid()
+        return { estado: 'enviado' }
+      } catch (error) {
+        if (error instanceof ErroDeApi && error.semResposta) return guardar()
+        throw error
+      }
+    },
+    onSuccess: (resultado) => {
       queryClient.invalidateQueries({ queryKey: myServiceRequestsKey })
-      toast.success('Pedido criado com sucesso.')
+      if (resultado.estado === 'enviado') {
+        toast.success('Pedido criado com sucesso.')
+      } else {
+        toast.info('Sem ligação: o pedido ficou guardado neste telemóvel e será enviado quando a ligação voltar.', { duration: 8000 })
+      }
     },
     onError: (error) => {
       toast.error(errorMessage(error, 'Não foi possível criar o pedido. Tenta novamente.'))

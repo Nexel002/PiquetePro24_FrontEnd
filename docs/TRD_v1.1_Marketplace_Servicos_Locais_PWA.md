@@ -1212,3 +1212,33 @@ rollback;
 **Notas de deploy:** 1) aplicar `supabase/migrations/20261013090000_idempotencia_criacao_pedido.sql`; 2) correr o bloco acima; 3) só então fazer o merge do backend. Sem variáveis de ambiente novas. Backend primeiro, frontend depois (o frontend ainda não envia o cabeçalho).
 
 **Critérios de entrega correspondentes:** `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 13; `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 5 (fila offline).
+
+---
+
+## Adendo v1.27
+
+### Fila offline para criar pedidos — só frontend (13/10/2026)
+
+**Contexto:** fecha o terceiro item da Fase 5 (o Adendo v1.25 deixou-o à espera da idempotência do backend, entregue no Adendo v1.26).
+
+**A. Garantia contra duplicados.** Está na `Idempotency-Key`, não na fila. A chave é gerada **uma vez por formulário** e vai em todas as tentativas, inclusive o reenvio manual depois de um erro 5xx e o reenvio automático da fila: o `id` de cada item guardado É a chave usada na tentativa original. Por isso um pedido que chegou ao servidor mas cuja resposta se perdeu volta a ser enviado com a mesma chave e o servidor devolve o original. Depois de um pedido criado a chave renova-se, senão o seguinte devolveria sempre o primeiro.
+
+**B. O que vai para a fila e o que não vai.** Só a falta de resposta (rede caiu, DNS, timeout de 20 s) e o estado «sem internet» à partida. Um erro do servidor (400, 403, ...) mostra-se logo no formulário: guardar um pedido inválido só o faria falhar mais tarde, longe do formulário. `ErroDeApi` (`lib/api.ts`) distingue os dois casos (`semResposta`).
+
+**C. Envio.** `ProcessadorDaFila` (montado dentro de `AuthProvider`) envia por ordem ao abrir a app, ao voltar o evento `online`, quando o servidor volta a responder e de minuto a minuto (apanha o Wi-Fi sem dados que volta sem evento). Pára à primeira falha de rede. Estados HTTP 401/408/429/5xx são tratados como temporários (o pedido fica); qualquer outro 4xx marca o item como **recusado** com a mensagem do servidor — fica visível e nunca se apaga em silêncio. Um só envio de cada vez por separador; entre separadores a chave cobre o resto.
+
+**D. Privacidade.** Cada item guarda o `userId`: num telemóvel partilhado, quem entra a seguir não vê nem envia os pedidos do anterior. Os dados ficam em IndexedDB no dispositivo até serem enviados ou descartados.
+
+**E. UI.** «Por enviar (n)» no topo de «Os meus pedidos», com «Descartar» (pede confirmação). Aviso ao guardar («ficou guardado neste telemóvel») e ao enviar. A mutação usa `networkMode: "always"`: por omissão o TanStack Query pausa as mutações sem rede e o botão ficava a rodar para sempre.
+
+**Dependência nova:** `fake-indexeddb` (**só desenvolvimento**, testes). Sem impacto no bundle.
+
+**Limites assumidos:**
+- Só funciona **dentro de uma sessão com a app aberta**. A página «Novo pedido» precisa do perfil e do estado de navegação (vindos de dados já carregados): abri-la de raiz sem rede não funciona. Cobre o caso real — a ligação cai ou falha a meio de criar o pedido.
+- O envio acontece com a app aberta. Não há Background Sync (não existe em Safari/iOS), logo um pedido guardado só sai quando o utilizador volta a abrir a app com ligação.
+- Só «criar pedido». Outras acções (aceitar, concluir, cancelar, propor) continuam a exigir ligação.
+- O corpo de um reenvio não é comparado com o original (decisão do Adendo v1.26).
+
+**Notas de deploy:** sem variáveis de ambiente nem alterações ao backend (já em produção). **Não verificado em browser real.**
+
+**Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 5.

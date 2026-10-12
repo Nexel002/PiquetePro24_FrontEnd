@@ -6,6 +6,8 @@ import { useSubmitReview } from '../hooks/useCatalog'
 import type { RequestStatus } from '../services/serviceRequests'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
+import { PedidosPorEnviar } from '../components/PedidosPorEnviar'
+import { usePedidosPendentes } from '../hooks/usePedidosPendentes'
 
 // Formulário de avaliação (Fase 9, TRD Adendo v1.17): só para pedidos COMPLETED sem
 // avaliação ainda (has_review, calculado pelo backend). Sem edição posterior — uma
@@ -79,6 +81,7 @@ export function MyServiceRequests() {
   const { data: requests, isLoading, isError } = useMyServiceRequests()
   const completeRequest = useCompleteServiceRequest()
   const cancelRequest = useCancelServiceRequest()
+  const { pedidos: porEnviar } = usePedidosPendentes()
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
@@ -89,6 +92,8 @@ export function MyServiceRequests() {
           Perfil
         </Link>
       </header>
+
+      <PedidosPorEnviar />
 
       {isLoading && (
         <div className="flex flex-col gap-2">
@@ -103,7 +108,7 @@ export function MyServiceRequests() {
         </p>
       )}
 
-      {requests && requests.length === 0 && (
+      {requests && requests.length === 0 && porEnviar.length === 0 && (
         <p className="text-sm text-gray-600">
           Ainda não criaste nenhum pedido.{' '}
           <Link to="/profissionais" className="underline">
