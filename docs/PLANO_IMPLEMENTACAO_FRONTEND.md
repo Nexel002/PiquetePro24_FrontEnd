@@ -241,6 +241,8 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 **Objetivo:** Validar a integração completa com o backend em staging, executar testes de jornada completa e preparar o deploy de produção, em coordenação com a Fase 7 do backend.
 
+**Estado (12/10/2026):** a Fase 7 do backend entregou o que esta fase consome — contrato OpenAPI em `GET /openapi.json` (e `/docs`), CORS por lista de origens, smoke e runbook (TRD Adendo v1.24). **O domínio oficial do frontend em produção é `https://piquete-pro24-front-end-beta.vercel.app`**: o domínio antigo (`piquete-pro24-front-end.vercel.app`) redirecciona para ele na Vercel, e `CORS_ORIGIN`/`FRONTEND_URL` (Fly) e os *Redirect URLs* (Supabase Auth) apontam só para ele. Ainda **não existe ambiente de staging** (nem Fly nem Supabase), pelo que os critérios que o pedem continuam por marcar; o smoke de produção do backend passou 7/7 (sem passos autenticados).
+
 **Escopo:**
 - Apontar ambiente de staging do frontend (Vercel preview/staging branch) para o ambiente de staging do backend (Fly.io + Supabase).
 - Teste E2E de jornada completa (mesma jornada validada no backend): registo → localização → KYC → subscrição → busca → pedido → atribuição → conclusão, agora do ponto de vista da UI.
