@@ -10,6 +10,9 @@
     <!-- A ligação ao manifest é injectada pelo vite-plugin-pwa (vite.config.ts); um
          manifest escrito à mão aqui criava dois manifests em conflito. -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- O Chrome avisa que apple-mobile-web-app-capable está obsoleto e pede a versão sem prefixo.
+         Ficam as duas: a sem prefixo é a norma; a da Apple continua a ser lida pelo Safari/iOS. -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>PiquetePro24</title>
