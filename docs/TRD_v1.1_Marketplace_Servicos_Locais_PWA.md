@@ -1149,4 +1149,6 @@ Além disso: `/service_requests/nearby` passa a exigir `PROFESSIONAL` e deixa de
 
 **Notas de deploy:** sem migrations nem variáveis de ambiente novas. `CORS_ORIGIN` já aceita lista, mas o valor actual (uma origem) continua válido. Dependências novas em `package.json`: `@asteasolutions/zod-to-openapi`, `swagger-ui-express` (produção); `autocannon` e os `@types` (desenvolvimento). Backend primeiro; o frontend não precisa de alteração.
 
+**Verificação em produção (12/10/2026).** Deploy do backend concluído; `npm run smoke` contra `piquetepro24-backend.fly.dev`: 7/7 (sem passos autenticados). O smoke apanhou um problema de configuração e não de código: o frontend passou a ser servido num domínio novo da Vercel e o CORS, correctamente, recusou-o. **Decisão do utilizador:** o domínio oficial do frontend passa a ser `https://piquete-pro24-front-end-beta.vercel.app`; `CORS_ORIGIN` e `FRONTEND_URL` (Fly), o *Site URL* e os *Redirect URLs* (Supabase Auth) apontam só para ele, e o domínio antigo (`piquete-pro24-front-end.vercel.app`) redirecciona para o novo na Vercel. Confirmado: o login volta ao domínio novo e a origem antiga é recusada pela API. Efeito para os utilizadores: sessões abertas no domínio antigo perdem-se (a sessão é por origem).
+
 **Critérios de entrega correspondentes:** `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 7.
