@@ -1089,3 +1089,35 @@ Além disso: `/service_requests/nearby` passa a exigir `PROFESSIONAL` e deixa de
 **Validação:** `tsc`, `eslint` e `tsc -p` (build) limpos; Vitest 447 testes (+~40: leitura do Nominatim e província por código ISO, limitador de 1 pedido/s com tempo simulado, ORS com 401/403/429/503, a cascata — pára na rua, falha do Nominatim passa ao ORS, bairro do OSM vs Google, 502 só com todos a falhar, cache, erro não guardado — e a rota `/geocode/reverse`). Corrida real da cascata nos 10 pontos de Maputo (Nominatim + ORS, sem Google): **rua em 10/10**.
 
 **Critérios de entrega correspondentes:** `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 2 (geocodificação reversa).
+
+## Adendo v1.23
+
+### Portfólio por trabalho (carrossel): um serviço, uma descrição e várias fotos (12/10/2026)
+
+**Contexto:** no catálogo do profissional (Adendo v1.17) cada foto enviada era um «trabalho» solto, sem serviço nem descrição. O utilizador pediu que um trabalho seja, como um post do Instagram, **um serviço com N fotos e uma descrição**: o profissional escolhe o serviço que fez, junta as fotos desse serviço e escreve a descrição; no perfil, o cliente vê cada trabalho como um carrossel.
+
+**Decisões (confirmadas pelo utilizador em 12/10/2026):**
+
+**A. Serviço obrigatório nos trabalhos novos.** O serviço tem de ser um dos que o profissional presta (`professional_service_categories`). Na base de dados `category_id` é `nullable` apenas por causa das fotos antigas, que aparecem sem serviço até o profissional as editar.
+
+**B. Fotos antigas: 1 foto = 1 trabalho.** A migration cria um trabalho por foto existente, com a data original e sem serviço nem descrição. Nada se perde; o profissional reagrupa à mão.
+
+**C. Limites.** 1 a **10 fotos por trabalho** (como no Instagram); descrição até 500 caracteres; sem limite de número de trabalhos (mantém-se a decisão do Adendo v1.17). Um trabalho nunca fica sem fotos: apagar a última foto devolve `409` e pede para apagar o trabalho.
+
+**D. Compatibilidade de contrato durante um ciclo.** `GET /professionals/:id/catalog` devolve `projects` **e** continua a devolver `portfolio` (fotos soltas) e os endpoints `POST`/`DELETE /professionals/me/portfolio`, para o frontend em produção e o PWA em cache não partirem entre os deploys. No modelo antigo foto = trabalho: `POST` cria um trabalho de 1 foto sem serviço; `DELETE` da única foto de um trabalho apaga o trabalho. **A remover** (backend: `portfolio`, os dois endpoints legados e `addPortfolioPhoto`/`removePortfolioPhoto`) quando o frontend novo estiver em produção e o PWA antigo deixar de circular.
+
+**E. Atomicidade em funções SQL.** `create_portfolio_project`, `add_portfolio_project_photos` e `remove_portfolio_project_photo` (mesmo padrão de `replace_professional_categories`): o REST do Supabase não tem transacção, e o limite de 10 fotos e «nunca zero fotos» não se impõem lendo-contando-escrevendo em JS sem abrir corrida entre dois pedidos. As funções bloqueiam a linha do trabalho (`FOR UPDATE`) e levantam erros com SQLSTATE próprios (`PF001`–`PF005`) que o service traduz em 400/404/409.
+
+**F. Upload.** O frontend envia as fotos ao Storage (WebP, 3 em paralelo) e só depois faz um único `POST`: nunca há trabalho incompleto. Se um upload falhar, nada é criado e as fotos que já subiram ficam órfãs no bucket (mesma omissão do Adendo v1.17, item D).
+
+**API nova** (todas `requireAuth` + `requireRole('PROFESSIONAL')`): `POST /professionals/me/projects` `{ category_id, description?, photo_urls[1..10] }`; `PATCH /professionals/me/projects/:id` `{ category_id?, description? }`; `POST /professionals/me/projects/:id/photos`; `DELETE /professionals/me/projects/:id/photos/:photoId`; `DELETE /professionals/me/projects/:id`. Cada `photo_url` tem de apontar para a pasta do próprio utilizador no bucket `portfolio-photos`. Auditoria: `PROFESSIONAL_CATALOG_PROJECT_CREATE|UPDATE|DELETE` (as acções de foto `PROFESSIONAL_CATALOG_PHOTO_ADD|REMOVE` mantêm-se).
+
+**Contrato do catálogo:** `projects: [{ id, category: {id, name} | null, description, created_at, photos: [{id, photo_url, position}] }]`, do mais recente para o mais antigo, fotos por `position`.
+
+**Frontend:** `MyCatalog` ganha «Os teus trabalhos» (novo trabalho em 3 passos — serviço, fotos com capa e reordenação, descrição — e editor por trabalho). `ProfessionalCatalog` mostra cada trabalho como um cartão com carrossel (`scroll-snap` em CSS, **sem dependência nova** pelo peso do bundle), chip do serviço, descrição e data; filtro por serviço quando há 2 ou mais; o ecrã inteiro navega só pelas fotos do trabalho; o contador «Trabalhos» conta trabalhos e não fotos.
+
+**Fora de âmbito / por fazer:** reordenar as fotos de um trabalho **já publicado** (a ordem só se define ao criar); apagar do Storage os ficheiros órfãos; moderação (mantém-se fora de âmbito, Adendo v1.17).
+
+**Notas de deploy:** a migration `20261012090000_portfolio_por_projeto.sql` tem de estar aplicada à base **antes** do deploy do backend; backend primeiro, frontend depois. Sem variáveis de ambiente novas. **Migration aplicada ao Supabase real em 12/10/2026 (pelo SQL Editor) e validada** por um bloco `DO` com rollback: `fotos_sem_projecto=0`, criação com posições 0,1, `PF001` (0 e 11 fotos), `PF002` (serviço alheio), `PF003` (outro profissional), `PF005` (foto inexistente), `PF004` (última foto), total de 10 fotos após acrescentar e cascata ao apagar o trabalho. **Não exercido:** a corrida real entre dois pedidos simultâneos (`FOR UPDATE`) e o `verificar:rls`.
+
+**Critérios de entrega correspondentes:** `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 12; `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 11.

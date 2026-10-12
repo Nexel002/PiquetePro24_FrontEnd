@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { fetchProfessionalCatalog } from '../services/catalog'
 import { workedWithProfessionalsKey } from './useWorkedWithProfessionals'
-import { addPortfolioPhoto, removePortfolioPhoto, uploadPortfolioPhoto } from '../services/portfolio'
+import {
+  addProjectPhotos,
+  createPortfolioProject,
+  removePortfolioProject,
+  removeProjectPhoto,
+  updatePortfolioProject,
+  uploadPortfolioPhotos,
+} from '../services/portfolio'
 import { submitServiceRequestReview, type ReviewPayload } from '../services/serviceRequests'
 import { useAuth } from '../store/AuthContext'
 
@@ -17,32 +24,80 @@ export function useProfessionalCatalog(professionalId: string | undefined) {
   })
 }
 
-// Encadeia upload (Storage, via lib/imageConversion.ts) + POST /professionals/me/portfolio
-// numa só mutation, mesmo padrão de useUploadAvatar.
-export function useAddPortfolioPhoto(professionalId: string | undefined) {
-  const { session } = useAuth()
+function useInvalidateCatalog(professionalId: string | undefined) {
   const queryClient = useQueryClient()
+  return () => {
+    if (professionalId) void queryClient.invalidateQueries({ queryKey: catalogQueryKey(professionalId) })
+  }
+}
+
+export interface CreateProjectVariables {
+  files: File[]
+  categoryId: string
+  description: string
+  onProgress?: (done: number, total: number) => void
+}
+
+// Encadeia o upload das fotos (Storage, via lib/imageConversion.ts) + POST
+// /professionals/me/projects numa só mutation, mesmo padrão de useUploadAvatar. O trabalho
+// só é criado quando todas as fotos subiram.
+export function useCreateProject(professionalId: string | undefined) {
+  const { session } = useAuth()
+  const invalidate = useInvalidateCatalog(professionalId)
 
   return useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async ({ files, categoryId, description, onProgress }: CreateProjectVariables) => {
       if (!session) throw new Error('Sessão expirada. Recarrega a página e tenta novamente.')
-      const photoUrl = await uploadPortfolioPhoto(session.user.id, file)
-      return addPortfolioPhoto(photoUrl)
+      const photoUrls = await uploadPortfolioPhotos(session.user.id, files, onProgress)
+      return createPortfolioProject({
+        category_id: categoryId,
+        description: description.trim() || null,
+        photo_urls: photoUrls,
+      })
     },
-    onSuccess: () => {
-      if (professionalId) void queryClient.invalidateQueries({ queryKey: catalogQueryKey(professionalId) })
-    },
+    onSuccess: invalidate,
   })
 }
 
-export function useRemovePortfolioPhoto(professionalId: string | undefined) {
-  const queryClient = useQueryClient()
+export function useUpdateProject(professionalId: string | undefined) {
+  const invalidate = useInvalidateCatalog(professionalId)
 
   return useMutation({
-    mutationFn: (photoId: string) => removePortfolioPhoto(photoId),
-    onSuccess: () => {
-      if (professionalId) void queryClient.invalidateQueries({ queryKey: catalogQueryKey(professionalId) })
+    mutationFn: (input: { projectId: string; categoryId?: string; description?: string | null }) =>
+      updatePortfolioProject(input.projectId, { category_id: input.categoryId, description: input.description }),
+    onSuccess: invalidate,
+  })
+}
+
+export function useAddProjectPhotos(professionalId: string | undefined) {
+  const { session } = useAuth()
+  const invalidate = useInvalidateCatalog(professionalId)
+
+  return useMutation({
+    mutationFn: async (input: { projectId: string; files: File[] }) => {
+      if (!session) throw new Error('Sessão expirada. Recarrega a página e tenta novamente.')
+      const photoUrls = await uploadPortfolioPhotos(session.user.id, input.files)
+      return addProjectPhotos(input.projectId, photoUrls)
     },
+    onSuccess: invalidate,
+  })
+}
+
+export function useRemoveProjectPhoto(professionalId: string | undefined) {
+  const invalidate = useInvalidateCatalog(professionalId)
+
+  return useMutation({
+    mutationFn: (input: { projectId: string; photoId: string }) => removeProjectPhoto(input.projectId, input.photoId),
+    onSuccess: invalidate,
+  })
+}
+
+export function useRemoveProject(professionalId: string | undefined) {
+  const invalidate = useInvalidateCatalog(professionalId)
+
+  return useMutation({
+    mutationFn: (projectId: string) => removePortfolioProject(projectId),
+    onSuccess: invalidate,
   })
 }
 

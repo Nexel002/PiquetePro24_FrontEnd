@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useProfessionalCatalog } from '../hooks/useCatalog'
 import { useProfile } from '../hooks/useProfile'
 import type { Review } from '../services/catalog'
+import type { ProjectPhoto } from '../services/portfolio'
+import { PhotoLightbox } from '../components/portfolio/PhotoLightbox'
+import { ProjectCard } from '../components/portfolio/ProjectCard'
 import { BackButton } from '../components/BackButton'
 
 const PROFESSIONAL_TYPE_LABELS = { SINGULAR: 'Profissional singular', COMPANY: 'Empresa' } as const
@@ -72,36 +75,6 @@ function RatingSummary({ average, reviews }: { average: number; reviews: Review[
   )
 }
 
-function Lightbox({ url, onClose }: { url: string; onClose: () => void }) {
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label="Foto do trabalho"
-      onClick={onClose}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-piquete-blue-deep/95 p-4 animate-fade-in"
-    >
-      <button
-        type="button"
-        onClick={onClose}
-        aria-label="Fechar"
-        className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-2xl text-white transition-colors hover:bg-white/20"
-      >
-        ×
-      </button>
-      <img src={url} alt="" className="max-h-full max-w-full rounded-2xl object-contain" />
-    </div>
-  )
-}
-
 function CatalogSkeleton() {
   return (
     <div className="flex flex-col gap-4">
@@ -120,12 +93,22 @@ export function ProfessionalCatalog() {
   const { id } = useParams<{ id: string }>()
   const { data: catalog, isLoading, isError } = useProfessionalCatalog(id)
   const { data: profile } = useProfile()
-  const [openPhotoUrl, setOpenPhotoUrl] = useState<string | null>(null)
+  const [openPhotos, setOpenPhotos] = useState<{ photos: ProjectPhoto[]; index: number } | null>(null)
+  const [serviceFilter, setServiceFilter] = useState<string | null>(null)
 
   const isOwner = Boolean(profile && catalog && profile.id === catalog.id)
-  // Sem foto de perfil, a primeira foto de trabalho serve de capa; sem nenhuma das
-  // duas, o herói cai para um fundo da marca com a inicial.
-  const coverUrl = catalog?.avatar_url ?? catalog?.portfolio[0]?.photo_url ?? null
+  // Sem foto de perfil, a primeira foto do trabalho mais recente serve de capa; sem
+  // nenhuma das duas, o herói cai para um fundo da marca com a inicial.
+  const coverUrl = catalog?.avatar_url ?? catalog?.projects[0]?.photos[0]?.photo_url ?? null
+
+  // Serviços com pelo menos um trabalho, para o filtro. Só aparece com 2 ou mais: com um
+  // só, o filtro não separava nada. Trabalhos sem serviço (anteriores ao Adendo v1.23)
+  // ficam fora dos chips mas continuam na lista "Todos".
+  const projectServices = new Map<string, string>()
+  for (const project of catalog?.projects ?? []) {
+    if (project.category) projectServices.set(project.category.id, project.category.name)
+  }
+  const visibleProjects = (catalog?.projects ?? []).filter((project) => serviceFilter === null || project.category?.id === serviceFilter)
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-5 p-4 pb-28 sm:p-6 sm:pb-28 animate-fade-in">
@@ -194,7 +177,7 @@ export function ProfessionalCatalog() {
               <div className="flex gap-2">
                 <StatTile value={catalog.rating_avg !== null ? catalog.rating_avg.toFixed(1) : '—'} label="Classificação" />
                 <StatTile value={String(catalog.rating_count)} label={catalog.rating_count === 1 ? 'Avaliação' : 'Avaliações'} />
-                <StatTile value={String(catalog.portfolio.length)} label={catalog.portfolio.length === 1 ? 'Trabalho' : 'Trabalhos'} />
+                <StatTile value={String(catalog.projects.length)} label={catalog.projects.length === 1 ? 'Trabalho' : 'Trabalhos'} />
               </div>
             </div>
           </section>
@@ -202,29 +185,42 @@ export function ProfessionalCatalog() {
           <section className="flex flex-col gap-3 rounded-3xl border border-gray-100 bg-white p-5 shadow-card">
             <h2 className="font-heading text-lg font-bold text-piquete-blue">Trabalhos realizados</h2>
 
-            {catalog.portfolio.length === 0 ? (
+            {catalog.projects.length === 0 ? (
               <p className="rounded-2xl border border-dashed border-gray-200 p-5 text-center text-sm text-piquete-gray">
-                {isOwner ? 'Ainda não adicionaste fotos dos teus trabalhos.' : 'Este profissional ainda não adicionou fotos de trabalhos.'}
+                {isOwner ? 'Ainda não adicionaste trabalhos.' : 'Este profissional ainda não adicionou trabalhos.'}
               </p>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {catalog.portfolio.map((photo, index) => (
-                  <button
-                    key={photo.id}
-                    type="button"
-                    onClick={() => setOpenPhotoUrl(photo.photo_url)}
-                    aria-label="Ver foto em ecrã inteiro"
-                    className={`group overflow-hidden rounded-2xl bg-gray-100 ${index === 0 ? 'col-span-2 aspect-[16/10]' : 'aspect-square'}`}
-                  >
-                    <img
-                      src={photo.photo_url}
-                      alt=""
-                      loading="lazy"
-                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              <>
+                {projectServices.size > 1 && (
+                  <div className="no-scrollbar -mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1" role="group" aria-label="Filtrar trabalhos por serviço">
+                    {[[null, 'Todos'] as const, ...projectServices.entries()].map(([id, name]) => (
+                      <button
+                        key={id ?? 'todos'}
+                        type="button"
+                        onClick={() => setServiceFilter(id)}
+                        aria-pressed={serviceFilter === id}
+                        className={`shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors ${
+                          serviceFilter === id
+                            ? 'border-piquete-blue bg-piquete-blue text-white'
+                            : 'border-gray-200 bg-white text-piquete-blue hover:border-piquete-blue/40'
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="flex flex-col gap-4">
+                  {visibleProjects.map((project) => (
+                    <ProjectCard
+                      key={project.id}
+                      project={project}
+                      onOpenPhoto={(index) => setOpenPhotos({ photos: project.photos, index })}
                     />
-                  </button>
-                ))}
-              </div>
+                  ))}
+                </div>
+              </>
             )}
           </section>
 
@@ -276,7 +272,7 @@ export function ProfessionalCatalog() {
         </>
       )}
 
-      {openPhotoUrl && <Lightbox url={openPhotoUrl} onClose={() => setOpenPhotoUrl(null)} />}
+      {openPhotos && <PhotoLightbox photos={openPhotos.photos} startIndex={openPhotos.index} onClose={() => setOpenPhotos(null)} />}
     </main>
   )
 }

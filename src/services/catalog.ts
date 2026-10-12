@@ -1,5 +1,5 @@
 import { api } from '../lib/api'
-import type { PortfolioPhoto } from './portfolio'
+import type { PortfolioProject } from './portfolio'
 import type { ProfessionalType } from './profile'
 import type { ServiceCategory } from './serviceCategories'
 
@@ -21,7 +21,9 @@ export interface ProfessionalCatalog {
   professional_type: ProfessionalType | null
   bio: string | null
   services: ServiceCategory[]
-  portfolio: PortfolioPhoto[]
+  // O backend ainda envia `portfolio` (fotos soltas) por compatibilidade com versões antigas
+  // do frontend (TRD Adendo v1.23, item D); esta versão só lê `projects`.
+  projects: PortfolioProject[]
   rating_avg: number | null
   rating_count: number
   reviews: Review[]
