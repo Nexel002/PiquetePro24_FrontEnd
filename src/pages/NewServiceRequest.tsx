@@ -43,7 +43,7 @@ export function NewServiceRequest() {
   const navigate = useNavigate()
   const routerLocation = useLocation()
   const state = routerLocation.state as NewServiceRequestState | null
-  const { data: profile, isLoading: isProfileLoading } = useProfile()
+  const { data: profile, isLoading: isProfileLoading, isError: isProfileError, refetch: refetchProfile } = useProfile()
   const createRequest = useCreateServiceRequest()
 
   const [title, setTitle] = useState('')
@@ -124,7 +124,7 @@ export function NewServiceRequest() {
 
             {isProfileLoading && <div className="h-10 animate-pulse rounded-xl bg-gray-200" />}
 
-            {!isProfileLoading && locationText && (
+            {!isProfileLoading && !isProfileError && locationText && (
               <p className="rounded-xl bg-gray-50 p-3 text-xs text-piquete-gray-dark">
                 <span className="font-semibold text-piquete-blue">Local do serviço:</span> {locationText}.{' '}
                 <Link to="/perfil" className="font-semibold text-piquete-blue underline">
@@ -133,7 +133,18 @@ export function NewServiceRequest() {
               </p>
             )}
 
-            {!isProfileLoading && !locationText && (
+            {/* Erro de rede não é o mesmo que "sem localização": mandar o cliente definir no perfil uma
+                localização que já tem seria apontar-lhe o problema errado. */}
+            {isProfileError && (
+              <p role="alert" className="rounded-xl bg-amber-50 p-3 text-xs text-amber-700">
+                Não foi possível carregar o teu perfil, por isso não sabemos o local do serviço.{' '}
+                <button type="button" onClick={() => void refetchProfile()} className="font-semibold underline">
+                  Tentar de novo
+                </button>
+              </p>
+            )}
+
+            {!isProfileLoading && !isProfileError && !locationText && (
               <p className="rounded-xl bg-amber-50 p-3 text-xs text-amber-700">
                 Ainda não tens uma localização no perfil.{' '}
                 <Link to="/perfil" className="font-semibold underline">
