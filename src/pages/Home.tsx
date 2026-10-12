@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { BottomNav } from '../components/BottomNav'
 import { CategoryFilter } from '../components/home/CategoryFilter'
 import { COLUNA } from '../components/home/layout'
+import { EstadoDaMontra } from '../components/home/EstadoDaMontra'
 import { HomeHeader } from '../components/home/HomeHeader'
 import { HomeHero } from '../components/home/HomeHero'
 import { HomeShortcuts } from '../components/home/HomeShortcuts'
@@ -12,6 +13,8 @@ import { WorkSlider } from '../components/home/WorkSlider'
 import { useFavorites } from '../hooks/useFavorites'
 import { useHomeFeed } from '../hooks/useHomeFeed'
 import { useHomeUser } from '../hooks/useHomeUser'
+import { useMyInvitations } from '../hooks/useInvitations'
+import { contarConvitesPorResponder } from '../lib/convitesPorResponder'
 
 // Esta página só compõe: quem é o utilizador (useHomeUser), o que se mostra (useHomeFeed) e
 // os blocos visuais (components/home). Fundo branco e conteúdo plano, no estilo das
@@ -22,6 +25,10 @@ export function Home() {
   const { temSessao, profile, primeiroNome, localizacao, terminarSessao } = useHomeUser()
   const feed = useHomeFeed()
   const { isFavorite, toggleFavorite } = useFavorites()
+  // Mesma chave de cache de «Pedidos recebidos»: abrir esse ecrã a seguir não repete o pedido.
+  // Se falhar, o sino fica sem ponto (não há contagem a afirmar) e o resto da Home segue igual.
+  const convites = useMyInvitations(profile?.role === 'PROFESSIONAL')
+  const convitesPorResponder = contarConvitesPorResponder(convites.data?.invitations)
 
   function aoPesquisar(event: FormEvent) {
     event.preventDefault()
@@ -60,6 +67,7 @@ export function Home() {
         aoMudarPesquisa={feed.setPesquisa}
         aoPesquisar={aoPesquisar}
         aoClicarNotificacoes={aoClicarNotificacoes}
+        notificacoesPorLer={convitesPorResponder}
         aoTerminarSessao={() => void terminarSessao()}
       />
       <CategoryFilter categorias={feed.categorias} selecionada={feed.categoria} aoSeleccionar={feed.setCategoria} />
@@ -76,7 +84,12 @@ export function Home() {
           localizacao={localizacao}
         />
 
-        {feed.filtroActivo ? (
+        {feed.estado !== 'pronto' ? (
+          <>
+            {temSessao && <HomeShortcuts papel={profile?.role} />}
+            <EstadoDaMontra estado={feed.estado} aoTentarDeNovo={feed.aoTentarDeNovo} />
+          </>
+        ) : feed.filtroActivo ? (
           <SearchResults
             works={feed.trabalhosFiltrados}
             isFavorite={isFavorite}

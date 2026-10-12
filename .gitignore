@@ -37,3 +37,8 @@ dev-dist/
 
 # graphify (derived; rebuild with `graphify update .`)
 graphify-out/
+
+# Playwright (E2E)
+dist-e2e/
+test-results/
+playwright-report/

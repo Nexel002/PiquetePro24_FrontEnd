@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react'
-import { FEATURED_WORKS } from '../data/featuredWorks'
+import type { FeaturedWork } from '../services/featuredWorks'
+import { useAuth } from '../store/AuthContext'
+import { useFeaturedWorks } from './useFeaturedWorks'
 import { useServiceCategories } from './useServiceCategories'
 
 // Categorias de reserva para quando a API não respondeu (offline ou ainda a carregar).
@@ -16,15 +18,31 @@ const CATEGORIAS_POR_OMISSAO = [
 
 // Cada slider mostra só os trabalhos do seu tema. Antes completava-se com `concat(slice(...))`,
 // o que repetia o mesmo cartão na fila e fazia o coração de um acender o do outro.
-const doTema = (...slugs: string[]) => FEATURED_WORKS.filter((w) => slugs.includes(w.serviceSlug))
-const CANALIZACAO = doTema('canalizacao')
-const ELETRICIDADE = doTema('eletricidade')
-const EXTERIORES = doTema('pintura', 'jardinagem', 'climatizacao')
+const doTema = (works: FeaturedWork[], ...slugs: string[]) => works.filter((w) => slugs.includes(w.service_slug))
+
+// O que a montra de trabalhos pode estar a mostrar. Cada estado tem texto próprio no ecrã:
+// «sem sessão», «a carregar», «erro» e «vazio» não são a mesma coisa (CLAUDE.md, Secção 3).
+export type EstadoDaMontra = 'sem-sessao' | 'a-carregar' | 'erro' | 'vazio' | 'pronto'
 
 export function useHomeFeed() {
+  const { session } = useAuth()
   const categoriasQuery = useServiceCategories()
+  const trabalhosQuery = useFeaturedWorks()
   const [pesquisa, setPesquisa] = useState('')
   const [categoria, setCategoria] = useState('all')
+
+  const trabalhos = useMemo(() => trabalhosQuery.data ?? [], [trabalhosQuery.data])
+
+  const estado: EstadoDaMontra =
+    session === null
+      ? 'sem-sessao'
+      : trabalhosQuery.isLoading
+        ? 'a-carregar'
+        : trabalhosQuery.isError
+          ? 'erro'
+          : trabalhos.length === 0
+            ? 'vazio'
+            : 'pronto'
 
   const categorias = useMemo(() => {
     const daApi = categoriasQuery.data?.map(({ slug, name }) => ({ slug, name }))
@@ -35,12 +53,12 @@ export function useHomeFeed() {
 
   const trabalhosFiltrados = useMemo(() => {
     const termo = pesquisa.toLowerCase().trim()
-    return FEATURED_WORKS.filter((w) => {
-      if (categoria !== 'all' && w.serviceSlug !== categoria) return false
+    return trabalhos.filter((w) => {
+      if (categoria !== 'all' && w.service_slug !== categoria) return false
       if (!termo) return true
-      return [w.title, w.serviceName, w.professionalName, w.location].some((campo) => campo.toLowerCase().includes(termo))
+      return [w.title, w.service_name, w.professional_name, w.location].some((campo) => campo.toLowerCase().includes(termo))
     })
-  }, [categoria, pesquisa])
+  }, [categoria, pesquisa, trabalhos])
 
   function limparFiltros() {
     setCategoria('all')
@@ -56,9 +74,11 @@ export function useHomeFeed() {
     filtroActivo,
     trabalhosFiltrados,
     limparFiltros,
-    destaques: FEATURED_WORKS,
-    canalizacao: CANALIZACAO,
-    eletricidade: ELETRICIDADE,
-    exteriores: EXTERIORES,
+    estado,
+    aoTentarDeNovo: () => void trabalhosQuery.refetch(),
+    destaques: trabalhos,
+    canalizacao: doTema(trabalhos, 'canalizacao'),
+    eletricidade: doTema(trabalhos, 'eletricidade'),
+    exteriores: doTema(trabalhos, 'pintura', 'jardinagem', 'climatizacao'),
   }
 }

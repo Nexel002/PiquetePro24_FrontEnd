@@ -23,3 +23,13 @@ jobs:
       - run: npm run lint
       - run: npm test
       - run: npm run build
+      # E2E sobre o build com o backend simulado no browser (ver playwright.config.ts). Só o
+      # Chromium: é o motor do público-alvo (Chrome em Android).
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
+          retention-days: 7
