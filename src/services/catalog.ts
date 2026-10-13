@@ -20,6 +20,8 @@ export interface ProfessionalCatalog {
   avatar_url: string | null
   professional_type: ProfessionalType | null
   bio: string | null
+  // true só com o KYC aprovado por um administrador (o backend decide; ver Adendo v1.39).
+  identity_verified: boolean
   services: ServiceCategory[]
   // O backend ainda envia `portfolio` (fotos soltas) por compatibilidade com versões antigas
   // do frontend (TRD Adendo v1.23, item D); esta versão só lê `projects`.

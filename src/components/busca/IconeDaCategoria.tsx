@@ -1,45 +1,4 @@
-// Os serviços são uma lista curada na base de dados (seed da migration), mas o ícone de cada um
-// vive aqui, por slug. Uma categoria nova sem entrada nesta tabela cai no ícone genérico —
-// em desenvolvimento avisa-se na consola, para não passar despercebido.
-export const CAMINHOS_DOS_ICONES: Record<string, string[]> = {
-  'canalizacao': [
-    'M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z',
-  ],
-  'carpintaria': [
-    'M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7',
-    'M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z',
-  ],
-  'climatizacao': [
-    'M12 3v18m0-18l-3 3m3-3l3 3m-3 15l-3-3m3 3l3-3M3 12h18m-18 0l3-3m-3 3l3 3m15-3l-3-3m3 3l-3 3',
-  ],
-  'eletricidade': [
-    'M13 10V3L4 14h7v7l9-11h-7z',
-  ],
-  'informatica-eletronica': [
-    'M9.75 17L9 20l2 1h2l2-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
-  ],
-  'jardinagem': [
-    'M12 21V11m0 0a5 5 0 005-5c0-2.5-2.5-4-5-4S7 3.5 7 6a5 5 0 005 5zm-3 7l3-3 3 3',
-  ],
-  'limpeza-domestica': [
-    'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z',
-  ],
-  'mudancas-transporte': [
-    'M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z',
-    'M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a2 2 0 014 0h1a1 1 0 001-1v-4.586a1 1 0 00-.293-.707l-2.414-2.414A1 1 0 0015.586 7H13m0 9v-5h4',
-  ],
-  'pintura': [
-    'M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01',
-  ],
-  'serralharia': [
-    'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
-    'M15 12a3 3 0 11-6 0 3 3 0 016 0z',
-  ],
-}
-
-export const CAMINHOS_DO_ICONE_GENERICO: string[] = [
-  'M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
-]
+import { CAMINHOS_DO_ICONE_GENERICO, CAMINHOS_DOS_ICONES } from './caminhosDosIcones'
 
 export function IconeDaCategoria({ slug }: { slug: string }) {
   const caminhos = CAMINHOS_DOS_ICONES[slug]

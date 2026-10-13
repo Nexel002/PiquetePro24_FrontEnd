@@ -19,6 +19,7 @@ function catalogo(extra: Partial<Catalogo> = {}): Catalogo {
     avatar_url: null,
     professional_type: 'SINGULAR',
     bio: 'Canalizador há 10 anos.',
+    identity_verified: false,
     services: [{ id: 's1', slug: 'canalizacao', name: 'Canalização' }],
     projects: [],
     rating_avg: null,
@@ -61,11 +62,14 @@ describe('ProfessionalCatalog', () => {
     expect(screen.getByRole('list', { name: 'Serviços' }).textContent).toContain('Canalização')
   })
 
-  it('não afirma que o profissional está verificado nem inventa uma descrição', () => {
+  it('só mostra «Identidade verificada» quando o backend o confirma; nunca inventa uma descrição', () => {
     mostrar({ data: catalogo({ bio: null }), isLoading: false, isError: false })
-
-    expect(screen.queryByTitle(/Verificado/i)).toBeNull()
+    expect(screen.queryByText('Identidade verificada')).toBeNull()
     expect(screen.queryByText(/Profissional qualificado disponível/)).toBeNull()
+    cleanup()
+
+    mostrar({ data: catalogo({ identity_verified: true }), isLoading: false, isError: false })
+    expect(screen.getByText('Identidade verificada')).toBeTruthy()
   })
 
   it('com um só serviço, «Pedir» leva à busca já com esse serviço; com vários, à busca geral', () => {
