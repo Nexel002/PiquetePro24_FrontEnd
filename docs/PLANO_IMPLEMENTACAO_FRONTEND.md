@@ -499,6 +499,21 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 18 — Comunicados da Equipa
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.46 do TRD. Consome a Fase 20 do backend (migration primeiro).
+
+**Escopo:**
+- `pages/AdminBroadcasts.tsx` (`/admin/comunicados`; `services/adminBroadcasts.ts`, `hooks/useAdminBroadcasts.ts`): grupo (clientes / profissionais / todos) + província opcional, assunto e mensagem; **«Ver destinatários»** calcula o número; só então aparece «Enviar comunicado», com confirmação («Enviar para N pessoas? Não se pode desfazer.»), e esse N segue no pedido. Mudar o grupo depois de contar apaga o número.
+- Histórico com estado (a enviar / concluído), quem enviou e os totais («37 de 40 enviados · 3 sem entrega»). Enquanto algum comunicado está a ser enviado, a lista actualiza de 5 em 5 segundos.
+- «Comunicados» na navegação do admin.
+
+**Critérios de Entrega:**
+- [x] 4 estados no histórico; o envio não existe sem contar; envia o número contado; grupo vazio e texto curto bloqueiam; mudar o grupo exige contar de novo; o erro do servidor volta a pedir confirmação — 8 testes (`AdminBroadcasts.test.tsx`).
+- [ ] Contra o backend real com SMTP configurado, e num telemóvel: não verificado.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

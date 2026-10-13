@@ -1555,3 +1555,13 @@ rollback;
 
 **Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 19; frontend Fase 17.
 
+## Adendo v1.46
+
+### Painel de admin: comunicados por email a grupos de utilizadores (14/10/2026)
+
+**Contexto.** A equipa não tinha como avisar os utilizadores (manutenção, novidades, aviso de segurança) sem usar uma ferramenta externa e as listas à mão.
+
+**Decisão.** Comunicado por **email** a um grupo (clientes, profissionais ou todos; opcionalmente uma província), com pré-visualização do número de destinatários e confirmação desse número no envio. Tecto de 500 por comunicado, 5 envios por hora por admin, histórico em `broadcasts`. Reaproveita o `EmailService` e o layout base; o texto do admin é escapado. Notificações dentro da app e SMS ficam de fora: não há infraestrutura. Envio em segundo plano no próprio processo, sem fila — um reinício a meio deixa o registo em `SENDING` (documentado na Fase 20 do backend).
+
+**Notas de deploy:** **migration primeiro** (`20261014120000_comunicados_admin.sql`), depois backend, depois frontend. Depende do SMTP já configurado (`SMTP_*`); sem ele os envios contam como falha. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fase 20; frontend Fase 18.
+
