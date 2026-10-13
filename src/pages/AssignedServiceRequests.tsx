@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAssignedServiceRequests } from '../hooks/useServiceRequests'
+import { useProfile } from '../hooks/useProfile'
+import { useTeam } from '../hooks/useCompanyTeam'
+import { AtribuirTecnico } from '../components/equipa/AtribuirTecnico'
 import { BackButton } from '../components/BackButton'
 import { ContactoCliente } from '../components/ContactoCliente'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { BotaoDenunciar } from '../components/moderacao/BotaoDenunciar'
+import type { TeamMember } from '../services/companyTeam'
 import type { RequestStatus, ServiceRequest } from '../services/serviceRequests'
 
 const STATUS_LABELS: Record<RequestStatus, string> = {
@@ -29,6 +33,11 @@ const dataFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'medium', ti
 // pedido em "Pedidos perto de ti" não havia forma de lhe voltar.
 export function AssignedServiceRequests() {
   const { data: requests, isLoading, isError } = useAssignedServiceRequests()
+  const { data: perfil } = useProfile()
+  // A equipa só se pede a uma empresa: um singular nem tem equipa nem a rota (403).
+  const ehEmpresa = perfil?.role === 'PROFESSIONAL' && perfil.professional_type === 'COMPANY'
+  const { data: equipa } = useTeam({ enabled: ehEmpresa })
+  const semTecnico = ehEmpresa ? (requests?.filter((r) => r.status === 'ASSIGNED' && !r.assigned_member_id).length ?? 0) : 0
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
@@ -41,6 +50,12 @@ export function AssignedServiceRequests() {
           Perfil
         </Link>
       </header>
+
+      {semTecnico > 0 && (
+        <p role="status" className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm font-semibold text-amber-900">
+          {semTecnico === 1 ? '1 trabalho aceite ainda não tem técnico.' : `${semTecnico} trabalhos aceites ainda não têm técnico.`} Atribui um para o cliente saber quem vai.
+        </p>
+      )}
 
       {isLoading && (
         <div className="flex flex-col gap-3">
@@ -74,7 +89,7 @@ export function AssignedServiceRequests() {
       {requests && requests.length > 0 && (
         <ul className="flex flex-col gap-3">
           {requests.map((request) => (
-            <TrabalhoAceite key={request.id} request={request} />
+            <TrabalhoAceite key={request.id} request={request} equipa={ehEmpresa ? (equipa ?? []) : null} />
           ))}
         </ul>
       )}
@@ -82,7 +97,8 @@ export function AssignedServiceRequests() {
   )
 }
 
-function TrabalhoAceite({ request }: { request: ServiceRequest }) {
+// `equipa` é null num profissional singular (não tem técnicos a quem atribuir).
+function TrabalhoAceite({ request, equipa }: { request: ServiceRequest; equipa: TeamMember[] | null }) {
   // O contacto só é pedido quando o profissional o abre — dados pessoais do cliente
   // não ficam em cache para todos os trabalhos da lista de uma vez.
   const [mostrarContacto, setMostrarContacto] = useState(false)
@@ -98,6 +114,8 @@ function TrabalhoAceite({ request }: { request: ServiceRequest }) {
         {[request.neighborhood, request.district, request.province].filter(Boolean).join(', ')}
         {request.assigned_at && ` · aceite a ${dataFormatter.format(new Date(request.assigned_at))}`}
       </p>
+
+      {equipa !== null && request.status === 'ASSIGNED' && <AtribuirTecnico pedido={request} equipa={equipa} />}
 
       <BotaoDenunciar targetType="SERVICE_REQUEST" targetId={request.id} descricao="com este pedido" rotulo="Reportar um problema" />
 

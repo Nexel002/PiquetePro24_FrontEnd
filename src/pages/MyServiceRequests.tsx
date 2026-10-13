@@ -151,6 +151,21 @@ export function MyServiceRequests() {
                 </p>
               )}
 
+              {serviceRequest.technician && (
+                <div className="flex items-center gap-2 rounded-xl bg-piquete-blue/5 px-3 py-2 text-xs text-piquete-blue">
+                  {serviceRequest.technician.avatar_url ? (
+                    <img src={serviceRequest.technician.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
+                  ) : (
+                    <span aria-hidden className="flex h-8 w-8 items-center justify-center rounded-full bg-piquete-blue/10 font-bold">
+                      {serviceRequest.technician.first_name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span>
+                    Vem o <span className="font-bold">{serviceRequest.technician.first_name}</span> · {serviceRequest.technician.title}
+                  </span>
+                </div>
+              )}
+
               {(serviceRequest.invited_count ?? 0) > 0 && (
                 <Link
                   to={`/os-meus-pedidos/${serviceRequest.id}/propostas`}

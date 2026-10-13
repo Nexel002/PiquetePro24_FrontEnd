@@ -596,16 +596,17 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
-## Fase 24 — Empresas e Equipas: atribuir técnico e «Os meus trabalhos»
+## Fase 24 — Empresas e Equipas: atribuir técnico ao pedido
 
-**Estado: aprovada (14/10/2026); implementação em curso.**
+**Estado: implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.** (A página «Os meus trabalhos» do técnico passou para a Fase 23.)
 
 - Em «Trabalhos aceites» da **empresa**: cada pedido ganha **«Atribuir técnico»** (só técnicos activos, com KYC aprovado e que façam o serviço do pedido) e um aviso para os pedidos **ainda sem técnico**.
-- `pages/TechnicianJobs.tsx` (`/tecnico/trabalhos`): os trabalhos atribuídos ao técnico, com o contacto do cliente (a mesma regra de elegibilidade do singular, aplicada ao técnico e à empresa).
-- O cliente, em «Os meus pedidos», vê o técnico do pedido (nome próprio, foto, título).
+- O cliente, em «Os meus pedidos», vê o técnico do pedido: «Vem o João · Canalizador», com a foto ou a inicial. Nunca telefone nem email.
+- `AtribuirTecnico` (`components/equipa/`): mostra o técnico atual ou «Este trabalho ainda não tem técnico», e deixa atribuir/mudar entre os técnicos **elegíveis** (ativo, identidade verificada, faz o serviço do pedido; a mesma regra do backend, que é quem decide). Sem nenhum elegível, explica porquê. A lista da equipa só se pede a uma **empresa** (um singular não tem rota nem equipa).
 
 **Critérios de Entrega:**
-- [ ] Atribuir/reatribuir, aviso de pedidos sem técnico, trabalhos do técnico com contacto, técnico visível ao cliente — testes de componente.
+- [x] Regra dos técnicos elegíveis, atribuir/mudar, sem escolher, sem elegíveis, erro do servidor — 8 testes (`AtribuirTecnico.test.tsx`); aviso de quantos trabalhos em curso ainda não têm técnico («1 trabalho… / 2 trabalhos…»), só em pedidos em curso, só para empresas — 6 testes (`AssignedServiceRequests.test.tsx`); o cliente vê quem vem, com foto ou inicial, e nunca telefone nem email — 5 testes (`MyServiceRequests.test.tsx`).
+- [ ] Não verificado no browser nem contra o backend real.
 
 ---
 
