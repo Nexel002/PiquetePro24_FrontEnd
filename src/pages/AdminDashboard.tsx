@@ -7,6 +7,7 @@ import { Card } from '../components/ui/Card'
 import { useAdminMetrics } from '../hooks/useAdminMetrics'
 import { useAdminSecurityAlerts } from '../hooks/useAdminSecurityAlerts'
 import { useAdminSubscriptions } from '../hooks/useAdminSubscriptions'
+import { useEstadoDoMfa } from '../hooks/useMfa'
 import { useAdminReports } from '../hooks/useModeration'
 
 // Valor de um cartão a partir de uma query: a carregar → `undefined`, falhou → `null`. Cada
@@ -30,6 +31,7 @@ export function AdminDashboard() {
   // Máximo de uma página de 100: acima disso o cartão mostra 100, que já diz «muitas».
   const aExpirar = useAdminSubscriptions({ filtro: 'EXPIRING', limit: 100, offset: 0 })
   const denuncias = useAdminReports({ status: 'OPEN', limit: 100, offset: 0 })
+  const mfa = useEstadoDoMfa()
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
@@ -41,6 +43,14 @@ export function AdminDashboard() {
       </header>
 
       <NavegacaoAdmin />
+
+      {/* Só quando se sabe que não há segundo factor: durante o carregamento ou numa falha de
+          leitura não se alarma ninguém. */}
+      {mfa.data && !mfa.data.temFactor && (
+        <Link to="/admin/seguranca" className="block rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <span className="font-bold">Protege a tua conta de administrador.</span> Ativa a verificação em dois passos.
+        </Link>
+      )}
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Precisa de atenção</h2>

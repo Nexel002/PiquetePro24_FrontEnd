@@ -1575,3 +1575,15 @@ rollback;
 
 **Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 21; frontend Fase 19.
 
+## Adendo v1.48
+
+### Painel de admin: verificação em dois passos (14/10/2026)
+
+**Contexto.** Uma conta de admin entra com palavra-passe ou Google, e o painel permite banir contas, activar subscrições e (desde o Adendo v1.46) enviar comunicados a centenas de pessoas. Uma só palavra-passe roubada chega a tudo isso.
+
+**Decisão.** TOTP do Supabase Auth como segundo factor, **exigido no backend** (variável `ADMIN_REQUIRE_MFA`, desligada por omissão) em todas as rotas `/admin/*`, e **pedido no frontend**: `/admin/seguranca` regista o factor (código QR + código de 6 dígitos) e um admin que já o tem mas entrou só com a palavra-passe vê o ecrã de verificação antes do painel. A exigência no backend é a que protege; o ecrã é conveniência. Fica de fora a divisão do ADMIN em papéis (revisor de KYC, financeiro…), que pede uma decisão sobre que acção pertence a quem.
+
+**Variável nova:** `ADMIN_REQUIRE_MFA` (backend, `fly secrets`). Se faltar: desligada. **Pré-requisito:** TOTP activo no Supabase (Authentication → Multi-Factor).
+
+**Notas de deploy:** sem migration. Ordem: backend, frontend, **registar o factor de cada admin**, e só depois ligar `ADMIN_REQUIRE_MFA=true`. Ligar antes tranca os admins fora (`fly secrets set ADMIN_REQUIRE_MFA=false` repõe). **Critérios de entrega correspondentes:** backend Fase 22; frontend Fase 20.
+

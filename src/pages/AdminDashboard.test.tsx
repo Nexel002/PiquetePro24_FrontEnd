@@ -12,7 +12,9 @@ const fontes = vi.hoisted(() => ({
   alertas: {} as Fonte<unknown>,
   subscricoes: {} as Fonte<unknown>,
   denuncias: {} as Fonte<unknown>,
+  mfa: { data: { temFactor: true }, isLoading: false, isError: false } as Fonte<unknown>,
 }))
+vi.mock('../hooks/useMfa', () => ({ useEstadoDoMfa: () => fontes.mfa }))
 vi.mock('../hooks/useModeration', () => ({ useAdminReports: () => fontes.denuncias }))
 vi.mock('../hooks/useAdminSubscriptions', () => ({ useAdminSubscriptions: () => fontes.subscricoes }))
 vi.mock('../hooks/useAdminMetrics', () => ({ useAdminMetrics: () => fontes.metricas }))
@@ -98,6 +100,18 @@ describe('AdminDashboard', () => {
     expect(screen.getByRole('link', { name: /alertas de segurança/i }).textContent).toContain('1')
   })
 
+  it('avisa o admin sem segundo factor e não alarma quem o tem', () => {
+    definir(pronto(METRICAS), pronto([]))
+    fontes.mfa = pronto({ temFactor: false })
+    mostrar()
+    expect(screen.getByRole('link', { name: /protege a tua conta/i }).getAttribute('href')).toBe('/admin/seguranca')
+    cleanup()
+
+    fontes.mfa = pronto({ temFactor: true })
+    mostrar()
+    expect(screen.queryByText(/protege a tua conta/i)).toBeNull()
+  })
+
   it('oferece atalho para todos os ecrãs, incluindo Subscrições, Métricas e Auditoria', () => {
     definir(pronto(METRICAS), pronto([]))
     mostrar()
@@ -106,7 +120,7 @@ describe('AdminDashboard', () => {
       .getAllByRole('link')
       .map((a) => a.getAttribute('href'))
       .filter((href) => href?.startsWith('/admin/'))
-    for (const rota of ['/admin/kyc', '/admin/utilizadores', '/admin/pedidos-servico', '/admin/subscricoes', '/admin/moderacao', '/admin/metricas', '/admin/audit-log']) {
+    for (const rota of ['/admin/kyc', '/admin/utilizadores', '/admin/pedidos-servico', '/admin/subscricoes', '/admin/moderacao', '/admin/seguranca', '/admin/metricas', '/admin/audit-log']) {
       expect(destinos).toContain(rota)
     }
   })

@@ -530,6 +530,24 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 20 — Verificação em Dois Passos do Admin
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser e contra o Supabase real.** Ver Adendo v1.48 do TRD. Pareada com a Fase 22 do backend (`ADMIN_REQUIRE_MFA`, desligada por omissão).
+
+**Escopo:**
+- `services/mfa.ts` + `hooks/useMfa.ts`: estado (factor TOTP confirmado? nível da sessão), registo de factor (apaga antes os factores abandonados a meio, que o Supabase não deixa duplicar) e verificação do código — tudo directamente contra `supabase.auth.mfa`.
+- `pages/AdminSecurity.tsx` (`/admin/seguranca`): ativar (código QR + segredo em texto + código de 6 dígitos). **Não há «desativar»** de propósito: tirar a protecção a partir de uma sessão que pode estar roubada é o que o segundo factor existe para impedir; a recuperação de um telemóvel perdido é feita no painel do Supabase.
+- `RotaDeAdmin`: um admin com factor mas sessão `aal1` vê `DesafioMfa` antes de qualquer ecrã de admin. Sem factor, entra (o aviso para o ativar está no dashboard). Se o estado do MFA não puder ser lido, **deixa passar**: quem protege é o backend, e trancar o painel por uma falha de leitura seria pior do que deixar o backend dizer 403.
+- `FormularioDeCodigo` (partilhado): só aceita dígitos, 6 no máximo; código incompleto é recusado sem gastar um pedido; erros do Supabase traduzidos para português; campo limpo ao falhar.
+- Dashboard: aviso «Protege a tua conta de administrador» só quando se sabe que **não** há segundo factor (não alarma durante o carregamento nem numa falha). «Segurança» na navegação.
+
+**Critérios de Entrega:**
+- [x] Estado do MFA, registo (com limpeza de factores abandonados), verificação, validação do código e mensagens — 11 testes (`mfa.test.ts`); guard por papel e por nível `aal` (desafio, entrada, carregamento, falha de leitura) — 10 testes (`RotaDeAdmin.test.tsx`); ecrã de segurança — 6 testes (`AdminSecurity.test.tsx`); aviso no dashboard — 1 teste. A CSP já permite `img-src data:` para o QR.
+- [ ] **Não testado contra o Supabase real:** o TOTP tem de estar activo no projecto (Authentication → Multi-Factor), e o fluxo completo (registar → sair → entrar → desafio → painel) só se confirma num browser com uma app de autenticação.
+- [ ] Ordem de activação em produção: registar o factor de cada admin **antes** de ligar `ADMIN_REQUIRE_MFA=true` no backend.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
