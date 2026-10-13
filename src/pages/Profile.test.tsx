@@ -32,6 +32,9 @@ vi.mock('../components/LocationForm', () => ({ LocationForm: () => <div>formulá
 vi.mock('../components/profile/DeleteAccountSection', () => ({
   DeleteAccountSection: ({ papel }: { papel: string }) => <div>apagar conta ({papel})</div>,
 }))
+vi.mock('../hooks/useServiceCategories', () => ({
+  useServiceCategories: () => ({ data: [] }),
+}))
 vi.mock('../lib/supabase', () => ({ supabase: { auth: { updateUser: mocks.updateUser } } }))
 
 function perfil(extra: Partial<UserProfile> = {}): UserProfile {

@@ -1426,3 +1426,19 @@ rollback;
 **C. Verificar.** Abrir `/profissionais/:id` a 390 px, 768 px e 1280 px; sem foto de perfil (cai para a primeira foto de um trabalho, ou a inicial); sem trabalhos e sem avaliações; com o filtro de serviços (2 ou mais); como dono (barra «Editar o meu catálogo»).
 
 **Notas de deploy:** nenhuma. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 9 (catálogo do profissional) e Fase 6 (polimento de UI).
+
+## Adendo v1.37
+
+### Divisão dos componentes grandes de Perfil, Busca e Catálogo — só frontend (13/10/2026)
+
+**Contexto.** Pedido do utilizador: nenhum ecrã pode ser um «God Component». Três páginas misturavam estado, regras e markup de vários blocos: `Profile.tsx` (560 linhas), `FindProfessionals.tsx` (598) e `ProfessionalCatalog.tsx` (414). `LocationForm.tsx` (213) ficou como está: tem uma só responsabilidade.
+
+**A. O que mudou — sem alterar comportamento.** Cada página passa a compor blocos e fica entre 100 e 125 linhas.
+- `Profile.tsx` → `components/profile/`: `FotoDoPerfil`, `IdentidadeDoPerfil`, `EstatisticasDaConta`, `DefinicoesDaConta` (dono do estado dos rascunhos e das passwords: monta-se ao abrir, e é isso que os repõe), `TelefoneRegistado`, `AtalhoDoCatalogo`, `HistoricoDePedidos` + `PedidoDoHistorico`, `PhoneIcon`.
+- `FindProfessionals.tsx` → `components/busca/` (`BarraDePesquisa`, `FiltroDeCategorias`, `OrientacaoDoPedido`, `AvisoDeLocalizacao`, `ResultadosDaBusca`, `CartaoDeProfissional`, `BarraDeEnvioDoPedido`, ícones) e três hooks: `useFiltrosDaBusca` (filtros no URL com debounce), `useLocalizarSePermitido`, `useSelecaoParaPedido` (serviço pedido, número de profissionais a escolher, envio).
+- `ProfessionalCatalog.tsx` → `components/catalogo/`: `FotoDoCatalogo`, `ApresentacaoDoProfissional`, `TrabalhosRealizados` (dono do filtro por serviço), `AvaliacoesDoProfissional`, `ResumoDeAvaliacao`, `Estrelas`, `EsqueletoDoCatalogo`, `rotulos`.
+- Partilhados em `components/ui/`: `Mosaico` (estatística em mosaico, antes duplicada em duas páginas) e `IconeDeVisto` (o «visto» da insígnia, antes copiado cinco vezes).
+
+**B. Sem alterações** a API, rotas, dados ou variáveis. Testes: 335 a passar, incluindo os 19 de `Profile.test.tsx` e os 16 de `FindProfessionals.test.tsx`, que não precisaram de mudar. Os blocos novos não têm testes próprios; são cobertos pelos das páginas.
+
+**Notas de deploy:** nenhuma. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (polimento de UI).
