@@ -625,13 +625,14 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 26 — Empresas e Equipas: termos e administração
 
-**Estado: aprovada (14/10/2026); implementação em curso.**
+**Estado: implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.**
 
-- **Termos de utilização** (`data/termosDeUtilizacao.ts`): secção sobre empresas e técnicos (a empresa responde pelos técnicos; conta singular não se converte em empresa). Rascunho a rever por um jurista.
-- **Admin:** a ficha de uma empresa mostra a equipa e o KYC de cada técnico; a ficha do técnico mostra a empresa; filtro por `TECHNICIAN` na lista de utilizadores.
+- **Termos de utilização** (`data/termosDeUtilizacao.ts`): **secção nova «5. Se és uma empresa»** (a empresa é o profissional perante o cliente e paga a subscrição única que cobre a equipa; **responde pelos seus técnicos**; máximo de 15 técnicos ativos; cada técnico tem conta e identidade verificada próprias; o contacto do cliente só é revelado à empresa e ao técnico atribuído, com a empresa verificada e subscrita; o cliente vê o primeiro nome, o título e a foto do técnico e avalia a empresa e o técnico; a empresa garante que o técnico aceita o tratamento dos seus dados; um técnico só pode estar numa empresa de cada vez). A secção 2 diz que **um singular não se converte em empresa**. As secções 5 a 12 passam a 6 a 13 e as referências cruzadas foram ajustadas; data de atualização passa a 15 de outubro de 2026. **Rascunho de produto: tem de ser revisto por um jurista antes de ser vinculativo**, em especial a secção 5.
+- **Admin:** `EquipaNaFicha` (ficha de uma empresa: técnicos com KYC, título, email e trabalhos em curso, cada nome a levar à ficha do técnico), `EmpresaNaFicha` (ficha de um técnico: a empresa e o estado dele nela); filtro «Técnicos» na lista de utilizadores; «Técnicos» nas métricas.
 
 **Critérios de Entrega:**
-- [ ] Termos actualizados; ficha da empresa com equipa; filtro — testes de componente.
+- [x] Numeração dos Termos contínua; secção de empresas logo a seguir à dos profissionais; diz que a empresa responde pelos técnicos, o limite de 15, a identidade verificada de cada técnico, a subscrição única, a quem se revela o contacto e que um singular não se converte — 7 testes novos em `Terms.test.tsx`; ficha da empresa com a equipa e do técnico com a empresa — 5 testes (`EquipaNaFicha.test.tsx`).
+- [ ] Revisão jurídica do texto dos Termos.
 
 ---
 

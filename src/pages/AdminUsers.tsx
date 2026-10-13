@@ -82,6 +82,7 @@ export function AdminUsers() {
           <option value="CLIENT">Clientes</option>
           <option value="PROFESSIONAL">Profissionais</option>
           <option value="ADMIN">Administradores</option>
+          <option value="TECHNICIAN">Técnicos</option>
         </select>
       </div>
 

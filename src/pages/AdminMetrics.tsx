@@ -7,6 +7,7 @@ const ROLE_LABELS: Record<string, string> = {
   CLIENT: 'Clientes',
   PROFESSIONAL: 'Profissionais',
   ADMIN: 'Administradores',
+  TECHNICIAN: 'Técnicos',
 }
 
 const KYC_STATUS_LABELS: Record<string, string> = {

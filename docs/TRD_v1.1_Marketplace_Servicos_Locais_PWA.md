@@ -1621,7 +1621,7 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 
 ### Empresas e equipas de técnicos (14/10/2026)
 
-**Estado: plano aprovado pelo utilizador; implementação em curso em `feat/empresas-equipas`.**
+**Estado: plano aprovado pelo utilizador; implementado em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser e contra o Supabase real.**
 
 **Contexto.** O Adendo v1.4, item F, introduziu `professional_type` (`SINGULAR` / `COMPANY`) deixando o desenho para depois («o onboarding de empresa deve ser mais complexo»). A 14/10/2026 a verificação no código mostrou que `COMPANY` era só uma etiqueta: a empresa passava pelo mesmo KYC, pagava a mesma subscrição e era convidada, escolhida e atribuída como uma pessoa. Não havia forma de registar os profissionais da empresa nem de dizer ao cliente quem ia a casa dele.
 
@@ -1642,4 +1642,4 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 
 **Fora de âmbito, como sugestões futuras:** documentos de empresa (alvará, representante legal) no KYC; agenda por técnico; atribuição sugerida por serviço e zona; aviso por WhatsApp ao técnico; selo «Equipa verificada».
 
-**Notas de deploy:** migrations por ordem (`…_papel_tecnico.sql`, depois `…_equipas_de_empresa.sql`, e as das Fases 26 e 27), aplicadas antes do backend. Backend primeiro, frontend depois. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fases 25 a 28; frontend Fases 23 a 26.
+**Notas de deploy:** 4 migrations, **por esta ordem**, aplicadas à mão antes do backend: `20261015090000_papel_tecnico.sql` (**sozinha**: um valor novo de enum não se usa na transação que o cria), `20261015100000_equipas_de_empresa.sql`, `20261015110000_atribuicao_de_tecnico.sql` e `20261015120000_avaliacao_do_tecnico.sql`. As duas últimas usam `on delete set null` para um técnico poder eliminar a conta mesmo com trabalhos no histórico. Backend primeiro, frontend depois. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fases 25 a 28; frontend Fases 23 a 26.
