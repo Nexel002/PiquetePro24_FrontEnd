@@ -15,6 +15,7 @@ export const DESTINOS_DE_ADMIN: DestinoDeAdmin[] = [
   { to: '/admin/moderacao', rotulo: 'Moderação', descricao: 'Denúncias e conteúdo ocultado' },
   { to: '/admin/servicos', rotulo: 'Serviços', descricao: 'Categorias e palavras de pesquisa' },
   { to: '/admin/comunicados', rotulo: 'Comunicados', descricao: 'Avisos por email a grupos de utilizadores' },
+  { to: '/admin/relatorios', rotulo: 'Relatórios', descricao: 'Funil de profissionais e exportações CSV' },
   { to: '/admin/metricas', rotulo: 'Métricas', descricao: 'Números da plataforma' },
   { to: '/admin/audit-log', rotulo: 'Auditoria', descricao: 'Registo de acções e alertas' },
 ]

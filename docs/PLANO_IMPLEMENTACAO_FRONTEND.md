@@ -514,6 +514,22 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 19 — Relatórios e Exportações
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.47 do TRD. Consome a Fase 21 do backend (sem migration).
+
+**Escopo:**
+- `pages/AdminReports.tsx` (`/admin/relatorios`; `services/adminReports.ts`, `hooks/useAdminReports.ts`): período «De / Até» (na hora de Maputo, UTC+2) que vale para o funil e para as exportações; funil de profissionais em barras com o número e a percentagem dos registados; três botões de exportação CSV (utilizadores, pedidos, pagamentos).
+- Exportar: pede o ficheiro como `blob`, entrega-o ao browser (`guardarFicheiro`, que liberta o URL de objecto), confirma o número de linhas, **avisa quando o backend cortou no tecto de 5000** e não descarrega um ficheiro vazio quando o período não tem dados.
+- **`lib/api.ts`:** o interceptor deixa passar as respostas `responseType: 'blob'` sem as desembrulhar (um CSV não traz o envelope `{ success, data }`; desembrulhá-lo dava `undefined`). Alteração a código partilhado, coberta por `lib/api.test.ts`.
+- «Relatórios» na navegação do admin.
+
+**Critérios de Entrega:**
+- [x] Funil (percentagens, 4 estados), datas em Maputo, exportar (sucesso, cortado, vazio, erro), leitura dos cabeçalhos do backend, descarga do ficheiro, interceptor JSON vs. blob — 14 testes (`AdminReports.test.tsx`, `adminReports.test.ts`, `api.test.ts`).
+- [ ] A descarga num browser real (nome do ficheiro, acentos no Excel) e contra o backend real: não verificado. Os cabeçalhos `X-Linhas` / `X-Truncada` só chegam ao browser se o CORS os expuser (o backend envia `Access-Control-Expose-Headers`); confirmar com o domínio de produção.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

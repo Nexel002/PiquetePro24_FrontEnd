@@ -1565,3 +1565,13 @@ rollback;
 
 **Notas de deploy:** **migration primeiro** (`20261014120000_comunicados_admin.sql`), depois backend, depois frontend. Depende do SMTP já configurado (`SMTP_*`); sem ele os envios contam como falha. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fase 20; frontend Fase 18.
 
+## Adendo v1.47
+
+### Painel de admin: exportações CSV e funil de profissionais (14/10/2026)
+
+**Contexto.** As métricas do painel são um retrato do momento: não dizem onde os profissionais se perdem (registo, KYC, pagamento, primeiro trabalho) nem deixam levar os dados para uma folha de cálculo.
+
+**Decisão.** Três exportações CSV (utilizadores, pedidos, pagamentos) com filtros de data, tecto de 5000 linhas e **sem contactos** (telefone e email ficam de fora da exportação de utilizadores); e um funil de cinco etapas que conta pessoas. As células são neutralizadas contra CSV injection e o ficheiro leva BOM para o Excel. Cada exportação fica no audit log. Frontend: secção «Relatórios» em `/admin/relatorios`.
+
+**Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 21; frontend Fase 19.
+
