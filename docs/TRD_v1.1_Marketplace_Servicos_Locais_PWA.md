@@ -1513,3 +1513,13 @@ rollback;
 
 **Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** frontend Fase 13; backend Fase 15.
 
+## Adendo v1.42
+
+### Painel de admin: fila de KYC por antiguidade, espera e reabertura (14/10/2026)
+
+**Contexto.** A fila de revisão de KYC não dizia há quanto tempo cada pessoa esperava, não tinha ordem por antiguidade (ordenava por `id`, que é um UUID aleatório) e uma rejeição por engano não tinha volta.
+
+**Decisão.** Coluna `submitted_at` (migration `20261014090000_kyc_submitted_at.sql`), fila FIFO, indicador «em atraso» acima de 48 h, motivos de rejeição frequentes no ecrã, e `POST /admin/kyc/:id/reopen` (só a partir de `REJECTED`, volta ao fim da fila). O histórico de decisões por revisor não ganha tabela: o audit log já o regista.
+
+**Notas de deploy:** **migration primeiro** (a aplicar à mão no SQL Editor), depois o backend, depois o frontend. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fase 16; frontend Fase 14.
+

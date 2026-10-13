@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   fetchKycSubmissions,
   fetchOwnKyc,
+  reopenKyc,
   reviewKyc,
   submitKyc,
   uploadKycDocument,
@@ -53,6 +54,18 @@ export function useKycSubmissions(status?: KycStatus) {
   return useQuery({
     queryKey: kycSubmissionsQueryKey(status),
     queryFn: () => fetchKycSubmissions(status),
+  })
+}
+
+export function useReopenKyc() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (kycId: string) => reopenKyc(kycId),
+    onSuccess: () => {
+      // A submissão muda de lista (de Rejeitados para Em análise).
+      void queryClient.invalidateQueries({ queryKey: ['kyc', 'admin'] })
+    },
   })
 }
 

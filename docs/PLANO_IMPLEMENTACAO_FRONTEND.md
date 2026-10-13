@@ -437,6 +437,22 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 14 — Revisão de KYC mais completa
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.42 do TRD. Consome a Fase 16 do backend (migration primeiro).
+
+**Escopo (`pages/AdminKyc.tsx`):**
+- Cada submissão em análise mostra «Em espera há X» e, a partir de 48 h, «— em atraso» (texto, não só cor). Lógica em `lib/esperaKyc.ts` (`LIMITE_ESPERA_KYC_HORAS`).
+- Motivos frequentes de rejeição (`MOTIVOS_DE_REJEICAO_KYC`): um toque preenche a caixa, que continua editável.
+- «Reabrir revisão» nas submissões rejeitadas (`useReopenKyc`, `reopenKyc` em `services/kyc.ts`).
+- `ProfessionalKyc.submitted_at` no contrato (`OwnKyc` não o inclui).
+
+**Critérios de Entrega:**
+- [x] Espera (horas, dias, atraso, datas inválidas), motivos e reabertura — 9 testes (`esperaKyc.test.ts`, `AdminKyc.test.tsx`).
+- [ ] Contra o backend real, com a migration aplicada, e o layout num telemóvel: não verificado.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

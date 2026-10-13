@@ -15,12 +15,14 @@ export interface ProfessionalKyc {
   reviewed_by: string | null
   review_notes: string | null
   verified_at: string | null
+  // Quando entrou (ou voltou a entrar) na fila de revisão. Só os endpoints /admin/kyc o devolvem.
+  submitted_at: string
 }
 
 // O que o próprio profissional recebe de GET/POST /kyc (backend Fase 6, TRD Adendo v1.15,
 // item D): sem o path do documento (só ADMIN, TRD Secção 5) nem o UUID do revisor. Os
 // endpoints /admin/kyc continuam a devolver ProfessionalKyc completo.
-export type OwnKyc = Omit<ProfessionalKyc, 'bi_document_url' | 'reviewed_by'>
+export type OwnKyc = Omit<ProfessionalKyc, 'bi_document_url' | 'reviewed_by' | 'submitted_at'>
 
 export interface SubmitKycPayload {
   bi_number: string
@@ -63,6 +65,12 @@ export interface ReviewKycPayload {
 
 export async function reviewKyc(kycId: string, payload: ReviewKycPayload): Promise<ProfessionalKyc> {
   const response = await api.patch<ProfessionalKyc>(`/admin/kyc/${kycId}`, payload)
+  return response.data
+}
+
+// Reabre uma rejeição para nova revisão (volta ao fim da fila).
+export async function reopenKyc(kycId: string): Promise<ProfessionalKyc> {
+  const response = await api.post<ProfessionalKyc>(`/admin/kyc/${kycId}/reopen`)
   return response.data
 }
 
