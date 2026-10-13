@@ -8,6 +8,7 @@ import { ApresentacaoDoProfissional } from '../components/catalogo/ApresentacaoD
 import { AvaliacoesDoProfissional } from '../components/catalogo/AvaliacoesDoProfissional'
 import { EsqueletoDoCatalogo } from '../components/catalogo/EsqueletoDoCatalogo'
 import { FotoDoCatalogo } from '../components/catalogo/FotoDoCatalogo'
+import { LayoutDividido } from '../components/layout/LayoutDividido'
 import { TrabalhosRealizados } from '../components/catalogo/TrabalhosRealizados'
 import { PhotoLightbox } from '../components/portfolio/PhotoLightbox'
 
@@ -45,19 +46,11 @@ export function ProfessionalCatalog() {
       )}
 
       {catalog && (
-        <div className="flex flex-col lg:grid lg:grid-cols-2 lg:min-h-dvh">
-          <FotoDoCatalogo catalog={catalog} capa={capa} ehDono={ehDono} />
-
-          <div className="flex min-w-0 flex-col gap-6 px-4 pt-6 md:px-8 lg:h-dvh lg:overflow-y-auto lg:p-10 xl:p-14 lg:gap-8 lg:bg-gray-50/50">
-            <ApresentacaoDoProfissional catalog={catalog} capa={capa} ehDono={ehDono} />
-            <TrabalhosRealizados
-              projects={catalog.projects}
-              ehDono={ehDono}
-              aoAbrirFoto={(photos, index) => setOpenPhotos({ photos, index })}
-            />
-            <AvaliacoesDoProfissional reviews={catalog.reviews} media={catalog.rating_avg} />
-          </div>
-        </div>
+        <LayoutDividido foto={<FotoDoCatalogo catalog={catalog} capa={capa} ehDono={ehDono} />}>
+          <ApresentacaoDoProfissional catalog={catalog} ehDono={ehDono} />
+          <TrabalhosRealizados projects={catalog.projects} ehDono={ehDono} aoAbrirFoto={(photos, index) => setOpenPhotos({ photos, index })} />
+          <AvaliacoesDoProfissional reviews={catalog.reviews} media={catalog.rating_avg} />
+        </LayoutDividido>
       )}
 
       {openPhotos && <PhotoLightbox photos={openPhotos.photos} startIndex={openPhotos.index} onClose={() => setOpenPhotos(null)} />}

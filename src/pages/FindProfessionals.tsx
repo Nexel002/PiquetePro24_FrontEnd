@@ -35,6 +35,9 @@ export function FindProfessionals() {
   })
 
   const hasLocation = coordinates !== null
+  // Num telemóvel, focar o campo ao entrar abre o teclado por cima dos resultados antes de o
+  // utilizador ter tocado em nada; só se foca onde há rato (hover) e ainda não há filtros.
+  const focarAoMontar = !filtros.q && !filtros.category && (window.matchMedia?.('(hover: hover)')?.matches ?? false)
 
   return (
     <main className="relative min-h-dvh bg-slate-50/50 pb-36">
@@ -70,7 +73,7 @@ export function FindProfessionals() {
             Canalizadores, eletricistas e técnicos de confiança para qualquer piquete na tua casa
           </p>
 
-          <BarraDePesquisa texto={filtros.text} aoMudar={filtros.setText} focarAoMontar={!filtros.q && !filtros.category} />
+          <BarraDePesquisa texto={filtros.text} aoMudar={filtros.setText} aoPesquisar={filtros.search} focarAoMontar={focarAoMontar} />
 
           {categories.data && categories.data.length > 0 && (
             <FiltroDeCategorias categorias={categories.data} selecionada={filtros.category} aoSeleccionar={filtros.selectCategory} />

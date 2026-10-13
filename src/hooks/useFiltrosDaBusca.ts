@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
 const SEARCH_DEBOUNCE_MS = 350
@@ -12,21 +12,31 @@ export function useFiltrosDaBusca() {
   const category = searchParams.get('category') ?? ''
   const [text, setText] = useState(q)
 
-  useEffect(() => {
-    if (text.trim() === q) return
-    const handle = setTimeout(() => {
+  const applyText = useCallback(
+    (value: string) => {
       setSearchParams(
         (current) => {
           const next = new URLSearchParams(current)
-          if (text.trim()) next.set('q', text.trim())
+          if (value.trim()) next.set('q', value.trim())
           else next.delete('q')
           return next
         },
         { replace: true },
       )
-    }, SEARCH_DEBOUNCE_MS)
+    },
+    [setSearchParams],
+  )
+
+  useEffect(() => {
+    if (text.trim() === q) return
+    const handle = setTimeout(() => applyText(text), SEARCH_DEBOUNCE_MS)
     return () => clearTimeout(handle)
-  }, [text, q, setSearchParams])
+  }, [text, q, applyText])
+
+  // «Pesquisar» (botão ou Enter) aplica já o texto, sem esperar pela pausa.
+  function search() {
+    applyText(text)
+  }
 
   // Tocar na categoria já escolhida desliga o filtro.
   function selectCategory(slug: string) {
@@ -41,5 +51,5 @@ export function useFiltrosDaBusca() {
     )
   }
 
-  return { q, category, text, setText, selectCategory }
+  return { q, category, text, setText, search, selectCategory }
 }
