@@ -1397,3 +1397,15 @@ rollback;
 **Notas de deploy:** variável nova, opcional (`VITE_MONTRA_DE_DEMONSTRACAO`); sem ela nada muda. Sem alterações ao backend.
 
 **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (trabalhos em destaque da Home).
+
+## Adendo v1.35
+
+### Home sem barra de navegação no rodapé — só frontend (13/10/2026)
+
+**Contexto.** Pedido do utilizador, a partir de uma captura da Home em telemóvel: a barra flutuante do rodapé (`BottomNav`, só visível abaixo de `md`) é desnecessária, porque o cabeçalho e os atalhos «Começa por aqui» já levam aos mesmos destinos. Abre a branch `refactor/refinamento-telas`, reservada a refinamentos de ecrãs.
+
+**A. O que mudou.** `BottomNav` removido da `Home` e o componente apagado (era o único consumidor). A margem inferior do `<main>` desceu de `7rem` para `2rem` + área segura, já que deixou de haver barra a cobrir. Nenhuma alteração de API, rotas ou variáveis.
+
+**B. Verificar.** Home em telemóvel e tablet: sem barra, último bloco sem folga excessiva. Confirmar que Pedidos, Histórico/Catálogo e Perfil continuam alcançáveis (atalhos e menu do avatar).
+
+**Notas de deploy:** nenhuma. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (polimento de UI).
