@@ -393,6 +393,35 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 12 — Dashboard de Entrada do Admin
+
+**Estado: PROPOSTA — aguarda aprovação do utilizador (13/10/2026); nada implementado.** Ver Adendo v1.39 do TRD.
+
+**Objetivo:** dar ao `ADMIN` uma entrada única (`/admin`) que mostre o que precisa de atenção agora e leve a todos os ecrãs de administração. Hoje o atalho «Painel Admin» da Home abre directamente `/admin/kyc`, as Métricas e o Registo de auditoria só se alcançam escrevendo o URL, e não há contadores de pendentes.
+
+**Nota de dependência:** **só frontend** — não há endpoint novo. Reutiliza `GET /admin/metrics` (`kycByStatus.PENDING`, `serviceRequestsByStatus.OPEN`) e `GET /admin/security-alerts`, ambos já em produção. Os contadores vêm de agregados; não se pagina nenhuma lista só para contar.
+
+**Escopo:**
+- `pages/AdminDashboard.tsx` (`/admin`, `lazy`, `ProtectedRoute`) com o mesmo guard de role dos outros ecrãs de admin.
+- Cartões de atenção: KYC em análise, pedidos abertos e alertas de segurança das últimas 24h (mesmos parâmetros do `AdminAuditLog`), cada um a levar ao ecrã correspondente já filtrado. Zero pendentes mostra «Tudo em dia», não um número 0 destacado.
+- Grelha de atalhos para os seis ecrãs, incluindo Métricas e Registo de auditoria.
+- `components/admin/NavegacaoAdmin` partilhada pelos seis ecrãs existentes, no lugar do botão de voltar solto.
+- Extrair o guard de role (hoje repetido em 6 páginas) para um componente `RotaDeAdmin`, usado pelo dashboard e pelas páginas existentes. **Refactor ligado à feature — a confirmar com o utilizador antes de tocar nas 6 páginas.**
+- Home: o atalho «Painel Admin» passa a apontar para `/admin` (`acoesRapidas.ts`, `papeis.ts`).
+
+**Critérios de Entrega:**
+- [ ] `/admin` trata os 4 estados (skeleton, erro, vazio/«Tudo em dia», dados); um erro numa fonte não esconde as outras.
+- [ ] Os contadores batem com os ecrãs de destino (KYC pendentes = lista filtrada por `PENDING`).
+- [ ] Não-admin é redireccionado para a Home; sem sessão vai para `/entrar?next=/admin`.
+- [ ] Todos os ecrãs de admin acessíveis a partir do dashboard e de volta, em telemóvel (390 px) e desktop.
+- [ ] Testes de componente (4 estados, guard, links); `npm run lint`, `npm run build` e `npm test` limpos. Sem dependência nova.
+
+**Decisões a confirmar:** (1) o refactor `RotaDeAdmin` entra nesta fase ou fica à parte; (2) se o dashboard mostra o gráfico de registos dos últimos 30 dias (`signupsLast30Days`) — o Adendo v1.9 D decidiu «sem gráficos»; propõe-se manter.
+
+**Consumo do backend:** Fase 9 do `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` (já entregue). Sem alterações no backend.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
