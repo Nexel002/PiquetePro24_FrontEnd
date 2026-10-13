@@ -578,25 +578,56 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
-## Fase 23 — Empresas e Equipas (plano, a decidir antes de implementar)
+## Fase 23 — Empresas e Equipas: papel do técnico e ecrã «A minha equipa»
 
-**Estado: PROPOSTA — aguarda aprovação (14/10/2026). Nada implementado.** Ver Adendo v1.51 do TRD e a Fase 25 do backend (que tem o modelo de dados, as regras e as decisões em aberto). Backend primeiro, frontend depois.
+**Estado: plano APROVADO pelo utilizador a 14/10/2026; implementação em curso em `feat/empresas-equipas`.** Ver Adendo v1.51 do TRD e as Fases 25 a 28 do backend (modelo, regras e decisões). Backend primeiro.
 
-**Ponto de partida:** hoje `COMPANY` é só uma etiqueta («Empresa») no registo, no perfil, no catálogo e nos resultados da busca. Não há equipa, nem atribuição de técnico, nem KYC próprio.
+**Decisões (resumo):** o técnico tem **login próprio** (papel `TECHNICIAN`), criado pelo administrador da empresa; subscrição única da empresa; **máximo 15 técnicos**; **KYC da empresa e de cada técnico com a lógica que já existe**; técnico atribuído **só depois de a empresa ser escolhida**; **avaliação da empresa e do técnico**; um singular **não** se converte em empresa; Termos a dizer que a empresa responde pelos técnicos.
 
-**Escopo por bloco (espelha o backend):**
-- **Bloco A — equipa e atribuição.** Ecrã «A minha equipa» (só para empresas: listar, adicionar, editar, desativar técnicos — nome, foto, título, serviços) em `/equipa`, ligado ao menu do profissional **apenas quando `professional_type === 'COMPANY'`**; em «Trabalhos aceites» da empresa, cada pedido ganha **«Atribuir técnico»** (escolha de um técnico activo que faça o serviço do pedido), e um aviso para os pedidos aceites **ainda sem técnico**. No catálogo (`ProfessionalCatalog`) uma secção **«A equipa»** (foto, nome próprio, título; nunca telefone) e, ao cliente, o técnico atribuído no pedido («Vem o João, eletricista»).
-- **Bloco B — KYC de empresa.** `Kyc.tsx` passa a mostrar os campos certos por tipo: empresa → NUIT da empresa, alvará, representante legal; singular → como hoje. Ecrã de revisão do admin com o tipo e os documentos.
-- **Bloco C — subscrição por escalão.** `Subscription.tsx` mostra o escalão e o preço conforme o número de técnicos activos (se for decidido).
-- **Bloco D — técnico com login** (opcional, depois): ecrã do técnico só com os trabalhos que lhe foram atribuídos.
-- **Bloco E — avaliações por técnico** e painel da empresa (pedidos e nota por técnico).
-- **Bloco F — admin:** ficha da empresa com a equipa, denúncias contra técnicos, métricas.
+**Escopo:**
+- `UserRole` ganha `TECHNICIAN` (`services/profile.ts`); os mapas por papel (`ACCOES_RAPIDAS`, `papeis.ts`, `UserMenu`) ganham o técnico; o `OnboardingGate` e a Home tratam o técnico: **KYC primeiro** (o ecrã de KYC que já existe), depois «Os meus trabalhos».
+- `pages/CompanyTeam.tsx` (`/equipa`, só para `professional_type === 'COMPANY'`): lista os técnicos com o **estado do KYC de cada um**, o título e os serviços; **adicionar** (nome, email, título, serviços; mostra a palavra-passe provisória **uma só vez**); editar; desactivar/reactivar; contador «X de 15». Atalho no menu do profissional **só para empresas**.
+- Os 4 estados em cada ecrã; «vazio» explica o que fazer.
 
-**Os 4 estados** (carregar, erro, vazio, dados) em cada ecrã novo; «vazio» da equipa explica o que fazer («Ainda não tens técnicos. Adiciona o primeiro para poderes atribuí-lo aos pedidos»). Mobile-first: a empresa gere a equipa a partir do telemóvel.
+**Critérios de Entrega:**
+- [ ] Papel técnico nos mapas e no onboarding; `/equipa` (4 estados, adicionar com palavra-passe uma vez, limite 15, desactivar/reactivar), escondido para singulares — testes de componente.
 
-**Critérios de Entrega (a marcar quando implementado):**
-- [ ] Bloco A: equipa, atribuição, aviso de pedidos sem técnico, equipa no catálogo sem telefones; testes de componente; lint, build e testes limpos.
-- [ ] Blocos B a F, conforme as decisões do backend (Fase 25).
+---
+
+## Fase 24 — Empresas e Equipas: atribuir técnico e «Os meus trabalhos»
+
+**Estado: aprovada (14/10/2026); implementação em curso.**
+
+- Em «Trabalhos aceites» da **empresa**: cada pedido ganha **«Atribuir técnico»** (só técnicos activos, com KYC aprovado e que façam o serviço do pedido) e um aviso para os pedidos **ainda sem técnico**.
+- `pages/TechnicianJobs.tsx` (`/tecnico/trabalhos`): os trabalhos atribuídos ao técnico, com o contacto do cliente (a mesma regra de elegibilidade do singular, aplicada ao técnico e à empresa).
+- O cliente, em «Os meus pedidos», vê o técnico do pedido (nome próprio, foto, título).
+
+**Critérios de Entrega:**
+- [ ] Atribuir/reatribuir, aviso de pedidos sem técnico, trabalhos do técnico com contacto, técnico visível ao cliente — testes de componente.
+
+---
+
+## Fase 25 — Empresas e Equipas: equipa no catálogo e avaliação do técnico
+
+**Estado: aprovada (14/10/2026); implementação em curso.**
+
+- `ProfessionalCatalog`: secção **«A equipa»** (foto, nome próprio, título, nota; nunca telefone), só técnicos aprovados.
+- Formulário de avaliação (`MyServiceRequests`): nota da **empresa** e, se o pedido teve técnico, nota **opcional do técnico**; as avaliações do catálogo da empresa mostram o técnico.
+
+**Critérios de Entrega:**
+- [ ] Equipa no catálogo; avaliação com e sem nota do técnico — testes de componente.
+
+---
+
+## Fase 26 — Empresas e Equipas: termos e administração
+
+**Estado: aprovada (14/10/2026); implementação em curso.**
+
+- **Termos de utilização** (`data/termosDeUtilizacao.ts`): secção sobre empresas e técnicos (a empresa responde pelos técnicos; conta singular não se converte em empresa). Rascunho a rever por um jurista.
+- **Admin:** a ficha de uma empresa mostra a equipa e o KYC de cada técnico; a ficha do técnico mostra a empresa; filtro por `TECHNICIAN` na lista de utilizadores.
+
+**Critérios de Entrega:**
+- [ ] Termos actualizados; ficha da empresa com equipa; filtro — testes de componente.
 
 ---
 

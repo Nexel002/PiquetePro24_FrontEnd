@@ -1619,15 +1619,27 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 
 ## Adendo v1.51
 
-### Empresas e equipas de técnicos — PROPOSTA (14/10/2026)
+### Empresas e equipas de técnicos (14/10/2026)
 
-**Estado: proposta, aguarda aprovação e decisões. Nada implementado.**
+**Estado: plano aprovado pelo utilizador; implementação em curso em `feat/empresas-equipas`.**
 
-**Contexto.** O Adendo v1.4, item F, introduziu `professional_type` (`SINGULAR` / `COMPANY`) deixando o desenho para depois («o onboarding de empresa deve ser mais complexo»). Esse «depois» nunca chegou: a 14/10/2026, a verificação no código mostra que `COMPANY` é só uma etiqueta. A empresa passa pelo mesmo KYC (BI + NUIT de uma pessoa), paga a mesma subscrição e é convidada, escolhida e atribuída como uma pessoa. Não existe forma de uma empresa registar os seus profissionais, nem de dizer ao cliente quem vai a casa dele.
+**Contexto.** O Adendo v1.4, item F, introduziu `professional_type` (`SINGULAR` / `COMPANY`) deixando o desenho para depois («o onboarding de empresa deve ser mais complexo»). A 14/10/2026 a verificação no código mostrou que `COMPANY` era só uma etiqueta: a empresa passava pelo mesmo KYC, pagava a mesma subscrição e era convidada, escolhida e atribuída como uma pessoa. Não havia forma de registar os profissionais da empresa nem de dizer ao cliente quem ia a casa dele.
 
-**Decisão proposta.** A empresa **continua a ser o profissional** perante o sistema (convites, propostas, KYC, subscrição, catálogo, avaliações); a **equipa de técnicos** é uma camada por baixo, gerida pelo administrador da empresa (o dono da conta), que **atribui o técnico** a cada pedido depois de escolhida. Assim nenhuma regra existente para singulares é tocada. Faseado: A) equipa e atribuição; B) KYC de empresa (NUIT, alvará, representante legal); C) subscrição por escalão de técnicos; D) técnico com login próprio; E) avaliação por técnico; F) administração. Detalhe, modelo de dados, riscos e as 7 decisões em aberto: backend Fase 25 e frontend Fase 23.
+**Decisões do utilizador:**
+1. O **técnico tem login próprio**, criado pelo administrador da empresa (que lhe entrega uma palavra-passe provisória).
+2. **Subscrição igual para todos** (paga a empresa, uma só). **Máximo de 15 técnicos activos por empresa.**
+3. **KYC da empresa e de cada técnico**, os dois com a lógica que já existe para o singular. Não se cria KYC novo de empresa.
+4. O técnico é atribuído **só depois de a empresa ser escolhida** pelo cliente.
+5. **Avaliação da empresa e do técnico.**
+6. Um singular **não se converte** em empresa (o histórico ficaria inconsistente): cria-se outra conta.
+7. Os **Termos de utilização** dizem que a empresa responde pelos técnicos.
 
-**Alternativa rejeitada.** Cada técnico como um profissional independente «associado» a uma empresa: duplicava KYC, subscrição e catálogo por pessoa, e obrigava a reescrever convites, elegibilidade e pesquisa.
+**Desenho.** A empresa **continua a ser o profissional** perante o sistema: convites, propostas, subscrição, catálogo e a nota que alimenta a pesquisa. O técnico é uma **conta própria com um papel novo, `TECHNICIAN`**, ligada à empresa por `company_members`. Um papel novo, e não um `PROFESSIONAL` disfarçado, é seguro por omissão: todas as rotas de profissional exigem `requireRole('PROFESSIONAL')`, logo o técnico não acede a nenhuma, e a pesquisa de profissionais nunca o lista. A elegibilidade do técnico para trabalhar é a da **empresa** (KYC + subscrição) **e** o **seu próprio KYC** aprovado. O contacto do cliente só vai à empresa e ao técnico atribuído (Secção 5 do TRD).
 
-**Notas de deploy:** nenhuma ainda (proposta). A implementação traz migrations (`company_members`, `company_member_services`, `service_requests.assigned_member_id`) e, no Bloco B, colunas novas em `professional_kyc`. **Critérios de entrega correspondentes:** backend Fase 25; frontend Fase 23.
+**Alternativa rejeitada.** Cada técnico como um profissional independente associado a uma empresa: duplicava subscrição e catálogo por pessoa, fazia o técnico aparecer na pesquisa e obrigava a reescrever convites e elegibilidade.
 
+**Fases:** backend 25 (modelo e gestão da equipa), 26 (atribuição e trabalho do técnico), 27 (equipa no catálogo e avaliação do técnico), 28 (termos e administração); frontend 23 a 26.
+
+**Fora de âmbito, como sugestões futuras:** documentos de empresa (alvará, representante legal) no KYC; agenda por técnico; atribuição sugerida por serviço e zona; aviso por WhatsApp ao técnico; selo «Equipa verificada».
+
+**Notas de deploy:** migrations por ordem (`…_papel_tecnico.sql`, depois `…_equipas_de_empresa.sql`, e as das Fases 26 e 27), aplicadas antes do backend. Backend primeiro, frontend depois. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fases 25 a 28; frontend Fases 23 a 26.
