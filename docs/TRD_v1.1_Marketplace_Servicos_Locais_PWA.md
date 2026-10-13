@@ -1469,13 +1469,17 @@ rollback;
 
 ## Adendo v1.39
 
-### Dashboard de entrada do Admin — PROPOSTA, só frontend (13/10/2026)
+### Dashboard de entrada do Admin — só frontend (13/10/2026)
 
-**Estado: proposta, aguarda aprovação. Nada implementado.**
+**Estado: implementado em `feat/dashboard-admin`; por validar no browser.**
 
 **Contexto.** Revisão do painel de administração a pedido do utilizador. Não existe uma dashboard: o atalho «Painel Admin» da Home abre `/admin/kyc`; Métricas (`/admin/metricas`) e Registo de auditoria (`/admin/audit-log`) não têm ligação a partir da Home; não há contadores de pendentes; a navegação entre ecrãs de admin é só um botão de voltar; os alertas de segurança só aparecem dentro do Registo de auditoria. A verificação do role `ADMIN` está repetida em seis páginas. Verificado que o backend protege todas as rotas `/admin/*` com `requireAuth` + `requireRole('ADMIN')` (lê `users_profile.role`, não o JWT).
 
-**Decisão proposta.** Nova rota `/admin` com cartões de atenção (KYC em análise, pedidos abertos, alertas de segurança 24h) e atalhos para os seis ecrãs, sem endpoint novo: usa `GET /admin/metrics` e `GET /admin/security-alerts`. Sem gráficos, mantendo a decisão do Adendo v1.9 D. A UI esconde, não autoriza — a autorização continua a ser do backend.
+**Decisão.** Nova rota `/admin` com cartões de atenção (KYC em análise, pedidos abertos, alertas de segurança 24h) e atalhos para os ecrãs, sem endpoint novo: usa `GET /admin/metrics` e `GET /admin/security-alerts`. Sem gráficos, mantendo a decisão do Adendo v1.9 D. A UI esconde, não autoriza — a autorização continua a ser do backend.
+
+**Implementação.** `RotaDeAdmin` (guard de role na rota, em lugar dos seis guards inline), `NavegacaoAdmin` + `destinos.ts` (barra de separadores partilhada), `CartaoDeAtencao` (distingue a carregar, erro e zero), `pages/AdminDashboard.tsx` em `/admin`. A Home passa a apontar o atalho «Painel Admin» para `/admin`. 10 testes novos.
+
+**Verificar manualmente.** Entrar como ADMIN: Home → «Painel Admin» abre `/admin` com os três contadores; cada cartão leva ao ecrã certo; a barra de separadores funciona em 390 px (desliza na horizontal) e em desktop; como CLIENT/PROFESSIONAL, `/admin` e `/admin/kyc` redireccionam para a Home.
 
 **Alternativa rejeitada.** Endpoint dedicado `/admin/dashboard`: duplicaria agregados que a RPC `admin_metrics()` já devolve.
 

@@ -10,7 +10,7 @@ export interface AccaoRapida {
 // apresentação (HomeShortcuts) deixa de ter um ramo por papel.
 export const ACCOES_RAPIDAS: Record<UserRole, AccaoRapida[]> = {
   ADMIN: [
-    { to: '/admin/kyc', rotulo: 'Painel Admin', descricao: 'Verificações de identidade pendentes' },
+    { to: '/admin', rotulo: 'Painel Admin', descricao: 'Pendentes, alertas e atalhos' },
     { to: '/admin/utilizadores', rotulo: 'Utilizadores', descricao: 'Contas, estados e moderação' },
     { to: '/admin/pedidos-servico', rotulo: 'Pedidos', descricao: 'Todos os pedidos de serviço' },
   ],

@@ -6,6 +6,7 @@ import { Home } from './pages/Home'
 import { Login } from './pages/Login'
 import { AuthCallback } from './pages/AuthCallback'
 import { ProtectedRoute } from './components/ProtectedRoute'
+import { RotaDeAdmin } from './components/admin/RotaDeAdmin'
 import { OnboardingGate } from './components/OnboardingGate'
 import { AuthProvider } from './store/AuthContext'
 import { IndicadorDeLigacao } from './components/IndicadorDeLigacao'
@@ -32,6 +33,7 @@ const NewServiceRequest = lazy(() => import('./pages/NewServiceRequest').then((m
 const ReceivedInvitations = lazy(() => import('./pages/ReceivedInvitations').then((m) => ({ default: m.ReceivedInvitations })))
 const RequestProposals = lazy(() => import('./pages/RequestProposals').then((m) => ({ default: m.RequestProposals })))
 const ProfessionalCatalog = lazy(() => import('./pages/ProfessionalCatalog').then((m) => ({ default: m.ProfessionalCatalog })))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard })))
 const AdminKyc = lazy(() => import('./pages/AdminKyc').then((m) => ({ default: m.AdminKyc })))
 const AdminAuditLog = lazy(() => import('./pages/AdminAuditLog').then((m) => ({ default: m.AdminAuditLog })))
 const AdminUsers = lazy(() => import('./pages/AdminUsers').then((m) => ({ default: m.AdminUsers })))
@@ -240,6 +242,17 @@ function App() {
               }
             />
 
+            {/* TRD Adendo v1.39 / Fase 12: entrada única do admin. */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <RotaDeAdmin>
+                    <AdminDashboard />
+                  </RotaDeAdmin>
+                </ProtectedRoute>
+              }
+            />
             {/* TRD Adendo v1.6: painel mínimo para ADMIN rever KYC. Sem
                 OnboardingGate — um ADMIN não passa pelo onboarding de
                 telefone/localização de CLIENT/PROFESSIONAL. O guard de role real
@@ -248,7 +261,9 @@ function App() {
               path="/admin/kyc"
               element={
                 <ProtectedRoute>
-                  <AdminKyc />
+                  <RotaDeAdmin>
+                    <AdminKyc />
+                  </RotaDeAdmin>
                 </ProtectedRoute>
               }
             />
@@ -259,7 +274,9 @@ function App() {
               path="/admin/audit-log"
               element={
                 <ProtectedRoute>
-                  <AdminAuditLog />
+                  <RotaDeAdmin>
+                    <AdminAuditLog />
+                  </RotaDeAdmin>
                 </ProtectedRoute>
               }
             />
@@ -269,7 +286,9 @@ function App() {
               path="/admin/utilizadores"
               element={
                 <ProtectedRoute>
-                  <AdminUsers />
+                  <RotaDeAdmin>
+                    <AdminUsers />
+                  </RotaDeAdmin>
                 </ProtectedRoute>
               }
             />
@@ -277,7 +296,9 @@ function App() {
               path="/admin/utilizadores/:id"
               element={
                 <ProtectedRoute>
-                  <AdminUserDetail />
+                  <RotaDeAdmin>
+                    <AdminUserDetail />
+                  </RotaDeAdmin>
                 </ProtectedRoute>
               }
             />
@@ -285,7 +306,9 @@ function App() {
               path="/admin/pedidos-servico"
               element={
                 <ProtectedRoute>
-                  <AdminServiceRequests />
+                  <RotaDeAdmin>
+                    <AdminServiceRequests />
+                  </RotaDeAdmin>
                 </ProtectedRoute>
               }
             />
@@ -293,7 +316,9 @@ function App() {
               path="/admin/metricas"
               element={
                 <ProtectedRoute>
-                  <AdminMetrics />
+                  <RotaDeAdmin>
+                    <AdminMetrics />
+                  </RotaDeAdmin>
                 </ProtectedRoute>
               }
             />

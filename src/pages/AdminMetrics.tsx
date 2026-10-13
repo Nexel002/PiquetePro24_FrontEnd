@@ -1,6 +1,5 @@
-import { Navigate } from 'react-router-dom'
-import { useProfile } from '../hooks/useProfile'
 import { useAdminMetrics } from '../hooks/useAdminMetrics'
+import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
 import { BackButton } from '../components/BackButton'
 import { Card } from '../components/ui/Card'
 
@@ -47,20 +46,7 @@ function Tile({ label, value }: { label: string; value: string | number }) {
 // backend). Mesma convenção de guard de role dentro do próprio componente já usada
 // nos outros ecrãs de admin.
 export function AdminMetrics() {
-  const { data: profile, isLoading: isProfileLoading } = useProfile()
   const { data: metrics, isLoading, isError } = useAdminMetrics()
-
-  if (isProfileLoading) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
-      </main>
-    )
-  }
-
-  if (profile?.role !== 'ADMIN') {
-    return <Navigate to="/" replace />
-  }
 
   const signupsTotal = metrics?.signupsLast30Days.reduce((sum, day) => sum + day.count, 0) ?? 0
 
@@ -72,6 +58,8 @@ export function AdminMetrics() {
           Métricas
         </h1>
       </header>
+
+      <NavegacaoAdmin />
 
       {isLoading && (
         <div className="grid grid-cols-2 gap-3">

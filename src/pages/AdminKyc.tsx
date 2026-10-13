@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
 import { toast } from 'sonner'
-import { useProfile } from '../hooks/useProfile'
 import { useKycSubmissions, useReviewKyc } from '../hooks/useKyc'
 import type { KycStatus, ProfessionalKyc } from '../services/kyc'
 import { BackButton } from '../components/BackButton'
@@ -36,24 +35,11 @@ const STATUS_FILTER_LABELS: Record<KycStatus | 'ALL', string> = {
 // mesma decisão tomada para onboarding): sem role ADMIN, redireciona para a Home em
 // vez de mostrar um ecrã vazio ou um 403 cru do backend.
 export function AdminKyc() {
-  const { data: profile, isLoading: isProfileLoading } = useProfile()
   const [statusFilter, setStatusFilter] = useState<KycStatus | 'ALL'>('PENDING')
   const { data: submissions, isLoading, isError } = useKycSubmissions(statusFilter === 'ALL' ? undefined : statusFilter)
   const reviewKycMutation = useReviewKyc()
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectNotes, setRejectNotes] = useState('')
-
-  if (isProfileLoading) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
-      </main>
-    )
-  }
-
-  if (profile?.role !== 'ADMIN') {
-    return <Navigate to="/" replace />
-  }
 
   function handleApprove(kyc: ProfessionalKyc) {
     reviewKycMutation.mutate(
@@ -97,6 +83,8 @@ export function AdminKyc() {
           Revisão de KYC
         </h1>
       </header>
+
+      <NavegacaoAdmin />
 
       <div className="flex gap-2 text-sm">
         {STATUS_FILTERS.map((filter) => (

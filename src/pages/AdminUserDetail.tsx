@@ -1,7 +1,7 @@
 import { useState } from 'react'
+import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useProfile } from '../hooks/useProfile'
 import { useAdminUserDetail, useBanUser, useChangeUserRole, useResendEmail, useUnbanUser } from '../hooks/useAdminUsers'
 import { useActivateSubscriptionManually, useUserSubscription } from '../hooks/useSubscription'
 import type { SubscriptionStatus } from '../services/subscriptions'
@@ -49,7 +49,6 @@ function isBanned(bannedUntil: string | null): boolean {
 // componente já usada em AdminKyc.tsx/AdminAuditLog.tsx/AdminUsers.tsx.
 export function AdminUserDetail() {
   const { id } = useParams<{ id: string }>()
-  const { data: profile, isLoading: isProfileLoading } = useProfile()
   const { data: user, isLoading, isError } = useAdminUserDetail(id ?? '')
   const resendEmailMutation = useResendEmail()
   const [resendTemplate, setResendTemplate] = useState<ResendEmailTemplate>('welcome')
@@ -61,18 +60,6 @@ export function AdminUserDetail() {
   const changeRoleMutation = useChangeUserRole()
   const [targetProfessionalType, setTargetProfessionalType] = useState<ProfessionalType>('SINGULAR')
   const [isConfirmingRoleChange, setIsConfirmingRoleChange] = useState(false)
-
-  if (isProfileLoading) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
-      </main>
-    )
-  }
-
-  if (profile?.role !== 'ADMIN') {
-    return <Navigate to="/" replace />
-  }
 
   if (!id) {
     return <Navigate to="/admin/utilizadores" replace />
@@ -143,6 +130,8 @@ export function AdminUserDetail() {
         <BackButton />
         <h1 className="text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">Ficha de utilizador</h1>
       </header>
+
+      <NavegacaoAdmin />
 
       {isLoading && (
         <div className="flex flex-col gap-3">

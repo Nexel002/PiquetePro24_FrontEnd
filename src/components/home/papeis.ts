@@ -11,5 +11,5 @@ export const ROTULO_PAPEL: Record<UserRole, string> = {
 export const LIGACAO_DO_PAPEL: Record<UserRole, { to: string; rotulo: string }> = {
   CLIENT: { to: '/os-meus-pedidos', rotulo: 'Os meus pedidos' },
   PROFESSIONAL: { to: '/pedidos-recebidos', rotulo: 'Pedidos recebidos' },
-  ADMIN: { to: '/admin/kyc', rotulo: 'Painel admin' },
+  ADMIN: { to: '/admin', rotulo: 'Painel admin' },
 }

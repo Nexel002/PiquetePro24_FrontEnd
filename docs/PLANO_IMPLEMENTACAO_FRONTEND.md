@@ -395,28 +395,28 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 12 — Dashboard de Entrada do Admin
 
-**Estado: PROPOSTA — aguarda aprovação do utilizador (13/10/2026); nada implementado.** Ver Adendo v1.39 do TRD.
+**Estado: implementada em `feat/dashboard-admin` (13/10/2026), por validar no browser.** Ver Adendo v1.39 do TRD.
 
 **Objetivo:** dar ao `ADMIN` uma entrada única (`/admin`) que mostre o que precisa de atenção agora e leve a todos os ecrãs de administração. Hoje o atalho «Painel Admin» da Home abre directamente `/admin/kyc`, as Métricas e o Registo de auditoria só se alcançam escrevendo o URL, e não há contadores de pendentes.
 
 **Nota de dependência:** **só frontend** — não há endpoint novo. Reutiliza `GET /admin/metrics` (`kycByStatus.PENDING`, `serviceRequestsByStatus.OPEN`) e `GET /admin/security-alerts`, ambos já em produção. Os contadores vêm de agregados; não se pagina nenhuma lista só para contar.
 
 **Escopo:**
-- `pages/AdminDashboard.tsx` (`/admin`, `lazy`, `ProtectedRoute`) com o mesmo guard de role dos outros ecrãs de admin.
-- Cartões de atenção: KYC em análise, pedidos abertos e alertas de segurança das últimas 24h (mesmos parâmetros do `AdminAuditLog`), cada um a levar ao ecrã correspondente já filtrado. Zero pendentes mostra «Tudo em dia», não um número 0 destacado.
-- Grelha de atalhos para os seis ecrãs, incluindo Métricas e Registo de auditoria.
-- `components/admin/NavegacaoAdmin` partilhada pelos seis ecrãs existentes, no lugar do botão de voltar solto.
-- Extrair o guard de role (hoje repetido em 6 páginas) para um componente `RotaDeAdmin`, usado pelo dashboard e pelas páginas existentes. **Refactor ligado à feature — a confirmar com o utilizador antes de tocar nas 6 páginas.**
+- `pages/AdminDashboard.tsx` (`/admin`, `lazy`, `ProtectedRoute` + `RotaDeAdmin`).
+- Cartões de atenção: KYC em análise, pedidos abertos e alertas de segurança das últimas 24h (mesmos parâmetros do `AdminAuditLog`), cada um a levar ao ecrã correspondente (o de verificações já abre em «Em análise»; os outros abrem sem filtro). Zero pendentes mostra «Tudo em dia», não um número 0 destacado.
+- Grelha de atalhos para os cinco ecrãs de destino (a ficha de utilizador chega-se pela lista), incluindo Métricas e Registo de auditoria.
+- `components/admin/NavegacaoAdmin` (barra de separadores, com `destinos.ts` como lista única) nos seis ecrãs existentes e no dashboard. **Desvio:** acrescenta-se por baixo do cabeçalho; o botão de voltar mantém-se.
+- Extrair o guard de role (hoje repetido em 6 páginas) para um componente `RotaDeAdmin`, aplicado **na rota** (`App.tsx`) e não dentro de cada página; os seis guards inline foram removidos. Aprovado pelo utilizador ao pedir a implementação. Efeito: uma página de admin já não monta (nem pede dados que dariam 403) para quem não é ADMIN.
 - Home: o atalho «Painel Admin» passa a apontar para `/admin` (`acoesRapidas.ts`, `papeis.ts`).
 
 **Critérios de Entrega:**
-- [ ] `/admin` trata os 4 estados (skeleton, erro, vazio/«Tudo em dia», dados); um erro numa fonte não esconde as outras.
-- [ ] Os contadores batem com os ecrãs de destino (KYC pendentes = lista filtrada por `PENDING`).
-- [ ] Não-admin é redireccionado para a Home; sem sessão vai para `/entrar?next=/admin`.
-- [ ] Todos os ecrãs de admin acessíveis a partir do dashboard e de volta, em telemóvel (390 px) e desktop.
-- [ ] Testes de componente (4 estados, guard, links); `npm run lint`, `npm run build` e `npm test` limpos. Sem dependência nova.
+- [x] `/admin` trata os 4 estados (skeleton, erro, vazio/«Tudo em dia», dados); um erro numa fonte não esconde as outras — por teste (`AdminDashboard.test.tsx`).
+- [ ] Os contadores batem com os ecrãs de destino. Vêm das mesmas fontes (`/admin/metrics`, `/admin/security-alerts` com 24h/5 tentativas, como o Registo de auditoria); **falta confirmar contra dados reais.**
+- [x] Não-admin é redireccionado para a Home sem montar o ecrã (`RotaDeAdmin.test.tsx`); sem sessão o `ProtectedRoute` leva a `/entrar?next=/admin` (comportamento já testado em `ProtectedRoute.test.tsx`).
+- [ ] Todos os ecrãs de admin acessíveis a partir do dashboard e de volta, em telemóvel (390 px) e desktop. **Ligações testadas; layout não visto num browser.**
+- [x] Testes de componente (10 novos: 5 do dashboard, 5 do guard); `npm run lint` (0 erros; 1 aviso que já existia em `AuthContext.tsx`), `npm run build` e `npm test` (382 testes) limpos. Sem dependência nova.
 
-**Decisões a confirmar:** (1) o refactor `RotaDeAdmin` entra nesta fase ou fica à parte; (2) se o dashboard mostra o gráfico de registos dos últimos 30 dias (`signupsLast30Days`) — o Adendo v1.9 D decidiu «sem gráficos»; propõe-se manter.
+**Decisões:** o refactor `RotaDeAdmin` entrou nesta fase; o dashboard fica sem gráficos (Adendo v1.9 D).
 
 **Consumo do backend:** Fase 9 do `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` (já entregue). Sem alterações no backend.
 

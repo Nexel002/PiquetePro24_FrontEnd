@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate } from 'react-router-dom'
-import { useProfile } from '../hooks/useProfile'
+import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
+import { Link } from 'react-router-dom'
 import { useAdminUsers } from '../hooks/useAdminUsers'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
@@ -25,7 +25,6 @@ const selectClassName =
 // guard de role dentro do próprio componente já usada em AdminKyc.tsx/
 // AdminAuditLog.tsx.
 export function AdminUsers() {
-  const { data: profile, isLoading: isProfileLoading } = useProfile()
   const [searchDraft, setSearchDraft] = useState('')
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('ALL')
@@ -37,18 +36,6 @@ export function AdminUsers() {
     limit: PAGE_SIZE,
     offset,
   })
-
-  if (isProfileLoading) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
-      </main>
-    )
-  }
-
-  if (profile?.role !== 'ADMIN') {
-    return <Navigate to="/" replace />
-  }
 
   function handleSearchSubmit(event: FormEvent) {
     event.preventDefault()
@@ -69,6 +56,8 @@ export function AdminUsers() {
           Utilizadores
         </h1>
       </header>
+
+      <NavegacaoAdmin />
 
       <div className="flex flex-wrap gap-2 text-sm">
         <form onSubmit={handleSearchSubmit} className="flex flex-1 gap-2">

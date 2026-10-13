@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useProfile } from '../hooks/useProfile'
 import { useAdminCancelServiceRequest, useAdminServiceRequests } from '../hooks/useAdminServiceRequests'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
@@ -33,7 +33,6 @@ const createdAtFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'medium
 // mesma convenção de guard de role dentro do próprio componente já usada nos outros
 // ecrãs de admin.
 export function AdminServiceRequests() {
-  const { data: profile, isLoading: isProfileLoading } = useProfile()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [offset, setOffset] = useState(0)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
@@ -44,18 +43,6 @@ export function AdminServiceRequests() {
     offset,
   })
   const cancelMutation = useAdminCancelServiceRequest()
-
-  if (isProfileLoading) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
-      </main>
-    )
-  }
-
-  if (profile?.role !== 'ADMIN') {
-    return <Navigate to="/" replace />
-  }
 
   function handleStatusChange(value: StatusFilter) {
     setOffset(0)
@@ -83,6 +70,8 @@ export function AdminServiceRequests() {
           Pedidos de serviço
         </h1>
       </header>
+
+      <NavegacaoAdmin />
 
       <div className="flex gap-2 text-sm">
         <select
