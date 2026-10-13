@@ -97,34 +97,45 @@ export function LocationForm({
     <div className="flex flex-col gap-4">
       {/* Um só toque no ícone obtém o GPS e grava de imediato — sem passo de
           confirmação à parte (pedido do utilizador). */}
-      <div className="relative bg-piquete-blue/5 border border-piquete-blue/10 rounded-xl p-3 flex flex-col items-center justify-center text-center">
+      <div className="relative bg-piquete-blue/5 border border-piquete-blue/10 rounded-2xl p-4 flex items-center justify-between gap-3 text-left">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-piquete-blue/10 text-piquete-blue">
+            <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 21c-4.418-4.03-7-7.86-7-11a7 7 0 1114 0c0 3.14-2.582 6.97-7 11z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11.5a2 2 0 100-4 2 2 0 000 4z" />
+            </svg>
+          </div>
+          <div className="flex flex-col min-w-0">
+            <p className="text-[11px] text-gray-500 uppercase tracking-wide font-semibold">Localização Atual</p>
+            <p className="text-sm font-bold text-piquete-blue truncate">
+              {geolocation.state.status === 'locating'
+                ? 'A localizar...'
+                : geolocation.state.status === 'success' && pendingPlace.isLoading
+                  ? 'A identificar o lugar...'
+                  : currentLocationLabel}
+            </p>
+          </div>
+        </div>
+
         <button
           type="button"
           onClick={handleUseGps}
           disabled={isBusy}
           aria-label="Atualizar localização por GPS"
-          className="absolute top-2 right-2 p-1.5 rounded-full bg-white border border-piquete-blue/20 text-piquete-blue hover:bg-piquete-blue hover:text-white transition-colors disabled:opacity-50"
+          title="Atualizar localização por GPS"
+          className="shrink-0 p-2.5 rounded-xl bg-white border border-piquete-blue/20 text-piquete-blue hover:bg-piquete-blue hover:text-white shadow-sm transition-all active:scale-95 disabled:opacity-50"
         >
           {isBusy ? (
-            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           ) : (
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 21c-4.418-4.03-7-7.86-7-11a7 7 0 1114 0c0 3.14-2.582 6.97-7 11z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 11.5a2 2 0 100-4 2 2 0 000 4z" />
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           )}
         </button>
-        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">Localização Atual</p>
-        <p className="text-sm font-bold text-piquete-blue">
-          {geolocation.state.status === 'locating'
-            ? 'A localizar...'
-            : geolocation.state.status === 'success' && pendingPlace.isLoading
-              ? 'A identificar o lugar...'
-              : currentLocationLabel}
-        </p>
       </div>
 
       {geolocation.state.status === 'error' && (

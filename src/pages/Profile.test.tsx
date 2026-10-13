@@ -32,6 +32,9 @@ vi.mock('../components/LocationForm', () => ({ LocationForm: () => <div>formulá
 vi.mock('../components/profile/DeleteAccountSection', () => ({
   DeleteAccountSection: ({ papel }: { papel: string }) => <div>apagar conta ({papel})</div>,
 }))
+vi.mock('../hooks/useServiceCategories', () => ({
+  useServiceCategories: () => ({ data: [] }),
+}))
 vi.mock('../lib/supabase', () => ({ supabase: { auth: { updateUser: mocks.updateUser } } }))
 
 function perfil(extra: Partial<UserProfile> = {}): UserProfile {
@@ -103,6 +106,27 @@ describe('Profile — estados do ecrã', () => {
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Ana Machava')
     expect(screen.getByText('+258840000000')).toBeTruthy()
     expect(screen.getByText('formulário de localização')).toBeTruthy()
+  })
+
+  it('tem um único <h1> (o nome); o papel está escrito por baixo, sem selo de verificado', () => {
+    mostrar({ perfil: { data: perfil({ role: 'ADMIN' }), isLoading: false, isError: false } })
+
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+    expect(screen.getByText('Administrador')).toBeTruthy()
+    expect(screen.queryByTitle(/Verificado/i)).toBeNull()
+  })
+
+  it('as estatísticas contam os pedidos e os concluídos (e não repetem o papel)', () => {
+    mostrar({
+      pedidos: {
+        data: [pedido(), pedido({ id: 'r2', status: 'COMPLETED' }), pedido({ id: 'r3', status: 'COMPLETED' })],
+        isLoading: false,
+      },
+    })
+
+    expect(screen.getByText('Pedidos').previousElementSibling?.textContent).toBe('3')
+    expect(screen.getByText('Concluídos').previousElementSibling?.textContent).toBe('2')
+    expect(screen.queryByText('Papel')).toBeNull()
   })
 
   it('só o profissional vê o atalho para o catálogo', () => {

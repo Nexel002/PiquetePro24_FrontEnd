@@ -1397,3 +1397,72 @@ rollback;
 **Notas de deploy:** variável nova, opcional (`VITE_MONTRA_DE_DEMONSTRACAO`); sem ela nada muda. Sem alterações ao backend.
 
 **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (trabalhos em destaque da Home).
+
+## Adendo v1.35
+
+### Home sem barra de navegação no rodapé — só frontend (13/10/2026)
+
+**Contexto.** Pedido do utilizador, a partir de uma captura da Home em telemóvel: a barra flutuante do rodapé (`BottomNav`, só visível abaixo de `md`) é desnecessária, porque o cabeçalho e os atalhos «Começa por aqui» já levam aos mesmos destinos. Abre a branch `refactor/refinamento-telas`, reservada a refinamentos de ecrãs.
+
+**A. O que mudou.** `BottomNav` removido da `Home` e o componente apagado (era o único consumidor). A margem inferior do `<main>` desceu de `7rem` para `2rem` + área segura, já que deixou de haver barra a cobrir. Nenhuma alteração de API, rotas ou variáveis.
+
+**B. Verificar.** Home em telemóvel e tablet: sem barra, último bloco sem folga excessiva. Confirmar que Pedidos, Histórico/Catálogo e Perfil continuam alcançáveis (atalhos e menu do avatar).
+
+**Notas de deploy:** nenhuma. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (polimento de UI).
+
+## Adendo v1.36
+
+### Perfil do profissional: layout em duas variantes — só frontend (13/10/2026)
+
+**Contexto.** Pedido do utilizador, com duas referências visuais: só o layout e a UX são reaproveitados, a identidade visual (cores, tipografia) continua a do sistema (`piquete-*`).
+
+**A. O que mudou** (`src/pages/ProfessionalCatalog.tsx`, rota `/profissionais/:id`).
+- **Telemóvel e tablet (< `lg`):** foto a toda a largura, sem margens laterais e com o rodapé arredondado; por baixo o nome e os serviços, depois descrição e estatísticas, os trabalhos (um carrossel por trabalho, em duas colunas a partir de `md`) e as avaliações.
+- **Desktop (`lg`+):** duas colunas. À esquerda a foto fixa (`sticky`) com o nome e os serviços sobre ela; à direita, em cartões, descrição e estatísticas, trabalhos e avaliações.
+- Uma só árvore de DOM nas duas variantes (o bloco do nome muda de posição por CSS), para não duplicar o `h1`.
+
+**B. Sem alterações** a API, dados, rotas ou variáveis. O perfil da própria conta (`/perfil`, `Profile.tsx`) **não** foi tocado.
+
+**C. Verificar.** Abrir `/profissionais/:id` a 390 px, 768 px e 1280 px; sem foto de perfil (cai para a primeira foto de um trabalho, ou a inicial); sem trabalhos e sem avaliações; com o filtro de serviços (2 ou mais); como dono (barra «Editar o meu catálogo»).
+
+**Notas de deploy:** nenhuma. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 9 (catálogo do profissional) e Fase 6 (polimento de UI).
+
+## Adendo v1.37
+
+### Divisão dos componentes grandes de Perfil, Busca e Catálogo — só frontend (13/10/2026)
+
+**Contexto.** Pedido do utilizador: nenhum ecrã pode ser um «God Component». Três páginas misturavam estado, regras e markup de vários blocos: `Profile.tsx` (560 linhas), `FindProfessionals.tsx` (598) e `ProfessionalCatalog.tsx` (414). `LocationForm.tsx` (213) ficou como está: tem uma só responsabilidade.
+
+**A. O que mudou — sem alterar comportamento.** Cada página passa a compor blocos e fica entre 100 e 125 linhas.
+- `Profile.tsx` → `components/profile/`: `FotoDoPerfil`, `IdentidadeDoPerfil`, `EstatisticasDaConta`, `DefinicoesDaConta` (dono do estado dos rascunhos e das passwords: monta-se ao abrir, e é isso que os repõe), `TelefoneRegistado`, `AtalhoDoCatalogo`, `HistoricoDePedidos` + `PedidoDoHistorico`, `PhoneIcon`.
+- `FindProfessionals.tsx` → `components/busca/` (`BarraDePesquisa`, `FiltroDeCategorias`, `OrientacaoDoPedido`, `AvisoDeLocalizacao`, `ResultadosDaBusca`, `CartaoDeProfissional`, `BarraDeEnvioDoPedido`, ícones) e três hooks: `useFiltrosDaBusca` (filtros no URL com debounce), `useLocalizarSePermitido`, `useSelecaoParaPedido` (serviço pedido, número de profissionais a escolher, envio).
+- `ProfessionalCatalog.tsx` → `components/catalogo/`: `FotoDoCatalogo`, `ApresentacaoDoProfissional`, `TrabalhosRealizados` (dono do filtro por serviço), `AvaliacoesDoProfissional`, `ResumoDeAvaliacao`, `Estrelas`, `EsqueletoDoCatalogo`, `rotulos`.
+- Partilhados em `components/ui/`: `Mosaico` (estatística em mosaico, antes duplicada em duas páginas) e `IconeDeVisto` (o «visto» da insígnia, antes copiado cinco vezes).
+
+**B. Sem alterações** a API, rotas, dados ou variáveis. Testes: 335 a passar, incluindo os 19 de `Profile.test.tsx` e os 16 de `FindProfessionals.test.tsx`, que não precisaram de mudar. Os blocos novos não têm testes próprios; são cobertos pelos das páginas.
+
+**Notas de deploy:** nenhuma. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (polimento de UI).
+
+## Adendo v1.38
+
+### Correcções e melhorias nos ecrãs Perfil, Catálogo e Busca — só frontend (13/10/2026)
+
+**Contexto.** Revisão dos ecrãs refinados no Adendo v1.37, a pedido do utilizador («faz todas as melhorias»).
+
+**A. Defeitos corrigidos.**
+- **`<h1>` em desktop.** O título estava num bloco com `lg:hidden` e o nome sobre a foto era um `<p>`: em desktop o ecrã ficava sem título para leitores de ecrã. Há agora um só `<h1>`, na `IdentidadeDoPerfil` / `IdentidadeDoProfissional`, que muda de lugar por CSS (por baixo da foto em telemóvel, sobre ela em desktop).
+- **Selo «Verificado» retirado** do Perfil e do Catálogo: aparecia a todos (no Perfil, a qualquer papel que não fosse cliente, administradores incluídos) e nenhum dos dois contratos (`UserProfile`, `ProfessionalCatalog`) traz dado de verificação. Volta quando o backend expuser o estado do KYC. O texto inventado «Profissional qualificado disponível…» (sem bio) também saiu; o dono vê uma dica a pedir a descrição.
+- **Botão «Pedir serviço» do Catálogo.** Levava a `/profissionais` sem contexto, com um rótulo («a este profissional») que o fluxo não permite — o pedido segue para 3 profissionais escolhidos na busca. Agora, com um só serviço, leva a `/profissionais?category=<slug>` («Pedir Canalização»); com vários, à busca geral («Pedir um serviço»); e diz que o pedido segue para 3 profissionais.
+- **Mosaico «Papel»** substituído por «Concluídos» (pedidos com estado `COMPLETED`); mostrava «Cliente» a um administrador e repetia o papel já escrito sob o nome.
+
+**B. Melhorias.**
+- A lupa da busca passou a submeter (e Enter também) e aplica o texto sem esperar pelo debounce. O `autoFocus` só se aplica onde há rato (`(hover: hover)`), para não abrir o teclado por cima dos resultados em telemóvel.
+- Ícones de categoria: tabela por slug (`CAMINHOS_DOS_ICONES`) com aviso na consola em desenvolvimento quando falta um. **Continua a ser preciso acrescentar o ícone aqui quando uma categoria nova entra na base de dados.**
+- Desktop: a página rola inteira e a foto fica presa (`sticky`); antes a coluna direita tinha scroll próprio e a roda do rato não fazia nada sobre a foto. Retirado o avatar duplicado do cabeçalho do Catálogo.
+- Casca partilhada `components/layout/LayoutDividido` (`LayoutDividido` + `ColunaDaFoto`), usada pelo Perfil e pelo Catálogo, em vez de copiada.
+
+**C. Testes novos.** `ProfessionalCatalog.test.tsx`, `useSelecaoParaPedido.test.tsx`, `useFiltrosDaBusca.test.tsx`, `BarraDePesquisa.test.tsx`, `IconeDaCategoria.test.tsx`; `Profile.test.tsx` ganhou o único `<h1>`, a ausência do selo e as estatísticas.
+
+**D. Verificar manualmente.** `/perfil` e `/profissionais/:id` a 390, 768 e 1280 px: um só título, foto presa ao rolar em desktop, nome sobre a foto em desktop e por baixo em telemóvel. Busca em telemóvel: o teclado não abre sozinho.
+
+**Notas de deploy:** nenhuma. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (polimento de UI) e Fase 9.

@@ -1,7 +1,6 @@
 import { useEffect, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { BottomNav } from '../components/BottomNav'
 import { CategoryFilter } from '../components/home/CategoryFilter'
 import { COLUNA } from '../components/home/layout'
 import { EstadoDaMontra } from '../components/home/EstadoDaMontra'
@@ -72,9 +71,10 @@ export function Home() {
       />
       <CategoryFilter categorias={feed.categorias} selecionada={feed.categoria} aoSeleccionar={feed.setCategoria} />
 
-      {/* O espaço em baixo cobre a barra de navegação flutuante (só em telemóvel) e a área
-          segura dos telemóveis com barra de gestos. */}
-      <main className={`${COLUNA} pb-[calc(7rem+env(safe-area-inset-bottom))]`}>
+      {/* Sem barra de navegação no rodapé: os atalhos «Começa por aqui» e o cabeçalho já levam
+          aos mesmos destinos. O espaço em baixo só cobre a área segura dos telemóveis com
+          barra de gestos. */}
+      <main className={`${COLUNA} pb-[calc(2rem+env(safe-area-inset-bottom))]`}>
         <HomeHero
           temSessao={temSessao}
           primeiroNome={primeiroNome}
@@ -138,8 +138,6 @@ export function Home() {
           </>
         )}
       </main>
-
-      <BottomNav />
     </div>
   )
 }
