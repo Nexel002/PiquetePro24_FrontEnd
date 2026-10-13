@@ -1426,3 +1426,17 @@ rollback;
 **C. Verificar.** Abrir `/profissionais/:id` a 390 px, 768 px e 1280 px; sem foto de perfil (cai para a primeira foto de um trabalho, ou a inicial); sem trabalhos e sem avaliações; com o filtro de serviços (2 ou mais); como dono (barra «Editar o meu catálogo»).
 
 **Notas de deploy:** nenhuma. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 9 (catálogo do profissional) e Fase 6 (polimento de UI).
+
+## Adendo v1.37
+
+### Perfil da própria conta com o mesmo layout do catálogo — só frontend (13/10/2026)
+
+**Contexto.** Pedido do utilizador: o desenho do Adendo v1.36 passa também a `/perfil` (`Profile.tsx`), para clientes e profissionais.
+
+**A. O que mudou.** Telemóvel e tablet: foto a toda a largura, sem margens laterais, nome e «Membro desde» por baixo; desktop (`lg`+): foto fixa à esquerda com o nome sobre ela e, à direita, definições, telefone, localização e histórico de pedidos. A câmara («Alterar foto») e a engrenagem («Definições da conta») passaram para o canto da foto, com o mesmo `aria-label`. Uma só árvore de DOM, sem `<h1>` duplicado.
+
+**B. Sem alterações** à lógica (edição de dados, password, remoção de foto, eliminação de conta, pedidos), a API, rotas ou variáveis. `Profile.test.tsx`: 19 testes continuam a passar.
+
+**C. Verificar.** `/perfil` a 390, 768 e 1280 px, como cliente e como profissional (cartão «O meu catálogo»); sem foto; painel de definições aberto; sem pedidos, com erro ao carregar pedidos.
+
+**Notas de deploy:** nenhuma. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (polimento de UI).

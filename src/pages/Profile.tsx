@@ -145,70 +145,50 @@ export function Profile() {
       : 'Não foi possível enviar a foto. Tenta novamente.'
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full flex-col pb-12 sm:max-w-lg sm:p-6 animate-fade-in">
-      {/* Cartão de perfil — fundo claro, consistente com o resto da app. Em mobile
-          ocupa o ecrã todo, sem margens nem cantos arredondados (pedido do
-          utilizador: "não pode haver espaços em branco no lado"); a partir do
-          breakpoint sm: fica um cartão simples flutuando sobre a página branca —
-          sem fundo escurecido nem modal (tentámos, não ficou bem, revertido). */}
-      <div className="relative overflow-hidden bg-white border-b border-gray-100 sm:rounded-[2.5rem] sm:border sm:border-gray-100 sm:shadow-card">
-        {/* Hero image */}
-        <div className="relative w-full h-72 sm:h-80 overflow-hidden bg-gradient-to-b from-slate-800 to-slate-950">
-          {profile.avatar_url ? (
-            <img
-              src={profile.avatar_url}
-              alt={profile.full_name}
-              className="w-full h-full object-cover object-top filter brightness-95 contrast-105"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-[#021431] via-[#052456] to-slate-900">
-              <div className="w-24 h-24 rounded-full bg-piquete-yellow/15 border-2 border-piquete-yellow/30 flex items-center justify-center text-4xl font-extrabold text-piquete-yellow">
-                {profile.full_name.charAt(0).toUpperCase()}
+    // Mesmo desenho do catálogo do profissional (ProfessionalCatalog.tsx). Telemóvel e tablet:
+    // foto a toda a largura, sem margens laterais ("não pode haver espaços em branco no
+    // lado", pedido do utilizador), e o resto em coluna. Desktop (lg): foto fixa à esquerda
+    // com o nome sobre ela; dados, localização e pedidos à direita. Uma só árvore de DOM —
+    // o bloco do nome muda de sítio por CSS, para não duplicar o <h1>.
+    <main className="mx-auto min-h-dvh w-full pb-12 animate-fade-in lg:max-w-6xl lg:px-8 lg:py-8 lg:pb-12">
+      <div className="flex flex-col lg:grid lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+        <aside className="relative lg:sticky lg:top-8 lg:overflow-hidden lg:rounded-3xl lg:shadow-card">
+          <div className="relative aspect-[4/5] overflow-hidden rounded-b-[2rem] bg-gradient-to-b from-slate-800 to-slate-950 md:aspect-[16/10] lg:aspect-[3/4] lg:rounded-none">
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={profile.full_name}
+                className="h-full w-full object-cover object-top filter brightness-95 contrast-105"
+              />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-tr from-[#021431] via-[#052456] to-slate-900">
+                <div className="flex h-28 w-28 items-center justify-center rounded-full border-2 border-piquete-yellow/30 bg-piquete-yellow/15 text-5xl font-extrabold text-piquete-yellow">
+                  {profile.full_name.charAt(0).toUpperCase()}
+                </div>
+              </div>
+            )}
+
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-black/20" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-3/5 bg-gradient-to-t from-piquete-blue-deep/90 via-piquete-blue-deep/40 to-transparent lg:block" />
+
+            <div className="absolute left-4 top-4 z-20">
+              <div className="rounded-2xl border border-white/15 bg-slate-900/60 p-1 shadow-lg backdrop-blur-md">
+                <BackButton className="text-white hover:bg-white/15" />
               </div>
             </div>
-          )}
 
-          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/10" />
-
-          {/* Só o botão de voltar fica sobre a imagem — as ações de conta mudaram-se
-              para junto do nome (ver abaixo), em vez de flutuarem aqui. */}
-          <div className="absolute top-4 left-4 z-20">
-            <div className="bg-slate-900/60 backdrop-blur-md rounded-2xl p-1 border border-white/15 shadow-lg">
-              <BackButton className="text-white hover:bg-white/15" />
-            </div>
-          </div>
-
-          <input
-            ref={avatarInputRef}
-            type="file"
-            accept="image/*"
-            capture="user"
-            onChange={handleAvatarSelected}
-            hidden
-          />
-        </div>
-
-        {/* Conteúdo */}
-        <div className="p-6 sm:p-8 flex flex-col gap-5">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-2 flex-wrap min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-piquete-blue tracking-tight font-heading truncate">
-                {profile.full_name}
-              </h1>
-            </div>
-
-            {/* Câmara (ação direta: trocar foto) e Definições (painel com editar
-                dados, password e remover foto) — substituem o botão "Editar" e os
-                ícones que antes flutuavam sobre a imagem. */}
-            <div className="flex items-center gap-2 shrink-0">
+            {/* Câmara (ação direta: trocar foto) e Definições (painel com editar dados,
+                password e remover foto) ficam sobre a foto, no canto — como a engrenagem
+                da referência —, em vez de competirem com o nome. */}
+            <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={uploadAvatar.isPending}
                 aria-label="Alterar foto"
-                className="p-2.5 rounded-2xl bg-gray-100 border border-gray-200 text-gray-600 hover:text-piquete-blue hover:border-piquete-blue/30 transition-all active:scale-95"
+                className="rounded-2xl border border-white/15 bg-slate-900/60 p-2.5 text-white shadow-lg backdrop-blur-md transition-all hover:bg-white/15 active:scale-95"
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
@@ -219,24 +199,40 @@ export function Profile() {
                 onClick={handleToggleSettings}
                 aria-label="Definições da conta"
                 aria-expanded={isSettingsOpen}
-                className={`p-2.5 rounded-2xl border transition-all active:scale-95 ${
+                className={`rounded-2xl border p-2.5 shadow-lg backdrop-blur-md transition-all active:scale-95 ${
                   isSettingsOpen
-                    ? 'bg-piquete-blue text-white border-piquete-blue'
-                    : 'bg-gray-100 border-gray-200 text-gray-600 hover:text-piquete-blue hover:border-piquete-blue/30'
+                    ? 'border-piquete-blue bg-piquete-blue text-white'
+                    : 'border-white/15 bg-slate-900/60 text-white hover:bg-white/15'
                 }`}
               >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                 </svg>
               </button>
             </div>
+
+            <input
+              ref={avatarInputRef}
+              type="file"
+              accept="image/*"
+              capture="user"
+              onChange={handleAvatarSelected}
+              hidden
+            />
           </div>
 
-          <p className="text-xs font-semibold text-gray-400">
-            Membro desde {memberSinceFormatter.format(new Date(profile.created_at))}
-          </p>
+          <div className="flex flex-col gap-1 px-4 pt-5 md:px-8 lg:absolute lg:inset-x-0 lg:bottom-0 lg:px-6 lg:pb-6 lg:pt-0">
+            <h1 className="truncate font-heading text-2xl font-extrabold tracking-tight text-piquete-blue lg:text-3xl lg:text-white">
+              {profile.full_name}
+            </h1>
+            <p className="text-xs font-semibold text-gray-400 lg:text-white/80">
+              Membro desde {memberSinceFormatter.format(new Date(profile.created_at))}
+            </p>
+          </div>
+        </aside>
 
+        <div className="flex min-w-0 flex-col gap-5 px-4 pt-5 md:px-8 lg:p-0">
           {uploadAvatar.isPending && (
             <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 p-2.5 rounded-xl text-center">
               A atualizar foto de perfil...
@@ -368,11 +364,9 @@ export function Profile() {
             </span>
             <LocationForm profile={profile} allowManual={false} />
           </div>
-        </div>
-      </div>
 
-      {/* Histórico de Pedidos de Serviço */}
-      <section className="mt-8 flex flex-col gap-4 px-4 sm:px-0">
+          {/* Histórico de Pedidos de Serviço */}
+          <section className="flex flex-col gap-4 border-t border-gray-100 pt-6 lg:border-0 lg:pt-2">
         <div className="flex items-center justify-between px-1">
           <div>
             <h2 className="text-lg font-bold text-piquete-blue tracking-tight font-heading">
@@ -482,6 +476,8 @@ export function Profile() {
           </div>
         )}
       </section>
+        </div>
+      </div>
     </main>
   )
 }
