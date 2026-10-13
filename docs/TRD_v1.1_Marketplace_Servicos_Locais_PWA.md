@@ -1533,3 +1533,13 @@ rollback;
 
 **Notas de deploy:** **migration primeiro** (`20261014100000_denuncias_e_moderacao.sql`, à mão no SQL Editor), depois o backend, depois o frontend. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fase 17; frontend Fase 15.
 
+## Adendo v1.44
+
+### Painel de admin: notas internas e disputas de pedidos (14/10/2026)
+
+**Contexto.** Perante um caso (um profissional que pede reembolso, um pedido em disputa) a equipa não tinha onde deixar contexto uns para os outros, e o cliente e o profissional não tinham como assinalar um problema com um pedido.
+
+**Decisão.** Tabela `admin_notes` (texto livre, só ADMIN, em contas e pedidos). A disputa reaproveita as denúncias do Adendo v1.43 com alvo `SERVICE_REQUEST`, limitada às duas partes do pedido. Frontend: secção «Notas internas» na ficha do utilizador e nos pedidos do admin, e «Reportar um problema» nos pedidos do cliente e do profissional.
+
+**Notas de deploy:** **migration primeiro** (`20261014110000_notas_internas_admin.sql`), depois backend, depois frontend. Sem variáveis. **Critérios de entrega correspondentes:** backend Fase 18; frontend Fase 16.
+

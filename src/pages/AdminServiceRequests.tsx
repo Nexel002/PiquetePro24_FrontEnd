@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
+import { NotasInternas } from '../components/admin/NotasInternas'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAdminCancelServiceRequest, useAdminServiceRequests } from '../hooks/useAdminServiceRequests'
@@ -36,6 +37,7 @@ export function AdminServiceRequests() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [offset, setOffset] = useState(0)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
+  const [notasAbertasId, setNotasAbertasId] = useState<string | null>(null)
 
   const { data: requests, isLoading, isError } = useAdminServiceRequests({
     status: statusFilter === 'ALL' ? undefined : statusFilter,
@@ -159,7 +161,18 @@ export function AdminServiceRequests() {
                       )}
                     </>
                   )}
+
+                  <button
+                    type="button"
+                    aria-expanded={notasAbertasId === serviceRequest.id}
+                    onClick={() => setNotasAbertasId((atual) => (atual === serviceRequest.id ? null : serviceRequest.id))}
+                    className="text-sm font-semibold text-piquete-blue underline pt-1"
+                  >
+                    Notas
+                  </button>
                 </div>
+
+                {notasAbertasId === serviceRequest.id && <NotasInternas targetType="SERVICE_REQUEST" targetId={serviceRequest.id} />}
               </Card>
             </li>
           ))}

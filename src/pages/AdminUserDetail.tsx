@@ -4,6 +4,7 @@ import { Link, Navigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAdminUserDetail, useBanUser, useChangeUserRole, useResendEmail, useUnbanUser } from '../hooks/useAdminUsers'
 import { useActivateSubscriptionManually, useUserSubscription } from '../hooks/useSubscription'
+import { NotasInternas } from '../components/admin/NotasInternas'
 import type { SubscriptionStatus } from '../services/subscriptions'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
@@ -199,6 +200,8 @@ export function AdminUserDetail() {
           </Link>
 
           {user.role === 'PROFESSIONAL' && <SubscricaoDoProfissional userId={user.id} />}
+
+          <NotasInternas targetType="USER" targetId={user.id} />
 
           {/* Adendo v1.9, item F: sem endpoint novo de leitura — reaproveita o
               EmailService já existente do lado do backend. Sem lógica de mostrar só

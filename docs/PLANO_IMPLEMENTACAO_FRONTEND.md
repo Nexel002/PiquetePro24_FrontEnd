@@ -469,6 +469,20 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 16 — Notas Internas e Disputas de Pedidos
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.44 do TRD. Consome a Fase 18 do backend (migration primeiro).
+
+**Escopo:**
+- `components/admin/NotasInternas.tsx` (`services/adminNotes.ts`, `hooks/useAdminNotes.ts`): escrever e ler notas de equipa; na ficha do utilizador (`AdminUserDetail`) e, atrás de um botão «Notas», em cada pedido de `AdminServiceRequests`.
+- «Reportar um problema» (`BotaoDenunciar` com `rotulo`) em «Os meus pedidos» (pedidos já atribuídos, concluídos ou cancelados com profissional) e em «Trabalhos aceites» do profissional. O pedido segue para a fila de `/admin/moderacao` como denúncia de um pedido (`SERVICE_REQUEST`); o backend só aceita do cliente e do profissional desse pedido.
+
+**Critérios de Entrega:**
+- [x] Notas: lista com autor, a carregar / erro / vazio, recusa de nota vazia, texto aparado — 3 testes (`NotasInternas.test.tsx`).
+- [ ] Não há teste de componente para os botões nas listas de pedidos (`MyServiceRequests` e `AssignedServiceRequests` não têm teste) nem validação no browser / contra o backend real.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

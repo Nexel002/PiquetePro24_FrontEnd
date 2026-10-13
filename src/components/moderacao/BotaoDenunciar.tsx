@@ -9,11 +9,13 @@ interface BotaoDenunciarProps {
   targetId: string
   // Para o leitor de ecrã distinguir os vários botões da página («Denunciar a avaliação de Ana»).
   descricao: string
+  // Texto do botão: «Denunciar» num conteúdo, «Reportar um problema» num pedido (disputa).
+  rotulo?: string
 }
 
 // Formulário inline em vez de modal: no telemóvel um modal por cima do catálogo é mais um
 // layer a fechar; aqui o formulário abre no sítio e fecha-se com «Cancelar».
-export function BotaoDenunciar({ targetType, targetId, descricao }: BotaoDenunciarProps) {
+export function BotaoDenunciar({ targetType, targetId, descricao, rotulo = 'Denunciar' }: BotaoDenunciarProps) {
   const criar = useCreateReport()
   const [aberto, setAberto] = useState(false)
   const [enviada, setEnviada] = useState(false)
@@ -29,10 +31,10 @@ export function BotaoDenunciar({ targetType, targetId, descricao }: BotaoDenunci
       <button
         type="button"
         onClick={() => setAberto(true)}
-        aria-label={`Denunciar ${descricao}`}
+        aria-label={`${rotulo} ${descricao}`}
         className="self-start text-xs font-semibold text-piquete-gray underline hover:text-rose-600"
       >
-        Denunciar
+        {rotulo}
       </button>
     )
   }
