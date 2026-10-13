@@ -28,7 +28,7 @@ export function TrabalhosRealizados({ projects, ehDono, aoAbrirFoto }: Trabalhos
             <p className="text-xs text-piquete-gray">Portfólio com fotos reais de projetos concluídos</p>
           </div>
           {projects.length > 0 && (
-            <span className="rounded-full bg-piquete-blue/10 px-3 py-1 text-xs font-bold text-piquete-blue">
+            <span className="shrink-0 whitespace-nowrap rounded-full bg-piquete-blue/10 px-3 py-1 text-xs font-bold text-piquete-blue">
               {projects.length} {projects.length === 1 ? 'projeto' : 'projetos'}
             </span>
           )}
