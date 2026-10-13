@@ -1523,3 +1523,13 @@ rollback;
 
 **Notas de deploy:** **migration primeiro** (a aplicar à mão no SQL Editor), depois o backend, depois o frontend. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fase 16; frontend Fase 14.
 
+## Adendo v1.43
+
+### Painel de admin: denúncias e moderação de conteúdo (14/10/2026)
+
+**Contexto.** O único instrumento de moderação era banir a conta inteira. Fotos de portfólio e comentários de avaliações abusivos não tinham remédio proporcional, e não havia canal para os utilizadores denunciarem.
+
+**Decisão.** Tabela `reports` com um só formato para quatro tipos de alvo; o admin vê uma fila (abertas, mais antigas primeiro) e resolve ou rejeita com nota obrigatória, podendo ocultar o conteúdo na mesma acção. Ocultar não apaga: o profissional vê o trabalho com o motivo, o admin pode repor, a prova mantém-se. Numa avaliação oculta-se só o comentário (a nota continua a contar para a média). Contas e pedidos moderam-se pelas vias que já existem (banir, cancelar). Frontend: botão «Denunciar» no catálogo do profissional (conta, trabalhos, comentários) e ecrã `/admin/moderacao`.
+
+**Notas de deploy:** **migration primeiro** (`20261014100000_denuncias_e_moderacao.sql`, à mão no SQL Editor), depois o backend, depois o frontend. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fase 17; frontend Fase 15.
+

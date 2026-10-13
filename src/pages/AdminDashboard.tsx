@@ -7,6 +7,7 @@ import { Card } from '../components/ui/Card'
 import { useAdminMetrics } from '../hooks/useAdminMetrics'
 import { useAdminSecurityAlerts } from '../hooks/useAdminSecurityAlerts'
 import { useAdminSubscriptions } from '../hooks/useAdminSubscriptions'
+import { useAdminReports } from '../hooks/useModeration'
 
 // Valor de um cartão a partir de uma query: a carregar → `undefined`, falhou → `null`. Cada
 // fonte tem o seu estado, para o erro de uma não esconder o que a outra já trouxe.
@@ -28,6 +29,7 @@ export function AdminDashboard() {
   const alertas = useAdminSecurityAlerts({ windowHours: 24, minAttempts: 5 })
   // Máximo de uma página de 100: acima disso o cartão mostra 100, que já diz «muitas».
   const aExpirar = useAdminSubscriptions({ filtro: 'EXPIRING', limit: 100, offset: 0 })
+  const denuncias = useAdminReports({ status: 'OPEN', limit: 100, offset: 0 })
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
@@ -61,6 +63,13 @@ export function AdminDashboard() {
             to="/admin/subscricoes"
             valor={valorDe(aExpirar, (lista) => lista.length)}
             vazio="Nenhuma a expirar"
+          />
+          <CartaoDeAtencao
+            rotulo="Denúncias por tratar"
+            to="/admin/moderacao"
+            valor={valorDe(denuncias, (lista) => lista.length)}
+            vazio="Nenhuma por tratar"
+            destaque
           />
           <CartaoDeAtencao
             rotulo="Alertas de segurança (24h)"

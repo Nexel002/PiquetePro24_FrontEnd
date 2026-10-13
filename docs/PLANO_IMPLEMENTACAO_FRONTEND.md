@@ -453,6 +453,22 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 15 — Denúncias e Moderação
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.43 do TRD. Consome a Fase 17 do backend (migration primeiro).
+
+**Escopo:**
+- `components/moderacao/BotaoDenunciar.tsx`: formulário inline (motivo + detalhes) que cria a denúncia; confirma o envio e mostra o erro do servidor (ex. «já denunciaste»). Usado no catálogo de um profissional por quem **não** é o dono: a conta (fim da página), cada trabalho e cada comentário de avaliação.
+- Catálogo: o dono vê os trabalhos ocultados com o aviso e o motivo; um comentário ocultado mostra «Comentário removido pela moderação» (`PortfolioProject.hidden/hidden_reason`, `Review.comment_hidden`).
+- `pages/AdminModeration.tsx` (`/admin/moderacao`): fila de denúncias (abertas por omissão; filtros resolvidas / rejeitadas / todas), quem denunciou, o alvo e se já está oculto ou já não existe; «Decidir» com nota obrigatória e, em trabalhos e comentários, «Ocultar o conteúdo denunciado»; «Repor conteúdo»; ligação à conta quando o alvo é uma conta.
+- Dashboard: cartão «Denúncias por tratar»; «Moderação» na navegação.
+
+**Critérios de Entrega:**
+- [x] 4 estados na fila, nota obrigatória, ocultar só ao resolver (nunca ao rejeitar), reposição, alvo inexistente — 6 testes (`AdminModeration.test.tsx`); `BotaoDenunciar` (abrir, enviar, confirmar, erro do servidor) — 4 testes; dashboard — 5 testes.
+- [ ] Contra o backend real com a migration aplicada, e o aspeto num telemóvel: não verificado.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

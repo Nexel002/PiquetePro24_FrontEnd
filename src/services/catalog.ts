@@ -10,7 +10,9 @@ export interface Review {
   client_id: string
   client_full_name: string
   rating: number
+  // null quando o comentário foi ocultado por moderação; a nota continua a contar.
   comment: string | null
+  comment_hidden: boolean
   created_at: string
 }
 

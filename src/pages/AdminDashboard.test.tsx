@@ -11,7 +11,9 @@ const fontes = vi.hoisted(() => ({
   metricas: {} as Fonte<unknown>,
   alertas: {} as Fonte<unknown>,
   subscricoes: {} as Fonte<unknown>,
+  denuncias: {} as Fonte<unknown>,
 }))
+vi.mock('../hooks/useModeration', () => ({ useAdminReports: () => fontes.denuncias }))
 vi.mock('../hooks/useAdminSubscriptions', () => ({ useAdminSubscriptions: () => fontes.subscricoes }))
 vi.mock('../hooks/useAdminMetrics', () => ({ useAdminMetrics: () => fontes.metricas }))
 vi.mock('../hooks/useAdminSecurityAlerts', () => ({ useAdminSecurityAlerts: () => fontes.alertas }))
@@ -27,7 +29,13 @@ const METRICAS: AdminMetrics = {
 }
 const ALERTA: SecurityAlert = { groupKey: 'u1', groupType: 'user_id', attempts: 9, lastAttemptAt: '2026-10-13T10:00:00Z' }
 
-function definir(metricas: Fonte<AdminMetrics>, alertas: Fonte<SecurityAlert[]>, subscricoes: Fonte<unknown[]> = pronto([])) {
+function definir(
+  metricas: Fonte<AdminMetrics>,
+  alertas: Fonte<SecurityAlert[]>,
+  subscricoes: Fonte<unknown[]> = pronto([]),
+  denuncias: Fonte<unknown[]> = pronto([]),
+) {
+  fontes.denuncias = denuncias
   fontes.metricas = metricas
   fontes.alertas = alertas
   fontes.subscricoes = subscricoes
@@ -48,8 +56,12 @@ afterEach(cleanup)
 
 describe('AdminDashboard', () => {
   it('mostra os contadores e liga cada cartão ao seu ecrã', () => {
-    definir(pronto(METRICAS), pronto([ALERTA]), pronto([{}, {}]))
+    definir(pronto(METRICAS), pronto([ALERTA]), pronto([{}, {}]), pronto([{}, {}, {}]))
     mostrar()
+
+    const den = screen.getByRole('link', { name: /denúncias por tratar/i })
+    expect(den.textContent).toContain('3')
+    expect(den.getAttribute('href')).toBe('/admin/moderacao')
 
     const subs = screen.getByRole('link', { name: /subscrições a expirar/i })
     expect(subs.textContent).toContain('2')
@@ -73,9 +85,9 @@ describe('AdminDashboard', () => {
   })
 
   it('mostra esqueletos enquanto carrega', () => {
-    definir(aCarregar, aCarregar, aCarregar)
+    definir(aCarregar, aCarregar, aCarregar, aCarregar)
     mostrar()
-    expect(screen.getAllByRole('status', { name: /a carregar/i })).toHaveLength(4)
+    expect(screen.getAllByRole('status', { name: /a carregar/i })).toHaveLength(5)
   })
 
   it('o erro de uma fonte não esconde a outra', () => {
@@ -94,7 +106,7 @@ describe('AdminDashboard', () => {
       .getAllByRole('link')
       .map((a) => a.getAttribute('href'))
       .filter((href) => href?.startsWith('/admin/'))
-    for (const rota of ['/admin/kyc', '/admin/utilizadores', '/admin/pedidos-servico', '/admin/subscricoes', '/admin/metricas', '/admin/audit-log']) {
+    for (const rota of ['/admin/kyc', '/admin/utilizadores', '/admin/pedidos-servico', '/admin/subscricoes', '/admin/moderacao', '/admin/metricas', '/admin/audit-log']) {
       expect(destinos).toContain(rota)
     }
   })
