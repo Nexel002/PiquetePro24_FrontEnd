@@ -33,6 +33,8 @@ function trabalho(extra: Partial<PortfolioProject> = {}, nFotos = 2): PortfolioP
     description: 'Casa de banho',
     created_at: '2026-10-01T10:00:00.000Z',
     photos: Array.from({ length: nFotos }, (_, i) => ({ id: `f${i}`, photo_url: `https://x/${i}.webp`, position: i })),
+    hidden: false,
+    hidden_reason: null,
     ...extra,
   }
 }

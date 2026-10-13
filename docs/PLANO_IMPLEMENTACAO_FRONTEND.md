@@ -395,30 +395,186 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 12 — Dashboard de Entrada do Admin
 
-**Estado: PROPOSTA — aguarda aprovação do utilizador (13/10/2026); nada implementado.** Ver Adendo v1.39 do TRD.
+**Estado: implementada em `feat/dashboard-admin` (13/10/2026), por validar no browser.** Ver Adendo v1.39 do TRD.
 
 **Objetivo:** dar ao `ADMIN` uma entrada única (`/admin`) que mostre o que precisa de atenção agora e leve a todos os ecrãs de administração. Hoje o atalho «Painel Admin» da Home abre directamente `/admin/kyc`, as Métricas e o Registo de auditoria só se alcançam escrevendo o URL, e não há contadores de pendentes.
 
 **Nota de dependência:** **só frontend** — não há endpoint novo. Reutiliza `GET /admin/metrics` (`kycByStatus.PENDING`, `serviceRequestsByStatus.OPEN`) e `GET /admin/security-alerts`, ambos já em produção. Os contadores vêm de agregados; não se pagina nenhuma lista só para contar.
 
 **Escopo:**
-- `pages/AdminDashboard.tsx` (`/admin`, `lazy`, `ProtectedRoute`) com o mesmo guard de role dos outros ecrãs de admin.
-- Cartões de atenção: KYC em análise, pedidos abertos e alertas de segurança das últimas 24h (mesmos parâmetros do `AdminAuditLog`), cada um a levar ao ecrã correspondente já filtrado. Zero pendentes mostra «Tudo em dia», não um número 0 destacado.
-- Grelha de atalhos para os seis ecrãs, incluindo Métricas e Registo de auditoria.
-- `components/admin/NavegacaoAdmin` partilhada pelos seis ecrãs existentes, no lugar do botão de voltar solto.
-- Extrair o guard de role (hoje repetido em 6 páginas) para um componente `RotaDeAdmin`, usado pelo dashboard e pelas páginas existentes. **Refactor ligado à feature — a confirmar com o utilizador antes de tocar nas 6 páginas.**
+- `pages/AdminDashboard.tsx` (`/admin`, `lazy`, `ProtectedRoute` + `RotaDeAdmin`).
+- Cartões de atenção: KYC em análise, pedidos abertos e alertas de segurança das últimas 24h (mesmos parâmetros do `AdminAuditLog`), cada um a levar ao ecrã correspondente (o de verificações já abre em «Em análise»; os outros abrem sem filtro). Zero pendentes mostra «Tudo em dia», não um número 0 destacado.
+- Grelha de atalhos para os cinco ecrãs de destino (a ficha de utilizador chega-se pela lista), incluindo Métricas e Registo de auditoria.
+- `components/admin/NavegacaoAdmin` (barra de separadores, com `destinos.ts` como lista única) nos seis ecrãs existentes e no dashboard. **Desvio:** acrescenta-se por baixo do cabeçalho; o botão de voltar mantém-se.
+- Extrair o guard de role (hoje repetido em 6 páginas) para um componente `RotaDeAdmin`, aplicado **na rota** (`App.tsx`) e não dentro de cada página; os seis guards inline foram removidos. Aprovado pelo utilizador ao pedir a implementação. Efeito: uma página de admin já não monta (nem pede dados que dariam 403) para quem não é ADMIN.
 - Home: o atalho «Painel Admin» passa a apontar para `/admin` (`acoesRapidas.ts`, `papeis.ts`).
 
 **Critérios de Entrega:**
-- [ ] `/admin` trata os 4 estados (skeleton, erro, vazio/«Tudo em dia», dados); um erro numa fonte não esconde as outras.
-- [ ] Os contadores batem com os ecrãs de destino (KYC pendentes = lista filtrada por `PENDING`).
-- [ ] Não-admin é redireccionado para a Home; sem sessão vai para `/entrar?next=/admin`.
-- [ ] Todos os ecrãs de admin acessíveis a partir do dashboard e de volta, em telemóvel (390 px) e desktop.
-- [ ] Testes de componente (4 estados, guard, links); `npm run lint`, `npm run build` e `npm test` limpos. Sem dependência nova.
+- [x] `/admin` trata os 4 estados (skeleton, erro, vazio/«Tudo em dia», dados); um erro numa fonte não esconde as outras — por teste (`AdminDashboard.test.tsx`).
+- [ ] Os contadores batem com os ecrãs de destino. Vêm das mesmas fontes (`/admin/metrics`, `/admin/security-alerts` com 24h/5 tentativas, como o Registo de auditoria); **falta confirmar contra dados reais.**
+- [x] Não-admin é redireccionado para a Home sem montar o ecrã (`RotaDeAdmin.test.tsx`); sem sessão o `ProtectedRoute` leva a `/entrar?next=/admin` (comportamento já testado em `ProtectedRoute.test.tsx`).
+- [ ] Todos os ecrãs de admin acessíveis a partir do dashboard e de volta, em telemóvel (390 px) e desktop. **Ligações testadas; layout não visto num browser.**
+- [x] Testes de componente (10 novos: 5 do dashboard, 5 do guard); `npm run lint` (0 erros; 1 aviso que já existia em `AuthContext.tsx`), `npm run build` e `npm test` (382 testes) limpos. Sem dependência nova.
 
-**Decisões a confirmar:** (1) o refactor `RotaDeAdmin` entra nesta fase ou fica à parte; (2) se o dashboard mostra o gráfico de registos dos últimos 30 dias (`signupsLast30Days`) — o Adendo v1.9 D decidiu «sem gráficos»; propõe-se manter.
+**Decisões:** o refactor `RotaDeAdmin` entrou nesta fase; o dashboard fica sem gráficos (Adendo v1.9 D).
 
 **Consumo do backend:** Fase 9 do `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` (já entregue). Sem alterações no backend.
+
+---
+
+## Fase 13 — Subscrições e Pagamentos no Painel de Admin
+
+**Estado: implementada em `feat/dashboard-admin` (13/10/2026), só local, por validar no browser.** Ver Adendo v1.41 do TRD. Consome a Fase 15 do backend (backend primeiro).
+
+**Escopo:**
+- `pages/AdminSubscriptions.tsx` (`/admin/subscricoes`): separadores Subscrições (filtro: a expirar por omissão, activas, expiradas, sem pagamento) e Pagamentos (filtro por estado), paginados de 25 em 25; «Suspender» com motivo obrigatório.
+- `services/adminSubscriptions.ts`, `hooks/useAdminSubscriptions.ts`.
+- Dashboard: novo cartão «Subscrições a expirar (7 dias)»; entrada «Subscrições» na navegação (`destinos.ts`). A activação manual continua na ficha do utilizador (já existia).
+
+**Critérios de Entrega:**
+- [x] 4 estados (a carregar, erro, vazio, dados), motivo obrigatório antes de suspender, «Suspender» só em subscrições activas, separador de pagamentos — 5 testes (`AdminSubscriptions.test.tsx`); dashboard actualizado (6 testes).
+- [ ] Layout em 390 px e em desktop, e contra o backend real: não verificado.
+
+---
+
+## Fase 14 — Revisão de KYC mais completa
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.42 do TRD. Consome a Fase 16 do backend (migration primeiro).
+
+**Escopo (`pages/AdminKyc.tsx`):**
+- Cada submissão em análise mostra «Em espera há X» e, a partir de 48 h, «— em atraso» (texto, não só cor). Lógica em `lib/esperaKyc.ts` (`LIMITE_ESPERA_KYC_HORAS`).
+- Motivos frequentes de rejeição (`MOTIVOS_DE_REJEICAO_KYC`): um toque preenche a caixa, que continua editável.
+- «Reabrir revisão» nas submissões rejeitadas (`useReopenKyc`, `reopenKyc` em `services/kyc.ts`).
+- `ProfessionalKyc.submitted_at` no contrato (`OwnKyc` não o inclui).
+
+**Critérios de Entrega:**
+- [x] Espera (horas, dias, atraso, datas inválidas), motivos e reabertura — 9 testes (`esperaKyc.test.ts`, `AdminKyc.test.tsx`).
+- [ ] Contra o backend real, com a migration aplicada, e o layout num telemóvel: não verificado.
+
+---
+
+## Fase 15 — Denúncias e Moderação
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.43 do TRD. Consome a Fase 17 do backend (migration primeiro).
+
+**Escopo:**
+- `components/moderacao/BotaoDenunciar.tsx`: formulário inline (motivo + detalhes) que cria a denúncia; confirma o envio e mostra o erro do servidor (ex. «já denunciaste»). Usado no catálogo de um profissional por quem **não** é o dono: a conta (fim da página), cada trabalho e cada comentário de avaliação.
+- Catálogo: o dono vê os trabalhos ocultados com o aviso e o motivo; um comentário ocultado mostra «Comentário removido pela moderação» (`PortfolioProject.hidden/hidden_reason`, `Review.comment_hidden`).
+- `pages/AdminModeration.tsx` (`/admin/moderacao`): fila de denúncias (abertas por omissão; filtros resolvidas / rejeitadas / todas), quem denunciou, o alvo e se já está oculto ou já não existe; «Decidir» com nota obrigatória e, em trabalhos e comentários, «Ocultar o conteúdo denunciado»; «Repor conteúdo»; ligação à conta quando o alvo é uma conta.
+- Dashboard: cartão «Denúncias por tratar»; «Moderação» na navegação.
+
+**Critérios de Entrega:**
+- [x] 4 estados na fila, nota obrigatória, ocultar só ao resolver (nunca ao rejeitar), reposição, alvo inexistente — 6 testes (`AdminModeration.test.tsx`); `BotaoDenunciar` (abrir, enviar, confirmar, erro do servidor) — 4 testes; dashboard — 5 testes.
+- [ ] Contra o backend real com a migration aplicada, e o aspeto num telemóvel: não verificado.
+
+---
+
+## Fase 16 — Notas Internas e Disputas de Pedidos
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.44 do TRD. Consome a Fase 18 do backend (migration primeiro).
+
+**Escopo:**
+- `components/admin/NotasInternas.tsx` (`services/adminNotes.ts`, `hooks/useAdminNotes.ts`): escrever e ler notas de equipa; na ficha do utilizador (`AdminUserDetail`) e, atrás de um botão «Notas», em cada pedido de `AdminServiceRequests`.
+- «Reportar um problema» (`BotaoDenunciar` com `rotulo`) em «Os meus pedidos» (pedidos já atribuídos, concluídos ou cancelados com profissional) e em «Trabalhos aceites» do profissional. O pedido segue para a fila de `/admin/moderacao` como denúncia de um pedido (`SERVICE_REQUEST`); o backend só aceita do cliente e do profissional desse pedido.
+
+**Critérios de Entrega:**
+- [x] Notas: lista com autor, a carregar / erro / vazio, recusa de nota vazia, texto aparado — 3 testes (`NotasInternas.test.tsx`).
+- [ ] Não há teste de componente para os botões nas listas de pedidos (`MyServiceRequests` e `AssignedServiceRequests` não têm teste) nem validação no browser / contra o backend real.
+
+---
+
+## Fase 17 — Gestão de Serviços pelo Admin
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.45 do TRD. Consome a Fase 19 do backend (sem migration).
+
+**Escopo:**
+- `pages/AdminServices.tsx` (`/admin/servicos`; `services/adminCategories.ts`, `hooks/useAdminCategories.ts`): lista os serviços com o slug, as palavras de pesquisa e quantos profissionais os usam; criar, editar (nome e palavras; o slug não muda) e apagar com confirmação. «Apagar» fica desactivado enquanto há profissionais com o serviço; se um pedido ainda o referir, o 409 do backend aparece como mensagem.
+- Aviso «Sem ícone» e instrução quando o slug não está em `caminhosDosIcones.ts` (um serviço novo usa o ícone genérico até lá).
+- Qualquer alteração invalida também a lista pública `['service-categories']`.
+- «Serviços» na navegação do admin.
+
+**Critérios de Entrega:**
+- [x] 4 estados, contagem, aviso de ícone, apagar com confirmação e bloqueado se em uso, criar (nome curto recusado) e editar — 7 testes (`AdminServices.test.tsx`).
+- [ ] Contra o backend real e num telemóvel: não verificado.
+
+---
+
+## Fase 18 — Comunicados da Equipa
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.46 do TRD. Consome a Fase 20 do backend (migration primeiro).
+
+**Escopo:**
+- `pages/AdminBroadcasts.tsx` (`/admin/comunicados`; `services/adminBroadcasts.ts`, `hooks/useAdminBroadcasts.ts`): grupo (clientes / profissionais / todos) + província opcional, assunto e mensagem; **«Ver destinatários»** calcula o número; só então aparece «Enviar comunicado», com confirmação («Enviar para N pessoas? Não se pode desfazer.»), e esse N segue no pedido. Mudar o grupo depois de contar apaga o número.
+- Histórico com estado (a enviar / concluído), quem enviou e os totais («37 de 40 enviados · 3 sem entrega»). Enquanto algum comunicado está a ser enviado, a lista actualiza de 5 em 5 segundos.
+- «Comunicados» na navegação do admin.
+
+**Critérios de Entrega:**
+- [x] 4 estados no histórico; o envio não existe sem contar; envia o número contado; grupo vazio e texto curto bloqueiam; mudar o grupo exige contar de novo; o erro do servidor volta a pedir confirmação — 8 testes (`AdminBroadcasts.test.tsx`).
+- [ ] Contra o backend real com SMTP configurado, e num telemóvel: não verificado.
+
+---
+
+## Fase 19 — Relatórios e Exportações
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.47 do TRD. Consome a Fase 21 do backend (sem migration).
+
+**Escopo:**
+- `pages/AdminReports.tsx` (`/admin/relatorios`; `services/adminReports.ts`, `hooks/useAdminReports.ts`): período «De / Até» (na hora de Maputo, UTC+2) que vale para o funil e para as exportações; funil de profissionais em barras com o número e a percentagem dos registados; três botões de exportação CSV (utilizadores, pedidos, pagamentos).
+- Exportar: pede o ficheiro como `blob`, entrega-o ao browser (`guardarFicheiro`, que liberta o URL de objecto), confirma o número de linhas, **avisa quando o backend cortou no tecto de 5000** e não descarrega um ficheiro vazio quando o período não tem dados.
+- **`lib/api.ts`:** o interceptor deixa passar as respostas `responseType: 'blob'` sem as desembrulhar (um CSV não traz o envelope `{ success, data }`; desembrulhá-lo dava `undefined`). Alteração a código partilhado, coberta por `lib/api.test.ts`.
+- «Relatórios» na navegação do admin.
+
+**Critérios de Entrega:**
+- [x] Funil (percentagens, 4 estados), datas em Maputo, exportar (sucesso, cortado, vazio, erro), leitura dos cabeçalhos do backend, descarga do ficheiro, interceptor JSON vs. blob — 14 testes (`AdminReports.test.tsx`, `adminReports.test.ts`, `api.test.ts`).
+- [ ] A descarga num browser real (nome do ficheiro, acentos no Excel) e contra o backend real: não verificado. Os cabeçalhos `X-Linhas` / `X-Truncada` só chegam ao browser se o CORS os expuser (o backend envia `Access-Control-Expose-Headers`); confirmar com o domínio de produção.
+
+---
+
+## Fase 20 — Verificação em Dois Passos do Admin
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser e contra o Supabase real.** Ver Adendo v1.48 do TRD. Pareada com a Fase 22 do backend (`ADMIN_REQUIRE_MFA`, desligada por omissão).
+
+**Escopo:**
+- `services/mfa.ts` + `hooks/useMfa.ts`: estado (factor TOTP confirmado? nível da sessão), registo de factor (apaga antes os factores abandonados a meio, que o Supabase não deixa duplicar) e verificação do código — tudo directamente contra `supabase.auth.mfa`.
+- `pages/AdminSecurity.tsx` (`/admin/seguranca`): ativar (código QR + segredo em texto + código de 6 dígitos). **Não há «desativar»** de propósito: tirar a protecção a partir de uma sessão que pode estar roubada é o que o segundo factor existe para impedir; a recuperação de um telemóvel perdido é feita no painel do Supabase.
+- `RotaDeAdmin`: um admin com factor mas sessão `aal1` vê `DesafioMfa` antes de qualquer ecrã de admin. Sem factor, entra (o aviso para o ativar está no dashboard). Se o estado do MFA não puder ser lido, **deixa passar**: quem protege é o backend, e trancar o painel por uma falha de leitura seria pior do que deixar o backend dizer 403.
+- `FormularioDeCodigo` (partilhado): só aceita dígitos, 6 no máximo; código incompleto é recusado sem gastar um pedido; erros do Supabase traduzidos para português; campo limpo ao falhar.
+- Dashboard: aviso «Protege a tua conta de administrador» só quando se sabe que **não** há segundo factor (não alarma durante o carregamento nem numa falha). «Segurança» na navegação.
+
+**Critérios de Entrega:**
+- [x] Estado do MFA, registo (com limpeza de factores abandonados), verificação, validação do código e mensagens — 11 testes (`mfa.test.ts`); guard por papel e por nível `aal` (desafio, entrada, carregamento, falha de leitura) — 10 testes (`RotaDeAdmin.test.tsx`); ecrã de segurança — 6 testes (`AdminSecurity.test.tsx`); aviso no dashboard — 1 teste. A CSP já permite `img-src data:` para o QR.
+- [ ] **Não testado contra o Supabase real:** o TOTP tem de estar activo no projecto (Authentication → Multi-Factor), e o fluxo completo (registar → sair → entrar → desafio → painel) só se confirma num browser com uma app de autenticação.
+- [ ] Ordem de activação em produção: registar o factor de cada admin **antes** de ligar `ADMIN_REQUIRE_MFA=true` no backend.
+
+---
+
+## Fase 21 — Estado do Sistema
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.49 do TRD. Consome a Fase 23 do backend (sem migration).
+
+**Escopo:**
+- `pages/AdminSystem.tsx` (`/admin/sistema`; `services/adminSystem.ts`, `hooks/useAdminSystem.ts`): base de dados (com a latência), cache e email, cada um com o estado **em texto** («A funcionar» / «Com falha» / «Desligado»), e uma nota quando está desligado a explicar o efeito (sem cache a app só é mais lenta; sem SMTP os emails ficam no log); modo de pagamentos e se o segundo factor é obrigatório; pendentes (KYC, denúncias, comunicados presos) com ligação ao ecrã de cada um. Actualiza de 30 em 30 segundos.
+- «Sistema» na navegação do admin.
+
+**Critérios de Entrega:**
+- [x] 4 estados, latência, falha com detalhe, desligado explicado, configuração e pendentes com ligações — 6 testes (`AdminSystem.test.tsx`).
+- [ ] Contra o backend real e num telemóvel: não verificado. Não mostra o estado dos jobs nem erros recentes (o backend não os guarda — ver Fase 23 do backend).
+
+---
+
+## Fase 22 — Gestão de Administradores
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.50 do TRD. Consome a Fase 24 do backend (sem migration).
+
+**Escopo:**
+- `pages/AdminAdmins.tsx` (`/admin/administradores`; `services/adminAccounts.ts`, `hooks/useAdminAccounts.ts`): lista dos administradores (a própria conta marcada «(tu)»), formulário para adicionar (nome + email) e «Remover» com confirmação.
+- **Conta nova:** o ecrã mostra a **palavra-passe provisória uma só vez**, com botão «Copiar» e o aviso de que o backend não a guarda; fica até o admin fechar («Já guardei, fechar») e recarregar a página perde-a. **Promoção** de um cliente que já tinha conta: não mostra palavra-passe nenhuma.
+- Sem «Remover» na própria conta; remover explica que a conta fica como cliente, não é apagada; os erros do backend (último administrador, conta de profissional, já é administrador) aparecem como mensagem.
+- «Administradores» na navegação do admin. O formulário usa `noValidate` para a mensagem de erro ser a nossa, em português, e não a bolha nativa do browser.
+
+**Critérios de Entrega:**
+- [x] 4 estados na lista, sem «Remover» na própria conta, confirmação ao remover, erro do servidor, validação do formulário, palavra-passe mostrada uma vez e fechável, promoção sem palavra-passe, erro ao adicionar — 9 testes (`AdminAdmins.test.tsx`).
+- [ ] Contra o backend real e num telemóvel: não verificado.
 
 ---
 

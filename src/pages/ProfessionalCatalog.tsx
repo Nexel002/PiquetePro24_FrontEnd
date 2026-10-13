@@ -11,6 +11,7 @@ import { FotoDoCatalogo } from '../components/catalogo/FotoDoCatalogo'
 import { LayoutDividido } from '../components/layout/LayoutDividido'
 import { TrabalhosRealizados } from '../components/catalogo/TrabalhosRealizados'
 import { PhotoLightbox } from '../components/portfolio/PhotoLightbox'
+import { BotaoDenunciar } from '../components/moderacao/BotaoDenunciar'
 
 // Catálogo de um profissional (Fase 9, TRD Adendo v1.17): foto, apresentação, portfólio e
 // avaliações. Usado por um CLIENT a ver um profissional (link em FindProfessionals.tsx) e
@@ -49,7 +50,12 @@ export function ProfessionalCatalog() {
         <LayoutDividido foto={<FotoDoCatalogo catalog={catalog} capa={capa} ehDono={ehDono} />}>
           <ApresentacaoDoProfissional catalog={catalog} ehDono={ehDono} />
           <TrabalhosRealizados projects={catalog.projects} ehDono={ehDono} aoAbrirFoto={(photos, index) => setOpenPhotos({ photos, index })} />
-          <AvaliacoesDoProfissional reviews={catalog.reviews} media={catalog.rating_avg} />
+          <AvaliacoesDoProfissional reviews={catalog.reviews} media={catalog.rating_avg} podeDenunciar={!ehDono} />
+          {!ehDono && (
+            <div className="px-2">
+              <BotaoDenunciar targetType="USER" targetId={catalog.id} descricao="este profissional" />
+            </div>
+          )}
         </LayoutDividido>
       )}
 

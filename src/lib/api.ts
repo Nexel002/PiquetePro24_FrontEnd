@@ -43,6 +43,9 @@ api.interceptors.request.use(async (config) => {
 api.interceptors.response.use(
   (response) => {
     registarRespostaDoServidor(true)
+    // Descarregamentos (CSV) vêm como ficheiro, sem o envelope `{ success, data }` dos endpoints
+    // JSON: desembrulhá-los daria `undefined`.
+    if (response.config.responseType === 'blob') return response
     const envelope = response.data as ApiEnvelope<unknown>
     return { ...response, data: envelope.data }
   },

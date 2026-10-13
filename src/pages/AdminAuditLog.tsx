@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Navigate, useSearchParams } from 'react-router-dom'
-import { useProfile } from '../hooks/useProfile'
+import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
+import { useSearchParams } from 'react-router-dom'
 import { useAuditLog } from '../hooks/useAuditLog'
 import { useAdminSecurityAlerts } from '../hooks/useAdminSecurityAlerts'
 import { BackButton } from '../components/BackButton'
@@ -63,7 +63,6 @@ function SecurityAlertsPanel({ onFilterByUser }: { onFilterByUser: (userId: stri
 // decisão de AdminKyc.tsx (guard de role dentro do próprio componente, sem
 // convenção de RequireRole dedicada no projeto ainda).
 export function AdminAuditLog() {
-  const { data: profile, isLoading: isProfileLoading } = useProfile()
   const [actionFilter, setActionFilter] = useState('')
   const [successFilter, setSuccessFilter] = useState<SuccessFilter>('ALL')
   const [offset, setOffset] = useState(0)
@@ -110,18 +109,6 @@ export function AdminAuditLog() {
     setOffset(0)
   }
 
-  if (isProfileLoading) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
-      </main>
-    )
-  }
-
-  if (profile?.role !== 'ADMIN') {
-    return <Navigate to="/" replace />
-  }
-
   function handleFilterChange(update: () => void) {
     // Qualquer mudança de filtro volta à primeira página — continuar num offset
     // antigo depois de mudar o filtro mostraria uma página "no meio do nada" do
@@ -138,6 +125,8 @@ export function AdminAuditLog() {
           Histórico de ações
         </h1>
       </header>
+
+      <NavegacaoAdmin />
 
       <SecurityAlertsPanel onFilterByUser={handleFilterByUser} />
 

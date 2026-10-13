@@ -7,6 +7,7 @@ import type { RequestStatus } from '../services/serviceRequests'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
 import { PedidosPorEnviar } from '../components/PedidosPorEnviar'
+import { BotaoDenunciar } from '../components/moderacao/BotaoDenunciar'
 import { usePedidosPendentes } from '../hooks/usePedidosPendentes'
 
 // Formulário de avaliação (Fase 9, TRD Adendo v1.17): só para pedidos COMPLETED sem
@@ -165,6 +166,15 @@ export function MyServiceRequests() {
 
               {serviceRequest.status === 'COMPLETED' && serviceRequest.professional_id && serviceRequest.has_review === false && (
                 <ReviewForm requestId={serviceRequest.id} professionalId={serviceRequest.professional_id} />
+              )}
+
+              {serviceRequest.professional_id && serviceRequest.status !== 'OPEN' && (
+                <BotaoDenunciar
+                  targetType="SERVICE_REQUEST"
+                  targetId={serviceRequest.id}
+                  descricao="com este pedido"
+                  rotulo="Reportar um problema"
+                />
               )}
 
               {(serviceRequest.status === 'OPEN' || serviceRequest.status === 'ASSIGNED') && (

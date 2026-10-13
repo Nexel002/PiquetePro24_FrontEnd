@@ -1,10 +1,11 @@
 import type { Review } from '../../services/catalog'
+import { BotaoDenunciar } from '../moderacao/BotaoDenunciar'
 import { Stars } from './Estrelas'
 import { ResumoDeAvaliacao } from './ResumoDeAvaliacao'
 
 const dateFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'medium' })
 
-export function AvaliacoesDoProfissional({ reviews, media }: { reviews: Review[]; media: number | null }) {
+export function AvaliacoesDoProfissional({ reviews, media, podeDenunciar = false }: { reviews: Review[]; media: number | null; podeDenunciar?: boolean }) {
 
   return (
       <section className="flex flex-col gap-5 rounded-[2.5rem] bg-white p-6 shadow-card border border-gray-100 sm:p-7">
@@ -40,6 +41,12 @@ export function AvaliacoesDoProfissional({ reviews, media }: { reviews: Review[]
                     <Stars rating={review.rating} className="h-3.5 w-3.5" />
                   </div>
                   {review.comment && <p className="text-sm leading-relaxed text-piquete-gray-dark">{review.comment}</p>}
+                  {review.comment_hidden && (
+                    <p className="text-xs italic text-piquete-gray">Comentário removido pela moderação.</p>
+                  )}
+                  {podeDenunciar && review.comment && (
+                    <BotaoDenunciar targetType="REVIEW" targetId={review.id} descricao={`a avaliação de ${review.client_full_name}`} />
+                  )}
                 </li>
               ))}
             </ul>

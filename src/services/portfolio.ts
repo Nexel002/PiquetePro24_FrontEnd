@@ -27,6 +27,9 @@ export interface PortfolioProject {
   description: string | null
   created_at: string
   photos: ProjectPhoto[]
+  // Ocultado por moderação: só o dono recebe estes trabalhos, com o motivo (Fase 17 do backend).
+  hidden: boolean
+  hidden_reason: string | null
 }
 
 // Devolve a mensagem de erro de um ficheiro que não serve, ou null. Separado do upload

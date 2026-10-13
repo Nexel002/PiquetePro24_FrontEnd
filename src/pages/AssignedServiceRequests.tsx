@@ -4,6 +4,7 @@ import { useAssignedServiceRequests, useServiceRequestContact } from '../hooks/u
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
+import { BotaoDenunciar } from '../components/moderacao/BotaoDenunciar'
 import { formatInternationalPhone } from '../lib/phone'
 import type { RequestStatus, ServiceRequest } from '../services/serviceRequests'
 
@@ -97,6 +98,8 @@ function TrabalhoAceite({ request }: { request: ServiceRequest }) {
         {[request.neighborhood, request.district, request.province].filter(Boolean).join(', ')}
         {request.assigned_at && ` · aceite a ${dataFormatter.format(new Date(request.assigned_at))}`}
       </p>
+
+      <BotaoDenunciar targetType="SERVICE_REQUEST" targetId={request.id} descricao="com este pedido" rotulo="Reportar um problema" />
 
       {request.status === 'ASSIGNED' &&
         (mostrarContacto ? (

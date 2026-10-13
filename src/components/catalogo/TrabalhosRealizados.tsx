@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { PortfolioProject, ProjectPhoto } from '../../services/portfolio'
+import { BotaoDenunciar } from '../moderacao/BotaoDenunciar'
 import { ProjectCard } from '../portfolio/ProjectCard'
 
 interface TrabalhosRealizadosProps {
@@ -64,11 +65,16 @@ export function TrabalhosRealizados({ projects, ehDono, aoAbrirFoto }: Trabalhos
             {/* Grid de Trabalhos (Carrossel estilo Instagram para cada trabalho) */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               {visibleProjects.map((project) => (
-                <ProjectCard
-                  key={project.id}
-                  project={project}
-                  onOpenPhoto={(index) => aoAbrirFoto(project.photos, index)}
-                />
+                <div key={project.id} className="flex flex-col gap-2">
+                  {project.hidden && (
+                    <p role="status" className="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">
+                      Este trabalho foi ocultado pela moderação e não aparece a outros utilizadores
+                      {project.hidden_reason ? `: ${project.hidden_reason}` : '.'}
+                    </p>
+                  )}
+                  <ProjectCard project={project} onOpenPhoto={(index) => aoAbrirFoto(project.photos, index)} />
+                  {!ehDono && <BotaoDenunciar targetType="PORTFOLIO_PROJECT" targetId={project.id} descricao="este trabalho" />}
+                </div>
               ))}
             </div>
           </>

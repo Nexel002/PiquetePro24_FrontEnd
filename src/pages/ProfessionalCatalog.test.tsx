@@ -11,6 +11,8 @@ const estado = vi.hoisted(() => ({
 
 vi.mock('../hooks/useCatalog', () => ({ useProfessionalCatalog: () => estado.catalogo }))
 vi.mock('../hooks/useProfile', () => ({ useProfile: () => estado.perfil }))
+// Só o botão de denunciar usa este hook; o comportamento dele tem teste próprio.
+vi.mock('../hooks/useModeration', () => ({ useCreateReport: () => ({ mutate: vi.fn(), isPending: false }) }))
 
 function catalogo(extra: Partial<Catalogo> = {}): Catalogo {
   return {
@@ -98,6 +100,62 @@ describe('ProfessionalCatalog', () => {
     expect(screen.getByRole('link', { name: 'Editar o meu catálogo' }).getAttribute('href')).toBe('/catalogo')
     expect(screen.getByText(/Ainda não escreveste uma descrição/)).toBeTruthy()
     expect(screen.queryByRole('link', { name: /^Pedir/ })).toBeNull()
+  })
+
+  describe('moderação', () => {
+    const projecto = {
+      id: 't1',
+      category: null,
+      description: 'Casa de banho',
+      created_at: '2026-10-01T10:00:00Z',
+      photos: [{ id: 'f1', photo_url: 'https://x/1.webp', position: 0 }],
+      hidden: false,
+      hidden_reason: null,
+    }
+    const avaliacao = {
+      id: 'r1',
+      service_request_id: 's1',
+      professional_id: 'p1',
+      client_id: 'c1',
+      client_full_name: 'Ana',
+      rating: 4,
+      comment: 'Bom trabalho',
+      comment_hidden: false,
+      created_at: '2026-10-02T10:00:00Z',
+    }
+
+    it('quem não é o dono pode denunciar a conta, o trabalho e o comentário', () => {
+      mostrar({ data: catalogo({ projects: [projecto], reviews: [avaliacao], rating_avg: 4, rating_count: 1 }), isLoading: false, isError: false })
+
+      expect(screen.getByRole('button', { name: 'Denunciar este profissional' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Denunciar este trabalho' })).toBeTruthy()
+      expect(screen.getByRole('button', { name: 'Denunciar a avaliação de Ana' })).toBeTruthy()
+    })
+
+    it('o dono não se denuncia a si próprio e vê o aviso do trabalho ocultado', () => {
+      mostrar(
+        {
+          data: catalogo({ projects: [{ ...projecto, hidden: true, hidden_reason: 'Imagens impróprias' }] }),
+          isLoading: false,
+          isError: false,
+        },
+        { data: { id: 'p1' } },
+      )
+
+      expect(screen.queryByRole('button', { name: /denunciar/i })).toBeNull()
+      expect(screen.getByRole('status').textContent).toContain('Imagens impróprias')
+    })
+
+    it('um comentário ocultado é explicado e não se pode denunciar', () => {
+      mostrar({
+        data: catalogo({ reviews: [{ ...avaliacao, comment: null, comment_hidden: true }], rating_avg: 4, rating_count: 1 }),
+        isLoading: false,
+        isError: false,
+      })
+
+      expect(screen.getByText('Comentário removido pela moderação.')).toBeTruthy()
+      expect(screen.queryByRole('button', { name: 'Denunciar a avaliação de Ana' })).toBeNull()
+    })
   })
 
   it('sem trabalhos nem avaliações, mostra os estados vazios', () => {

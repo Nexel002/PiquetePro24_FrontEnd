@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Navigate } from 'react-router-dom'
+import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
 import { toast } from 'sonner'
-import { useProfile } from '../hooks/useProfile'
-import { useKycSubmissions, useReviewKyc } from '../hooks/useKyc'
+import { useKycSubmissions, useReopenKyc, useReviewKyc } from '../hooks/useKyc'
+import { esperaDaSubmissao, MOTIVOS_DE_REJEICAO_KYC } from '../lib/esperaKyc'
 import type { KycStatus, ProfessionalKyc } from '../services/kyc'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
@@ -30,30 +30,30 @@ const STATUS_FILTER_LABELS: Record<KycStatus | 'ALL', string> = {
   ALL: 'Todos',
 }
 
+// Há quanto tempo a submissão espera. O alerta tem texto («em atraso») e não só cor.
+function EsperaNaFila({ submittedAt }: { submittedAt: string }) {
+  const espera = esperaDaSubmissao(submittedAt)
+
+  return (
+    <p className={`text-xs ${espera.emAtraso ? 'font-semibold text-amber-700' : 'text-gray-500'}`}>
+      Em espera há {espera.texto}
+      {espera.emAtraso && ' — em atraso'}
+    </p>
+  )
+}
+
 // TRD Adendo v1.6: superfície mínima para o ADMIN exercer GET/PATCH /admin/kyc — não
 // é um "painel" com métricas, só a fila de revisão. Guard de role feito aqui (não há
 // convenção de RequireRole dedicada no projeto ainda — ver OnboardingGate.tsx para a
 // mesma decisão tomada para onboarding): sem role ADMIN, redireciona para a Home em
 // vez de mostrar um ecrã vazio ou um 403 cru do backend.
 export function AdminKyc() {
-  const { data: profile, isLoading: isProfileLoading } = useProfile()
   const [statusFilter, setStatusFilter] = useState<KycStatus | 'ALL'>('PENDING')
   const { data: submissions, isLoading, isError } = useKycSubmissions(statusFilter === 'ALL' ? undefined : statusFilter)
   const reviewKycMutation = useReviewKyc()
+  const reopenMutation = useReopenKyc()
   const [rejectingId, setRejectingId] = useState<string | null>(null)
   const [rejectNotes, setRejectNotes] = useState('')
-
-  if (isProfileLoading) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
-      </main>
-    )
-  }
-
-  if (profile?.role !== 'ADMIN') {
-    return <Navigate to="/" replace />
-  }
 
   function handleApprove(kyc: ProfessionalKyc) {
     reviewKycMutation.mutate(
@@ -63,6 +63,13 @@ export function AdminKyc() {
         onError: (err) => toast.error(err instanceof Error ? err.message : 'Não foi possível aprovar esta submissão.'),
       },
     )
+  }
+
+  function handleReopen(kyc: ProfessionalKyc) {
+    reopenMutation.mutate(kyc.id, {
+      onSuccess: () => toast.success(`Revisão de ${kyc.bi_number} reaberta.`),
+      onError: (err) => toast.error(err instanceof Error ? err.message : 'Não foi possível reabrir esta submissão.'),
+    })
   }
 
   function handleStartReject(kycId: string) {
@@ -97,6 +104,8 @@ export function AdminKyc() {
           Revisão de KYC
         </h1>
       </header>
+
+      <NavegacaoAdmin />
 
       <div className="flex gap-2 text-sm">
         {STATUS_FILTERS.map((filter) => (
@@ -139,12 +148,41 @@ export function AdminKyc() {
                   <Badge variant={STATUS_BADGE_VARIANT[kyc.status]}>{STATUS_LABELS[kyc.status]}</Badge>
                 </div>
 
+                {kyc.status === 'PENDING' && (
+                  <EsperaNaFila submittedAt={kyc.submitted_at} />
+                )}
+
                 {kyc.review_notes && <p className="text-sm text-gray-600">Motivo: {kyc.review_notes}</p>}
+
+                {kyc.status === 'REJECTED' && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="self-start"
+                    onClick={() => handleReopen(kyc)}
+                    disabled={reopenMutation.isPending}
+                  >
+                    Reabrir revisão
+                  </Button>
+                )}
 
                 {kyc.status === 'PENDING' && (
                   <div className="flex flex-col gap-2">
                     {rejectingId === kyc.id ? (
                       <div className="flex flex-col gap-2">
+                        <div className="flex flex-wrap gap-1.5" aria-label="Motivos frequentes">
+                          {MOTIVOS_DE_REJEICAO_KYC.map((motivo) => (
+                            <button
+                              key={motivo}
+                              type="button"
+                              onClick={() => setRejectNotes(motivo)}
+                              className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-200"
+                            >
+                              {motivo.split('.')[0]}
+                            </button>
+                          ))}
+                        </div>
                         <label className="flex flex-col gap-1.5">
                           <span className="text-xs font-semibold uppercase tracking-wider text-piquete-blue-dark">Motivo da rejeição</span>
                           <textarea

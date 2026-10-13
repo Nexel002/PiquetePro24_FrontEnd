@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Link, Navigate } from 'react-router-dom'
+import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
+import { NotasInternas } from '../components/admin/NotasInternas'
+import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useProfile } from '../hooks/useProfile'
 import { useAdminCancelServiceRequest, useAdminServiceRequests } from '../hooks/useAdminServiceRequests'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
@@ -33,10 +34,10 @@ const createdAtFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'medium
 // mesma convenção de guard de role dentro do próprio componente já usada nos outros
 // ecrãs de admin.
 export function AdminServiceRequests() {
-  const { data: profile, isLoading: isProfileLoading } = useProfile()
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL')
   const [offset, setOffset] = useState(0)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
+  const [notasAbertasId, setNotasAbertasId] = useState<string | null>(null)
 
   const { data: requests, isLoading, isError } = useAdminServiceRequests({
     status: statusFilter === 'ALL' ? undefined : statusFilter,
@@ -44,18 +45,6 @@ export function AdminServiceRequests() {
     offset,
   })
   const cancelMutation = useAdminCancelServiceRequest()
-
-  if (isProfileLoading) {
-    return (
-      <main className="flex min-h-dvh items-center justify-center">
-        <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
-      </main>
-    )
-  }
-
-  if (profile?.role !== 'ADMIN') {
-    return <Navigate to="/" replace />
-  }
 
   function handleStatusChange(value: StatusFilter) {
     setOffset(0)
@@ -83,6 +72,8 @@ export function AdminServiceRequests() {
           Pedidos de serviço
         </h1>
       </header>
+
+      <NavegacaoAdmin />
 
       <div className="flex gap-2 text-sm">
         <select
@@ -170,7 +161,18 @@ export function AdminServiceRequests() {
                       )}
                     </>
                   )}
+
+                  <button
+                    type="button"
+                    aria-expanded={notasAbertasId === serviceRequest.id}
+                    onClick={() => setNotasAbertasId((atual) => (atual === serviceRequest.id ? null : serviceRequest.id))}
+                    className="text-sm font-semibold text-piquete-blue underline pt-1"
+                  >
+                    Notas
+                  </button>
                 </div>
+
+                {notasAbertasId === serviceRequest.id && <NotasInternas targetType="SERVICE_REQUEST" targetId={serviceRequest.id} />}
               </Card>
             </li>
           ))}

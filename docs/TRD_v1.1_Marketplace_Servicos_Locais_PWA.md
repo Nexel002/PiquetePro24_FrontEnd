@@ -1469,13 +1469,17 @@ rollback;
 
 ## Adendo v1.39
 
-### Dashboard de entrada do Admin — PROPOSTA, só frontend (13/10/2026)
+### Dashboard de entrada do Admin — só frontend (13/10/2026)
 
-**Estado: proposta, aguarda aprovação. Nada implementado.**
+**Estado: implementado em `feat/dashboard-admin`; por validar no browser.**
 
 **Contexto.** Revisão do painel de administração a pedido do utilizador. Não existe uma dashboard: o atalho «Painel Admin» da Home abre `/admin/kyc`; Métricas (`/admin/metricas`) e Registo de auditoria (`/admin/audit-log`) não têm ligação a partir da Home; não há contadores de pendentes; a navegação entre ecrãs de admin é só um botão de voltar; os alertas de segurança só aparecem dentro do Registo de auditoria. A verificação do role `ADMIN` está repetida em seis páginas. Verificado que o backend protege todas as rotas `/admin/*` com `requireAuth` + `requireRole('ADMIN')` (lê `users_profile.role`, não o JWT).
 
-**Decisão proposta.** Nova rota `/admin` com cartões de atenção (KYC em análise, pedidos abertos, alertas de segurança 24h) e atalhos para os seis ecrãs, sem endpoint novo: usa `GET /admin/metrics` e `GET /admin/security-alerts`. Sem gráficos, mantendo a decisão do Adendo v1.9 D. A UI esconde, não autoriza — a autorização continua a ser do backend.
+**Decisão.** Nova rota `/admin` com cartões de atenção (KYC em análise, pedidos abertos, alertas de segurança 24h) e atalhos para os ecrãs, sem endpoint novo: usa `GET /admin/metrics` e `GET /admin/security-alerts`. Sem gráficos, mantendo a decisão do Adendo v1.9 D. A UI esconde, não autoriza — a autorização continua a ser do backend.
+
+**Implementação.** `RotaDeAdmin` (guard de role na rota, em lugar dos seis guards inline), `NavegacaoAdmin` + `destinos.ts` (barra de separadores partilhada), `CartaoDeAtencao` (distingue a carregar, erro e zero), `pages/AdminDashboard.tsx` em `/admin`. A Home passa a apontar o atalho «Painel Admin» para `/admin`. 10 testes novos.
+
+**Verificar manualmente.** Entrar como ADMIN: Home → «Painel Admin» abre `/admin` com os três contadores; cada cartão leva ao ecrã certo; a barra de separadores funciona em 390 px (desliza na horizontal) e em desktop; como CLIENT/PROFESSIONAL, `/admin` e `/admin/kyc` redireccionam para a Home.
 
 **Alternativa rejeitada.** Endpoint dedicado `/admin/dashboard`: duplicaria agregados que a RPC `admin_metrics()` já devolve.
 
@@ -1498,3 +1502,118 @@ rollback;
 **E. Por verificar.** Contra o Supabase real: pedir o catálogo de um profissional com KYC aprovado e de outro sem. Os ecrãs continuam por ver num browser e num telemóvel.
 
 **Notas de deploy:** nenhuma migration, nenhuma variável. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 9 e Fase 6; `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 9.
+
+## Adendo v1.41
+
+### Painel de admin: subscrições e pagamentos (13/10/2026)
+
+**Contexto.** Na revisão do painel (Adendo v1.39) o financeiro parecia bloqueado pela «Fase 5 do backend, que não existe». Era um comentário desactualizado: a Fase 5 existe (subscrições, transacções, activação manual pelo admin). Faltava a visão global.
+
+**Decisão.** Modelo de cobrança **manual** (o admin confirma o pagamento recebido por fora; sem gateway). Três endpoints novos, sem migration: `GET /admin/subscriptions`, `GET /admin/payments`, `POST /admin/users/:id/subscription/revoke` (motivo obrigatório, vai para o audit log). Frontend: `/admin/subscricoes` e um cartão «a expirar (7 dias)» no dashboard. A janela de 7 dias é mais larga do que o aviso por email (3 dias) de propósito: o admin precisa de tempo para contactar.
+
+**Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** frontend Fase 13; backend Fase 15.
+
+## Adendo v1.42
+
+### Painel de admin: fila de KYC por antiguidade, espera e reabertura (14/10/2026)
+
+**Contexto.** A fila de revisão de KYC não dizia há quanto tempo cada pessoa esperava, não tinha ordem por antiguidade (ordenava por `id`, que é um UUID aleatório) e uma rejeição por engano não tinha volta.
+
+**Decisão.** Coluna `submitted_at` (migration `20261014090000_kyc_submitted_at.sql`), fila FIFO, indicador «em atraso» acima de 48 h, motivos de rejeição frequentes no ecrã, e `POST /admin/kyc/:id/reopen` (só a partir de `REJECTED`, volta ao fim da fila). O histórico de decisões por revisor não ganha tabela: o audit log já o regista.
+
+**Notas de deploy:** **migration primeiro** (a aplicar à mão no SQL Editor), depois o backend, depois o frontend. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fase 16; frontend Fase 14.
+
+## Adendo v1.43
+
+### Painel de admin: denúncias e moderação de conteúdo (14/10/2026)
+
+**Contexto.** O único instrumento de moderação era banir a conta inteira. Fotos de portfólio e comentários de avaliações abusivos não tinham remédio proporcional, e não havia canal para os utilizadores denunciarem.
+
+**Decisão.** Tabela `reports` com um só formato para quatro tipos de alvo; o admin vê uma fila (abertas, mais antigas primeiro) e resolve ou rejeita com nota obrigatória, podendo ocultar o conteúdo na mesma acção. Ocultar não apaga: o profissional vê o trabalho com o motivo, o admin pode repor, a prova mantém-se. Numa avaliação oculta-se só o comentário (a nota continua a contar para a média). Contas e pedidos moderam-se pelas vias que já existem (banir, cancelar). Frontend: botão «Denunciar» no catálogo do profissional (conta, trabalhos, comentários) e ecrã `/admin/moderacao`.
+
+**Notas de deploy:** **migration primeiro** (`20261014100000_denuncias_e_moderacao.sql`, à mão no SQL Editor), depois o backend, depois o frontend. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fase 17; frontend Fase 15.
+
+## Adendo v1.44
+
+### Painel de admin: notas internas e disputas de pedidos (14/10/2026)
+
+**Contexto.** Perante um caso (um profissional que pede reembolso, um pedido em disputa) a equipa não tinha onde deixar contexto uns para os outros, e o cliente e o profissional não tinham como assinalar um problema com um pedido.
+
+**Decisão.** Tabela `admin_notes` (texto livre, só ADMIN, em contas e pedidos). A disputa reaproveita as denúncias do Adendo v1.43 com alvo `SERVICE_REQUEST`, limitada às duas partes do pedido. Frontend: secção «Notas internas» na ficha do utilizador e nos pedidos do admin, e «Reportar um problema» nos pedidos do cliente e do profissional.
+
+**Notas de deploy:** **migration primeiro** (`20261014110000_notas_internas_admin.sql`), depois backend, depois frontend. Sem variáveis. **Critérios de entrega correspondentes:** backend Fase 18; frontend Fase 16.
+
+## Adendo v1.45
+
+### Painel de admin: gestão do catálogo de serviços (14/10/2026)
+
+**Contexto.** Os serviços (Canalização, Pintura…) só se criavam ou renomeavam por SQL. Uma categoria nova pedia um programador.
+
+**Decisão.** CRUD de admin sobre `service_categories`, sem migration. O slug é imutável e derivado do nome; as palavras-chave são normalizadas para a pesquisa; apagar um serviço em uso é recusado pela chave estrangeira (409). Frontend: ecrã `/admin/servicos`. Preço da subscrição e outros parâmetros comerciais **ficam fora**: continuam variável de ambiente.
+
+**Atenção:** um serviço novo não tem ícone até se acrescentar o slug a `components/busca/caminhosDosIcones.ts` (o ecrã avisa).
+
+**Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 19; frontend Fase 17.
+
+## Adendo v1.46
+
+### Painel de admin: comunicados por email a grupos de utilizadores (14/10/2026)
+
+**Contexto.** A equipa não tinha como avisar os utilizadores (manutenção, novidades, aviso de segurança) sem usar uma ferramenta externa e as listas à mão.
+
+**Decisão.** Comunicado por **email** a um grupo (clientes, profissionais ou todos; opcionalmente uma província), com pré-visualização do número de destinatários e confirmação desse número no envio. Tecto de 500 por comunicado, 5 envios por hora por admin, histórico em `broadcasts`. Reaproveita o `EmailService` e o layout base; o texto do admin é escapado. Notificações dentro da app e SMS ficam de fora: não há infraestrutura. Envio em segundo plano no próprio processo, sem fila — um reinício a meio deixa o registo em `SENDING` (documentado na Fase 20 do backend).
+
+**Notas de deploy:** **migration primeiro** (`20261014120000_comunicados_admin.sql`), depois backend, depois frontend. Depende do SMTP já configurado (`SMTP_*`); sem ele os envios contam como falha. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fase 20; frontend Fase 18.
+
+## Adendo v1.47
+
+### Painel de admin: exportações CSV e funil de profissionais (14/10/2026)
+
+**Contexto.** As métricas do painel são um retrato do momento: não dizem onde os profissionais se perdem (registo, KYC, pagamento, primeiro trabalho) nem deixam levar os dados para uma folha de cálculo.
+
+**Decisão.** Três exportações CSV (utilizadores, pedidos, pagamentos) com filtros de data, tecto de 5000 linhas e **sem contactos** (telefone e email ficam de fora da exportação de utilizadores); e um funil de cinco etapas que conta pessoas. As células são neutralizadas contra CSV injection e o ficheiro leva BOM para o Excel. Cada exportação fica no audit log. Frontend: secção «Relatórios» em `/admin/relatorios`.
+
+**Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 21; frontend Fase 19.
+
+## Adendo v1.48
+
+### Painel de admin: verificação em dois passos (14/10/2026)
+
+**Contexto.** Uma conta de admin entra com palavra-passe ou Google, e o painel permite banir contas, activar subscrições e (desde o Adendo v1.46) enviar comunicados a centenas de pessoas. Uma só palavra-passe roubada chega a tudo isso.
+
+**Decisão.** TOTP do Supabase Auth como segundo factor, **exigido no backend** (variável `ADMIN_REQUIRE_MFA`, desligada por omissão) em todas as rotas `/admin/*`, e **pedido no frontend**: `/admin/seguranca` regista o factor (código QR + código de 6 dígitos) e um admin que já o tem mas entrou só com a palavra-passe vê o ecrã de verificação antes do painel. A exigência no backend é a que protege; o ecrã é conveniência. Fica de fora a divisão do ADMIN em papéis (revisor de KYC, financeiro…), que pede uma decisão sobre que acção pertence a quem.
+
+**Variável nova:** `ADMIN_REQUIRE_MFA` (backend, `fly secrets`). Se faltar: desligada. **Pré-requisito:** TOTP activo no Supabase (Authentication → Multi-Factor).
+
+**Notas de deploy:** sem migration. Ordem: backend, frontend, **registar o factor de cada admin**, e só depois ligar `ADMIN_REQUIRE_MFA=true`. Ligar antes tranca os admins fora (`fly secrets set ADMIN_REQUIRE_MFA=false` repõe). **Critérios de entrega correspondentes:** backend Fase 22; frontend Fase 20.
+
+## Adendo v1.49
+
+### Painel de admin: estado do sistema (14/10/2026)
+
+**Contexto.** Para saber se a base de dados, a cache e o email estão a funcionar, e se há comunicados presos ou denúncias por tratar, o admin tinha de pedir a quem tem acesso aos logs do Fly.
+
+**Decisão.** Um endpoint de admin (`GET /admin/system-status`) com o estado de cada peça e três contadores de pendentes, e um ecrã `/admin/sistema` que o mostra e actualiza de 30 em 30 segundos. Só estado, nunca segredos nem URLs. **Fora:** estado dos jobs, erros recentes e fila de emails — pedem instrumentação que ainda não existe.
+
+**Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 23; frontend Fase 21.
+
+## Adendo v1.50
+
+### Painel de admin: gestão de administradores (14/10/2026)
+
+**Contexto.** O Adendo v1.9 (item G) deixava deliberadamente a promoção a ADMIN fora da API: só por `UPDATE` directo na base de dados. Isso obrigava a mexer em SQL para cada novo admin e não deixava rasto na auditoria. O programador pediu poder adicionar administradores a partir do painel.
+
+**Decisão.** Passa a existir **um único sítio** onde se cria um ADMIN: `POST /admin/admins`, só acessível a quem já é ADMIN, com auditoria (`ADMIN_CREATE`, `ADMIN_PROMOTE`, `ADMIN_REVOKE`) e salvaguardas:
+- cria a conta com palavra-passe provisória (mostrada uma vez, nunca guardada nem registada) ou promove uma conta de **cliente** existente; **profissionais não se promovem**;
+- **remover = rebaixar a cliente**, nunca apagar; ninguém se remove a si próprio e nunca se remove o último administrador;
+- limite de 10 alterações por hora por admin;
+- `PATCH /admin/users/:id/role` continua a recusar ADMIN.
+
+A segurança destas contas reforça-se com a verificação em dois passos (Adendo v1.48). Fica de fora a divisão do ADMIN em papéis (revisor de KYC, financeiro…).
+
+**Script de administração.** `npm run admins -- listar | criar | palavra-passe | apagar` (backend, `service_role` do `.env`): cria o primeiro admin e serve de recuperação se o último for removido. Só apaga contas que sejam ADMIN.
+
+**Operação de 14/10/2026 (script, Supabase real):** apagada a conta ADMIN de teste `admin.teste@piquetepro24-teste.com` (4 KYC por ela revistos ficam sem revisor); definida palavra-passe na conta ADMIN do programador, que entrava só por Google (mantida para preservar a identidade Google e a auditoria). Estado final: um ADMIN. A palavra-passe provisória foi entregue ao programador e **não consta de nenhum documento**.
+
+**Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 24; frontend Fase 22.
+
