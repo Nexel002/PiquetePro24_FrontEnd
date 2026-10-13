@@ -120,7 +120,7 @@ describe('AdminDashboard', () => {
       .getAllByRole('link')
       .map((a) => a.getAttribute('href'))
       .filter((href) => href?.startsWith('/admin/'))
-    for (const rota of ['/admin/kyc', '/admin/utilizadores', '/admin/pedidos-servico', '/admin/subscricoes', '/admin/moderacao', '/admin/seguranca', '/admin/metricas', '/admin/audit-log']) {
+    for (const rota of ['/admin/kyc', '/admin/utilizadores', '/admin/pedidos-servico', '/admin/subscricoes', '/admin/moderacao', '/admin/seguranca', '/admin/sistema', '/admin/metricas', '/admin/audit-log']) {
       expect(destinos).toContain(rota)
     }
   })

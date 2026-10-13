@@ -1587,3 +1587,13 @@ rollback;
 
 **Notas de deploy:** sem migration. Ordem: backend, frontend, **registar o factor de cada admin**, e só depois ligar `ADMIN_REQUIRE_MFA=true`. Ligar antes tranca os admins fora (`fly secrets set ADMIN_REQUIRE_MFA=false` repõe). **Critérios de entrega correspondentes:** backend Fase 22; frontend Fase 20.
 
+## Adendo v1.49
+
+### Painel de admin: estado do sistema (14/10/2026)
+
+**Contexto.** Para saber se a base de dados, a cache e o email estão a funcionar, e se há comunicados presos ou denúncias por tratar, o admin tinha de pedir a quem tem acesso aos logs do Fly.
+
+**Decisão.** Um endpoint de admin (`GET /admin/system-status`) com o estado de cada peça e três contadores de pendentes, e um ecrã `/admin/sistema` que o mostra e actualiza de 30 em 30 segundos. Só estado, nunca segredos nem URLs. **Fora:** estado dos jobs, erros recentes e fila de emails — pedem instrumentação que ainda não existe.
+
+**Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 23; frontend Fase 21.
+

@@ -548,6 +548,20 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 21 — Estado do Sistema
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.49 do TRD. Consome a Fase 23 do backend (sem migration).
+
+**Escopo:**
+- `pages/AdminSystem.tsx` (`/admin/sistema`; `services/adminSystem.ts`, `hooks/useAdminSystem.ts`): base de dados (com a latência), cache e email, cada um com o estado **em texto** («A funcionar» / «Com falha» / «Desligado»), e uma nota quando está desligado a explicar o efeito (sem cache a app só é mais lenta; sem SMTP os emails ficam no log); modo de pagamentos e se o segundo factor é obrigatório; pendentes (KYC, denúncias, comunicados presos) com ligação ao ecrã de cada um. Actualiza de 30 em 30 segundos.
+- «Sistema» na navegação do admin.
+
+**Critérios de Entrega:**
+- [x] 4 estados, latência, falha com detalhe, desligado explicado, configuração e pendentes com ligações — 6 testes (`AdminSystem.test.tsx`).
+- [ ] Contra o backend real e num telemóvel: não verificado. Não mostra o estado dos jobs nem erros recentes (o backend não os guarda — ver Fase 23 do backend).
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
