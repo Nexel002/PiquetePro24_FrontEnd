@@ -1543,3 +1543,15 @@ rollback;
 
 **Notas de deploy:** **migration primeiro** (`20261014110000_notas_internas_admin.sql`), depois backend, depois frontend. Sem variáveis. **Critérios de entrega correspondentes:** backend Fase 18; frontend Fase 16.
 
+## Adendo v1.45
+
+### Painel de admin: gestão do catálogo de serviços (14/10/2026)
+
+**Contexto.** Os serviços (Canalização, Pintura…) só se criavam ou renomeavam por SQL. Uma categoria nova pedia um programador.
+
+**Decisão.** CRUD de admin sobre `service_categories`, sem migration. O slug é imutável e derivado do nome; as palavras-chave são normalizadas para a pesquisa; apagar um serviço em uso é recusado pela chave estrangeira (409). Frontend: ecrã `/admin/servicos`. Preço da subscrição e outros parâmetros comerciais **ficam fora**: continuam variável de ambiente.
+
+**Atenção:** um serviço novo não tem ícone até se acrescentar o slug a `components/busca/caminhosDosIcones.ts` (o ecrã avisa).
+
+**Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 19; frontend Fase 17.
+

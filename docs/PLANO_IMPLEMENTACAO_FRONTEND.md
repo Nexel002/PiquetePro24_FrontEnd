@@ -483,6 +483,22 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 17 — Gestão de Serviços pelo Admin
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.45 do TRD. Consome a Fase 19 do backend (sem migration).
+
+**Escopo:**
+- `pages/AdminServices.tsx` (`/admin/servicos`; `services/adminCategories.ts`, `hooks/useAdminCategories.ts`): lista os serviços com o slug, as palavras de pesquisa e quantos profissionais os usam; criar, editar (nome e palavras; o slug não muda) e apagar com confirmação. «Apagar» fica desactivado enquanto há profissionais com o serviço; se um pedido ainda o referir, o 409 do backend aparece como mensagem.
+- Aviso «Sem ícone» e instrução quando o slug não está em `caminhosDosIcones.ts` (um serviço novo usa o ícone genérico até lá).
+- Qualquer alteração invalida também a lista pública `['service-categories']`.
+- «Serviços» na navegação do admin.
+
+**Critérios de Entrega:**
+- [x] 4 estados, contagem, aviso de ícone, apagar com confirmação e bloqueado se em uso, criar (nome curto recusado) e editar — 7 testes (`AdminServices.test.tsx`).
+- [ ] Contra o backend real e num telemóvel: não verificado.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
