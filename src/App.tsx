@@ -46,6 +46,7 @@ const AdminBroadcasts = lazy(() => import('./pages/AdminBroadcasts').then((m) =>
 const AdminReports = lazy(() => import('./pages/AdminReports').then((m) => ({ default: m.AdminReports })))
 const AdminSecurity = lazy(() => import('./pages/AdminSecurity').then((m) => ({ default: m.AdminSecurity })))
 const AdminSystem = lazy(() => import('./pages/AdminSystem').then((m) => ({ default: m.AdminSystem })))
+const AdminAdmins = lazy(() => import('./pages/AdminAdmins').then((m) => ({ default: m.AdminAdmins })))
 const AdminMetrics = lazy(() => import('./pages/AdminMetrics').then((m) => ({ default: m.AdminMetrics })))
 const DefinirNovaPassword = lazy(() => import('./pages/DefinirNovaPassword').then((m) => ({ default: m.DefinirNovaPassword })))
 
@@ -385,6 +386,16 @@ function App() {
                 <ProtectedRoute>
                   <RotaDeAdmin>
                     <AdminSystem />
+                  </RotaDeAdmin>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/administradores"
+              element={
+                <ProtectedRoute>
+                  <RotaDeAdmin>
+                    <AdminAdmins />
                   </RotaDeAdmin>
                 </ProtectedRoute>
               }

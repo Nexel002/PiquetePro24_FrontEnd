@@ -1597,3 +1597,23 @@ rollback;
 
 **Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 23; frontend Fase 21.
 
+## Adendo v1.50
+
+### Painel de admin: gestão de administradores (14/10/2026)
+
+**Contexto.** O Adendo v1.9 (item G) deixava deliberadamente a promoção a ADMIN fora da API: só por `UPDATE` directo na base de dados. Isso obrigava a mexer em SQL para cada novo admin e não deixava rasto na auditoria. O programador pediu poder adicionar administradores a partir do painel.
+
+**Decisão.** Passa a existir **um único sítio** onde se cria um ADMIN: `POST /admin/admins`, só acessível a quem já é ADMIN, com auditoria (`ADMIN_CREATE`, `ADMIN_PROMOTE`, `ADMIN_REVOKE`) e salvaguardas:
+- cria a conta com palavra-passe provisória (mostrada uma vez, nunca guardada nem registada) ou promove uma conta de **cliente** existente; **profissionais não se promovem**;
+- **remover = rebaixar a cliente**, nunca apagar; ninguém se remove a si próprio e nunca se remove o último administrador;
+- limite de 10 alterações por hora por admin;
+- `PATCH /admin/users/:id/role` continua a recusar ADMIN.
+
+A segurança destas contas reforça-se com a verificação em dois passos (Adendo v1.48). Fica de fora a divisão do ADMIN em papéis (revisor de KYC, financeiro…).
+
+**Script de administração.** `npm run admins -- listar | criar | palavra-passe | apagar` (backend, `service_role` do `.env`): cria o primeiro admin e serve de recuperação se o último for removido. Só apaga contas que sejam ADMIN.
+
+**Operação de 14/10/2026 (script, Supabase real):** apagada a conta ADMIN de teste `admin.teste@piquetepro24-teste.com` (4 KYC por ela revistos ficam sem revisor); definida palavra-passe na conta ADMIN do programador, que entrava só por Google (mantida para preservar a identidade Google e a auditoria). Estado final: um ADMIN. A palavra-passe provisória foi entregue ao programador e **não consta de nenhum documento**.
+
+**Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 24; frontend Fase 22.
+

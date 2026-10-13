@@ -562,6 +562,22 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 22 — Gestão de Administradores
+
+**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.50 do TRD. Consome a Fase 24 do backend (sem migration).
+
+**Escopo:**
+- `pages/AdminAdmins.tsx` (`/admin/administradores`; `services/adminAccounts.ts`, `hooks/useAdminAccounts.ts`): lista dos administradores (a própria conta marcada «(tu)»), formulário para adicionar (nome + email) e «Remover» com confirmação.
+- **Conta nova:** o ecrã mostra a **palavra-passe provisória uma só vez**, com botão «Copiar» e o aviso de que o backend não a guarda; fica até o admin fechar («Já guardei, fechar») e recarregar a página perde-a. **Promoção** de um cliente que já tinha conta: não mostra palavra-passe nenhuma.
+- Sem «Remover» na própria conta; remover explica que a conta fica como cliente, não é apagada; os erros do backend (último administrador, conta de profissional, já é administrador) aparecem como mensagem.
+- «Administradores» na navegação do admin. O formulário usa `noValidate` para a mensagem de erro ser a nossa, em português, e não a bolha nativa do browser.
+
+**Critérios de Entrega:**
+- [x] 4 estados na lista, sem «Remover» na própria conta, confirmação ao remover, erro do servidor, validação do formulário, palavra-passe mostrada uma vez e fechável, promoção sem palavra-passe, erro ao adicionar — 9 testes (`AdminAdmins.test.tsx`).
+- [ ] Contra o backend real e num telemóvel: não verificado.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
