@@ -1466,3 +1466,35 @@ rollback;
 **D. Verificar manualmente.** `/perfil` e `/profissionais/:id` a 390, 768 e 1280 px: um só título, foto presa ao rolar em desktop, nome sobre a foto em desktop e por baixo em telemóvel. Busca em telemóvel: o teclado não abre sozinho.
 
 **Notas de deploy:** nenhuma. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (polimento de UI) e Fase 9.
+
+## Adendo v1.39
+
+### Dashboard de entrada do Admin — PROPOSTA, só frontend (13/10/2026)
+
+**Estado: proposta, aguarda aprovação. Nada implementado.**
+
+**Contexto.** Revisão do painel de administração a pedido do utilizador. Não existe uma dashboard: o atalho «Painel Admin» da Home abre `/admin/kyc`; Métricas (`/admin/metricas`) e Registo de auditoria (`/admin/audit-log`) não têm ligação a partir da Home; não há contadores de pendentes; a navegação entre ecrãs de admin é só um botão de voltar; os alertas de segurança só aparecem dentro do Registo de auditoria. A verificação do role `ADMIN` está repetida em seis páginas. Verificado que o backend protege todas as rotas `/admin/*` com `requireAuth` + `requireRole('ADMIN')` (lê `users_profile.role`, não o JWT).
+
+**Decisão proposta.** Nova rota `/admin` com cartões de atenção (KYC em análise, pedidos abertos, alertas de segurança 24h) e atalhos para os seis ecrãs, sem endpoint novo: usa `GET /admin/metrics` e `GET /admin/security-alerts`. Sem gráficos, mantendo a decisão do Adendo v1.9 D. A UI esconde, não autoriza — a autorização continua a ser do backend.
+
+**Alternativa rejeitada.** Endpoint dedicado `/admin/dashboard`: duplicaria agregados que a RPC `admin_metrics()` já devolve.
+
+**Notas de deploy:** nenhuma (sem migração, sem variáveis). **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 12.
+
+## Adendo v1.40
+
+### Selo «Identidade verificada» no catálogo, ícones de categoria vigiados e documentação replicada — backend e frontend (13/10/2026)
+
+**Contexto.** O Adendo v1.38 retirou o selo «Verificado» porque nenhum contrato trazia dados de verificação, e deixou pendentes: o selo, a vigilância dos ícones de categoria e a replicação desta documentação no backend.
+
+**A. Backend — `GET /professionals/:id/catalog` ganha `identity_verified: boolean`.** É `true` só quando existe uma linha em `professional_kyc` do profissional com `status = 'APPROVED'` (a mesma fonte da montra de trabalhos, `featuredWorksService`); `PENDING`, `REJECTED` ou sem KYC dão `false`. Sem migration: a tabela e o enum já existiam. Campo novo e aditivo, por isso um frontend antigo continua a funcionar. Uma falha a ler o KYC devolve 500 em vez de `false` (esconder o erro mostraria «não verificado» a quem o está). Teste novo em `routes/catalog.test.ts` (cinco casos).
+
+**B. Frontend.** `ProfessionalCatalog.identity_verified` (`services/catalog.ts`); `IdentidadeDoProfissional` mostra «Identidade verificada» só quando é `true`. O Perfil da própria conta continua **sem** selo: `UserProfile` não traz este dado e o profissional vê o estado do seu KYC no ecrã de verificação.
+
+**C. Ícones de categoria.** A tabela passou para `components/busca/caminhosDosIcones.ts` (o ficheiro do componente só exporta componentes). Novo teste que lê as migrations do backend, **quando o repositório está na pasta ao lado**, e falha se uma categoria inserida não tiver ícone; sozinho (CI do frontend) o teste é ignorado e fica o aviso na consola em desenvolvimento.
+
+**D. Ordem de deploy.** Backend primeiro (o campo novo), frontend depois. Se o frontend sair antes, `identity_verified` vem `undefined` e o selo simplesmente não aparece — sem erro.
+
+**E. Por verificar.** Contra o Supabase real: pedir o catálogo de um profissional com KYC aprovado e de outro sem. Os ecrãs continuam por ver num browser e num telemóvel.
+
+**Notas de deploy:** nenhuma migration, nenhuma variável. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 9 e Fase 6; `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 9.
