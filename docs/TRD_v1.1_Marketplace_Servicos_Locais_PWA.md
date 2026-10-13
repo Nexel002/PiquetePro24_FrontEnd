@@ -1617,3 +1617,17 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 
 **Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 24; frontend Fase 22.
 
+## Adendo v1.51
+
+### Empresas e equipas de técnicos — PROPOSTA (14/10/2026)
+
+**Estado: proposta, aguarda aprovação e decisões. Nada implementado.**
+
+**Contexto.** O Adendo v1.4, item F, introduziu `professional_type` (`SINGULAR` / `COMPANY`) deixando o desenho para depois («o onboarding de empresa deve ser mais complexo»). Esse «depois» nunca chegou: a 14/10/2026, a verificação no código mostra que `COMPANY` é só uma etiqueta. A empresa passa pelo mesmo KYC (BI + NUIT de uma pessoa), paga a mesma subscrição e é convidada, escolhida e atribuída como uma pessoa. Não existe forma de uma empresa registar os seus profissionais, nem de dizer ao cliente quem vai a casa dele.
+
+**Decisão proposta.** A empresa **continua a ser o profissional** perante o sistema (convites, propostas, KYC, subscrição, catálogo, avaliações); a **equipa de técnicos** é uma camada por baixo, gerida pelo administrador da empresa (o dono da conta), que **atribui o técnico** a cada pedido depois de escolhida. Assim nenhuma regra existente para singulares é tocada. Faseado: A) equipa e atribuição; B) KYC de empresa (NUIT, alvará, representante legal); C) subscrição por escalão de técnicos; D) técnico com login próprio; E) avaliação por técnico; F) administração. Detalhe, modelo de dados, riscos e as 7 decisões em aberto: backend Fase 25 e frontend Fase 23.
+
+**Alternativa rejeitada.** Cada técnico como um profissional independente «associado» a uma empresa: duplicava KYC, subscrição e catálogo por pessoa, e obrigava a reescrever convites, elegibilidade e pesquisa.
+
+**Notas de deploy:** nenhuma ainda (proposta). A implementação traz migrations (`company_members`, `company_member_services`, `service_requests.assigned_member_id`) e, no Bloco B, colunas novas em `professional_kyc`. **Critérios de entrega correspondentes:** backend Fase 25; frontend Fase 23.
+

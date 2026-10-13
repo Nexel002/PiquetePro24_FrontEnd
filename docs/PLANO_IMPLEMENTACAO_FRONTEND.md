@@ -578,6 +578,28 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 23 — Empresas e Equipas (plano, a decidir antes de implementar)
+
+**Estado: PROPOSTA — aguarda aprovação (14/10/2026). Nada implementado.** Ver Adendo v1.51 do TRD e a Fase 25 do backend (que tem o modelo de dados, as regras e as decisões em aberto). Backend primeiro, frontend depois.
+
+**Ponto de partida:** hoje `COMPANY` é só uma etiqueta («Empresa») no registo, no perfil, no catálogo e nos resultados da busca. Não há equipa, nem atribuição de técnico, nem KYC próprio.
+
+**Escopo por bloco (espelha o backend):**
+- **Bloco A — equipa e atribuição.** Ecrã «A minha equipa» (só para empresas: listar, adicionar, editar, desativar técnicos — nome, foto, título, serviços) em `/equipa`, ligado ao menu do profissional **apenas quando `professional_type === 'COMPANY'`**; em «Trabalhos aceites» da empresa, cada pedido ganha **«Atribuir técnico»** (escolha de um técnico activo que faça o serviço do pedido), e um aviso para os pedidos aceites **ainda sem técnico**. No catálogo (`ProfessionalCatalog`) uma secção **«A equipa»** (foto, nome próprio, título; nunca telefone) e, ao cliente, o técnico atribuído no pedido («Vem o João, eletricista»).
+- **Bloco B — KYC de empresa.** `Kyc.tsx` passa a mostrar os campos certos por tipo: empresa → NUIT da empresa, alvará, representante legal; singular → como hoje. Ecrã de revisão do admin com o tipo e os documentos.
+- **Bloco C — subscrição por escalão.** `Subscription.tsx` mostra o escalão e o preço conforme o número de técnicos activos (se for decidido).
+- **Bloco D — técnico com login** (opcional, depois): ecrã do técnico só com os trabalhos que lhe foram atribuídos.
+- **Bloco E — avaliações por técnico** e painel da empresa (pedidos e nota por técnico).
+- **Bloco F — admin:** ficha da empresa com a equipa, denúncias contra técnicos, métricas.
+
+**Os 4 estados** (carregar, erro, vazio, dados) em cada ecrã novo; «vazio» da equipa explica o que fazer («Ainda não tens técnicos. Adiciona o primeiro para poderes atribuí-lo aos pedidos»). Mobile-first: a empresa gere a equipa a partir do telemóvel.
+
+**Critérios de Entrega (a marcar quando implementado):**
+- [ ] Bloco A: equipa, atribuição, aviso de pedidos sem técnico, equipa no catálogo sem telefones; testes de componente; lint, build e testes limpos.
+- [ ] Blocos B a F, conforme as decisões do backend (Fase 25).
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
