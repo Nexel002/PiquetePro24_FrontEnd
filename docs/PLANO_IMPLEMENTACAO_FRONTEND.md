@@ -612,13 +612,14 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 25 — Empresas e Equipas: equipa no catálogo e avaliação do técnico
 
-**Estado: aprovada (14/10/2026); implementação em curso.**
+**Estado: implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.**
 
 - `ProfessionalCatalog`: secção **«A equipa»** (foto, nome próprio, título, nota; nunca telefone), só técnicos aprovados.
 - Formulário de avaliação (`MyServiceRequests`): nota da **empresa** e, se o pedido teve técnico, nota **opcional do técnico**; as avaliações do catálogo da empresa mostram o técnico.
 
 **Critérios de Entrega:**
-- [ ] Equipa no catálogo; avaliação com e sem nota do técnico — testes de componente.
+- [x] Secção «A equipa» (técnico, título, nota e nº de avaliações; «Ainda sem avaliações»; ausente em singulares e em empresas sem técnicos; nunca telefone nem email); a avaliação diz «Feito por João · Canalizador» e a nota dele; sem técnico não menciona nenhum — 6 testes novos em `ProfessionalCatalog.test.tsx`. Formulário de avaliação: a nota do técnico só aparece se o pedido teve técnico, é opcional, tocar outra vez tira-a, e sem ela a avaliação da empresa segue sozinha — 5 testes novos em `MyServiceRequests.test.tsx`.
+- [ ] Não verificado no browser nem contra o backend real (migration `20261015120000_avaliacao_do_tecnico.sql`).
 
 ---
 

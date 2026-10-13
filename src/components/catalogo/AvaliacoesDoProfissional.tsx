@@ -40,6 +40,14 @@ export function AvaliacoesDoProfissional({ reviews, media, podeDenunciar = false
                     </div>
                     <Stars rating={review.rating} className="h-3.5 w-3.5" />
                   </div>
+                  {review.technician && (
+                    <p className="flex items-center gap-1.5 text-xs text-piquete-gray">
+                      <span>
+                        Feito por <span className="font-semibold text-gray-800">{review.technician.first_name}</span> · {review.technician.title}
+                      </span>
+                      {review.member_rating !== null && <Stars rating={review.member_rating} className="h-3 w-3" />}
+                    </p>
+                  )}
                   {review.comment && <p className="text-sm leading-relaxed text-piquete-gray-dark">{review.comment}</p>}
                   {review.comment_hidden && (
                     <p className="text-xs italic text-piquete-gray">Comentário removido pela moderação.</p>

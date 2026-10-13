@@ -1,16 +1,16 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ServiceRequest } from '../services/serviceRequests'
 import { MyServiceRequests } from './MyServiceRequests'
 
-const estado = vi.hoisted(() => ({ pedidos: { data: [] as unknown[], isLoading: false, isError: false } }))
+const estado = vi.hoisted(() => ({ pedidos: { data: [] as unknown[], isLoading: false, isError: false }, avaliar: vi.fn() }))
 vi.mock('../hooks/useServiceRequests', () => ({
   useMyServiceRequests: () => estado.pedidos,
   useCancelServiceRequest: () => ({ mutate: vi.fn(), isPending: false }),
   useCompleteServiceRequest: () => ({ mutate: vi.fn(), isPending: false }),
 }))
-vi.mock('../hooks/useCatalog', () => ({ useSubmitReview: () => ({ mutate: vi.fn(), isPending: false }) }))
+vi.mock('../hooks/useCatalog', () => ({ useSubmitReview: () => ({ mutate: estado.avaliar, isPending: false }) }))
 vi.mock('../hooks/usePedidosPendentes', () => ({ usePedidosPendentes: () => ({ pendentes: [], estado: 'ok' }) }))
 vi.mock('../components/PedidosPorEnviar', () => ({ PedidosPorEnviar: () => null }))
 vi.mock('../components/moderacao/BotaoDenunciar', () => ({ BotaoDenunciar: () => null }))
@@ -36,7 +36,10 @@ function pedido(extra: Partial<ServiceRequest> = {}): ServiceRequest {
   }
 }
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  estado.avaliar.mockReset()
+})
 
 function mostrar(pedidos: ServiceRequest[]) {
   estado.pedidos = { data: pedidos, isLoading: false, isError: false }
@@ -74,5 +77,46 @@ describe('Os meus pedidos — técnico do pedido', () => {
   it('nunca mostra telefone nem email do técnico', () => {
     mostrar([pedido({ technician: { id: 'm1', first_name: 'João', title: 'Canalizador', avatar_url: null } })])
     expect(document.body.textContent).not.toMatch(/@|\+258|tel:/)
+  })
+})
+
+describe('Os meus pedidos — avaliar a empresa e o técnico', () => {
+  const concluido = (extra: Partial<ServiceRequest> = {}) => pedido({ status: 'COMPLETED', has_review: false, ...extra })
+  const joao = { id: 'm1', first_name: 'João', title: 'Canalizador', avatar_url: null }
+
+  it('um pedido concluído com técnico oferece a nota do técnico, como opcional', () => {
+    mostrar([concluido({ assigned_member_id: 'm1', technician: joao })])
+    expect(screen.getByText(/avaliar também o joão/i)).toBeTruthy()
+    expect(screen.getByText('(opcional)')).toBeTruthy()
+  })
+
+  it('sem técnico (singular, ou a empresa nunca atribuiu) não oferece a nota do técnico', () => {
+    mostrar([concluido()])
+    expect(screen.queryByText(/avaliar também/i)).toBeNull()
+  })
+
+  it('envia a nota da empresa e a do técnico', () => {
+    mostrar([concluido({ assigned_member_id: 'm1', technician: joao })])
+    fireEvent.click(screen.getByRole('button', { name: '4 estrelas' }))
+    fireEvent.click(screen.getByRole('button', { name: '3 estrelas para João' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Avaliar profissional' }))
+
+    expect(estado.avaliar.mock.calls[0][0].payload).toEqual({ rating: 4, comment: undefined, member_rating: 3 })
+  })
+
+  it('sem escolher a nota do técnico, não a envia (a avaliação da empresa segue sozinha)', () => {
+    mostrar([concluido({ assigned_member_id: 'm1', technician: joao })])
+    fireEvent.click(screen.getByRole('button', { name: 'Avaliar profissional' }))
+
+    expect(estado.avaliar.mock.calls[0][0].payload).toEqual({ rating: 5, comment: undefined, member_rating: undefined })
+  })
+
+  it('tocar outra vez na nota escolhida tira-a', () => {
+    mostrar([concluido({ assigned_member_id: 'm1', technician: joao })])
+    fireEvent.click(screen.getByRole('button', { name: '3 estrelas para João' }))
+    fireEvent.click(screen.getByRole('button', { name: '3 estrelas para João' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Avaliar profissional' }))
+
+    expect(estado.avaliar.mock.calls[0][0].payload.member_rating).toBeUndefined()
   })
 })

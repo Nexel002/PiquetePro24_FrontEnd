@@ -155,6 +155,8 @@ export async function fetchAssignedServiceRequests(): Promise<ServiceRequest[]> 
 export interface ReviewPayload {
   rating: number
   comment?: string
+  // Nota do técnico, só em pedidos que tiveram técnico (Backend Fase 27). Opcional.
+  member_rating?: number
 }
 
 export interface CreatedReview {
