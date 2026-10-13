@@ -4,6 +4,13 @@ import { api } from '../lib/api'
 // (supabase/migrations/20260915135236_schema_inicial.sql).
 export type RequestStatus = 'OPEN' | 'ASSIGNED' | 'COMPLETED' | 'CANCELLED'
 
+export interface AssignedTechnician {
+  id: string
+  first_name: string
+  title: string
+  avatar_url: string | null
+}
+
 export interface ServiceRequest {
   id: string
   client_id: string
@@ -19,6 +26,12 @@ export interface ServiceRequest {
   completed_at: string | null
   // Serviço pedido (Fase 10, Bloco B) — null nos pedidos abertos antigos.
   category_id: string | null
+  // Técnico da empresa que vai fazer o trabalho (Backend Fase 26); null até a empresa o escolher e
+  // sempre null num pedido de um profissional singular.
+  assigned_member_id: string | null
+  // Só nas listas do cliente e da empresa, num pedido com técnico: o que o cliente pode ver (primeiro
+  // nome, título e foto). Nunca telefone nem email.
+  technician?: AssignedTechnician
   // Só vêm preenchidos em fetchMyServiceRequests, para pedidos dirigidos: a quantos
   // profissionais foi enviado e quantas propostas já chegaram (0 num pedido aberto).
   invited_count?: number

@@ -1,7 +1,7 @@
 import { api } from '../lib/api'
 
 // Espelha o enum user_role do backend (PiquetePro24_Backend, supabase/migrations).
-export type UserRole = 'CLIENT' | 'PROFESSIONAL' | 'ADMIN'
+export type UserRole = 'CLIENT' | 'PROFESSIONAL' | 'ADMIN' | 'TECHNICIAN'
 
 // Espelha o enum professional_type do backend
 // (20260916155516_tipo_profissional_singular_empresa.sql). Só relevante quando

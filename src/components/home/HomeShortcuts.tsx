@@ -1,14 +1,20 @@
 import { Link } from 'react-router-dom'
-import type { UserRole } from '../../services/profile'
+import type { ProfessionalType, UserRole } from '../../services/profile'
 import { ACCOES_RAPIDAS } from './acoesRapidas'
 
 interface HomeShortcutsProps {
   papel?: UserRole
+  // Só uma empresa tem equipa: o atalho «A minha equipa» é dela.
+  tipoProfissional?: ProfessionalType | null
 }
 
-export function HomeShortcuts({ papel }: HomeShortcutsProps) {
+export function HomeShortcuts({ papel, tipoProfissional }: HomeShortcutsProps) {
   // Sem perfil carregado, o cliente é o caso por omissão (é o papel de quem acabou de entrar).
-  const accoes = ACCOES_RAPIDAS[papel ?? 'CLIENT']
+  const base = ACCOES_RAPIDAS[papel ?? 'CLIENT']
+  const accoes =
+    papel === 'PROFESSIONAL' && tipoProfissional === 'COMPANY'
+      ? [...base, { to: '/equipa', rotulo: 'A minha equipa', descricao: 'Técnicos da tua empresa' }]
+      : base
 
   return (
     <section aria-labelledby="atalhos" className="mb-10 sm:mb-12">

@@ -17,6 +17,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   CLIENT: 'Cliente',
   PROFESSIONAL: 'Profissional',
   ADMIN: 'Administrador',
+  TECHNICIAN: 'Técnico',
 }
 
 const KYC_STATUS_LABELS: Record<NonNullable<AdminUserDetailData['kyc_status']>, string> = {

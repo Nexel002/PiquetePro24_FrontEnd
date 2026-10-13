@@ -38,6 +38,7 @@ export function Home() {
   function aoClicarNotificacoes() {
     if (profile?.role === 'PROFESSIONAL') navigate('/pedidos-recebidos')
     else if (profile?.role === 'CLIENT') navigate('/os-meus-pedidos')
+    else if (profile?.role === 'TECHNICIAN') navigate('/tecnico/trabalhos')
     else toast.info('Não tens novas notificações no momento.')
   }
 
@@ -92,7 +93,7 @@ export function Home() {
 
         {feed.estado !== 'pronto' ? (
           <>
-            {temSessao && <HomeShortcuts papel={profile?.role} />}
+            {temSessao && <HomeShortcuts papel={profile?.role} tipoProfissional={profile?.professional_type} />}
             <EstadoDaMontra estado={feed.estado} aoTentarDeNovo={feed.aoTentarDeNovo} />
           </>
         ) : feed.filtroActivo ? (
@@ -104,7 +105,7 @@ export function Home() {
           />
         ) : (
           <>
-            {temSessao && <HomeShortcuts papel={profile?.role} />}
+            {temSessao && <HomeShortcuts papel={profile?.role} tipoProfissional={profile?.professional_type} />}
             <div className="space-y-12 sm:space-y-14">
               <WorkSlider
                 id="destaques"

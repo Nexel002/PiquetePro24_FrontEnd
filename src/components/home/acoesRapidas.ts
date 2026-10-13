@@ -14,6 +14,11 @@ export const ACCOES_RAPIDAS: Record<UserRole, AccaoRapida[]> = {
     { to: '/admin/utilizadores', rotulo: 'Utilizadores', descricao: 'Contas, estados e moderação' },
     { to: '/admin/pedidos-servico', rotulo: 'Pedidos', descricao: 'Todos os pedidos de serviço' },
   ],
+  TECHNICIAN: [
+    { to: '/tecnico/trabalhos', rotulo: 'Os meus trabalhos', descricao: 'Trabalhos que a empresa te atribuiu' },
+    { to: '/verificacao-identidade', rotulo: 'Verificação de identidade', descricao: 'Obrigatória para receberes trabalhos' },
+    { to: '/perfil', rotulo: 'O meu perfil', descricao: 'Foto e dados da conta' },
+  ],
   PROFESSIONAL: [
     { to: '/pedidos-recebidos', rotulo: 'Pedidos Recebidos', descricao: 'Convites à espera da tua proposta' },
     { to: '/catalogo', rotulo: 'O Meu Catálogo', descricao: 'Fotos, serviços e avaliações' },

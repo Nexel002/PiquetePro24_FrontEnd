@@ -16,6 +16,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   CLIENT: 'Cliente',
   PROFESSIONAL: 'Profissional',
   ADMIN: 'Administrador',
+  TECHNICIAN: 'Técnico',
 }
 
 const selectClassName =

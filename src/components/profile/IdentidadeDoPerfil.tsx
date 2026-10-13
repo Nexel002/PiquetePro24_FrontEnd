@@ -2,7 +2,7 @@ import type { UserProfile } from '../../services/profile'
 
 const memberSinceFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long' })
 
-const ROLE_LABELS = { PROFESSIONAL: 'Profissional PiquetePro', ADMIN: 'Administrador', CLIENT: 'Cliente' } as const
+const ROLE_LABELS = { PROFESSIONAL: 'Profissional PiquetePro', ADMIN: 'Administrador', CLIENT: 'Cliente', TECHNICIAN: 'Técnico' } as const
 
 // Sem selo de «verificado»: o perfil não traz nenhum dado de verificação (KYC), e um selo
 // mostrado a qualquer papel afirmava uma garantia que o ecrã não sabe dar.
