@@ -1409,3 +1409,20 @@ rollback;
 **B. Verificar.** Home em telemóvel e tablet: sem barra, último bloco sem folga excessiva. Confirmar que Pedidos, Histórico/Catálogo e Perfil continuam alcançáveis (atalhos e menu do avatar).
 
 **Notas de deploy:** nenhuma. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 6 (polimento de UI).
+
+## Adendo v1.36
+
+### Perfil do profissional: layout em duas variantes — só frontend (13/10/2026)
+
+**Contexto.** Pedido do utilizador, com duas referências visuais: só o layout e a UX são reaproveitados, a identidade visual (cores, tipografia) continua a do sistema (`piquete-*`).
+
+**A. O que mudou** (`src/pages/ProfessionalCatalog.tsx`, rota `/profissionais/:id`).
+- **Telemóvel e tablet (< `lg`):** foto a toda a largura, sem margens laterais e com o rodapé arredondado; por baixo o nome e os serviços, depois descrição e estatísticas, os trabalhos (um carrossel por trabalho, em duas colunas a partir de `md`) e as avaliações.
+- **Desktop (`lg`+):** duas colunas. À esquerda a foto fixa (`sticky`) com o nome e os serviços sobre ela; à direita, em cartões, descrição e estatísticas, trabalhos e avaliações.
+- Uma só árvore de DOM nas duas variantes (o bloco do nome muda de posição por CSS), para não duplicar o `h1`.
+
+**B. Sem alterações** a API, dados, rotas ou variáveis. O perfil da própria conta (`/perfil`, `Profile.tsx`) **não** foi tocado.
+
+**C. Verificar.** Abrir `/profissionais/:id` a 390 px, 768 px e 1280 px; sem foto de perfil (cai para a primeira foto de um trabalho, ou a inicial); sem trabalhos e sem avaliações; com o filtro de serviços (2 ou mais); como dono (barra «Editar o meu catálogo»).
+
+**Notas de deploy:** nenhuma. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 9 (catálogo do profissional) e Fase 6 (polimento de UI).
