@@ -10,7 +10,9 @@ type Fonte<T> = { data: T | undefined; isLoading: boolean; isError: boolean }
 const fontes = vi.hoisted(() => ({
   metricas: {} as Fonte<unknown>,
   alertas: {} as Fonte<unknown>,
+  subscricoes: {} as Fonte<unknown>,
 }))
+vi.mock('../hooks/useAdminSubscriptions', () => ({ useAdminSubscriptions: () => fontes.subscricoes }))
 vi.mock('../hooks/useAdminMetrics', () => ({ useAdminMetrics: () => fontes.metricas }))
 vi.mock('../hooks/useAdminSecurityAlerts', () => ({ useAdminSecurityAlerts: () => fontes.alertas }))
 
@@ -25,9 +27,10 @@ const METRICAS: AdminMetrics = {
 }
 const ALERTA: SecurityAlert = { groupKey: 'u1', groupType: 'user_id', attempts: 9, lastAttemptAt: '2026-10-13T10:00:00Z' }
 
-function definir(metricas: Fonte<AdminMetrics>, alertas: Fonte<SecurityAlert[]>) {
+function definir(metricas: Fonte<AdminMetrics>, alertas: Fonte<SecurityAlert[]>, subscricoes: Fonte<unknown[]> = pronto([])) {
   fontes.metricas = metricas
   fontes.alertas = alertas
+  fontes.subscricoes = subscricoes
 }
 const pronto = <T,>(data: T): Fonte<T> => ({ data, isLoading: false, isError: false })
 const aCarregar: Fonte<never> = { data: undefined, isLoading: true, isError: false }
@@ -45,9 +48,12 @@ afterEach(cleanup)
 
 describe('AdminDashboard', () => {
   it('mostra os contadores e liga cada cartão ao seu ecrã', () => {
-    definir(pronto(METRICAS), pronto([ALERTA]))
+    definir(pronto(METRICAS), pronto([ALERTA]), pronto([{}, {}]))
     mostrar()
 
+    const subs = screen.getByRole('link', { name: /subscrições a expirar/i })
+    expect(subs.textContent).toContain('2')
+    expect(subs.getAttribute('href')).toBe('/admin/subscricoes')
     const kyc = screen.getByRole('link', { name: /verificações em análise/i })
     expect(kyc.textContent).toContain('4')
     expect(kyc.getAttribute('href')).toBe('/admin/kyc')
@@ -67,9 +73,9 @@ describe('AdminDashboard', () => {
   })
 
   it('mostra esqueletos enquanto carrega', () => {
-    definir(aCarregar, aCarregar)
+    definir(aCarregar, aCarregar, aCarregar)
     mostrar()
-    expect(screen.getAllByRole('status', { name: /a carregar/i })).toHaveLength(3)
+    expect(screen.getAllByRole('status', { name: /a carregar/i })).toHaveLength(4)
   })
 
   it('o erro de uma fonte não esconde a outra', () => {
@@ -80,7 +86,7 @@ describe('AdminDashboard', () => {
     expect(screen.getByRole('link', { name: /alertas de segurança/i }).textContent).toContain('1')
   })
 
-  it('oferece atalho para os cinco ecrãs, incluindo Métricas e Auditoria', () => {
+  it('oferece atalho para todos os ecrãs, incluindo Subscrições, Métricas e Auditoria', () => {
     definir(pronto(METRICAS), pronto([]))
     mostrar()
 
@@ -88,7 +94,7 @@ describe('AdminDashboard', () => {
       .getAllByRole('link')
       .map((a) => a.getAttribute('href'))
       .filter((href) => href?.startsWith('/admin/'))
-    for (const rota of ['/admin/kyc', '/admin/utilizadores', '/admin/pedidos-servico', '/admin/metricas', '/admin/audit-log']) {
+    for (const rota of ['/admin/kyc', '/admin/utilizadores', '/admin/pedidos-servico', '/admin/subscricoes', '/admin/metricas', '/admin/audit-log']) {
       expect(destinos).toContain(rota)
     }
   })

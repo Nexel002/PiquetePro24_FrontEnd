@@ -6,6 +6,7 @@ import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
 import { Card } from '../components/ui/Card'
 import { useAdminMetrics } from '../hooks/useAdminMetrics'
 import { useAdminSecurityAlerts } from '../hooks/useAdminSecurityAlerts'
+import { useAdminSubscriptions } from '../hooks/useAdminSubscriptions'
 
 // Valor de um cartão a partir de uma query: a carregar → `undefined`, falhou → `null`. Cada
 // fonte tem o seu estado, para o erro de uma não esconder o que a outra já trouxe.
@@ -25,6 +26,8 @@ export function AdminDashboard() {
   const metricas = useAdminMetrics()
   // Mesmos parâmetros do painel de alertas do Registo de auditoria, para o número bater.
   const alertas = useAdminSecurityAlerts({ windowHours: 24, minAttempts: 5 })
+  // Máximo de uma página de 100: acima disso o cartão mostra 100, que já diz «muitas».
+  const aExpirar = useAdminSubscriptions({ filtro: 'EXPIRING', limit: 100, offset: 0 })
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
@@ -39,7 +42,7 @@ export function AdminDashboard() {
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Precisa de atenção</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <CartaoDeAtencao
             rotulo="Verificações em análise"
             to="/admin/kyc"
@@ -52,6 +55,12 @@ export function AdminDashboard() {
             to="/admin/pedidos-servico"
             valor={valorDe(metricas, (m) => m.serviceRequestsByStatus.OPEN ?? 0)}
             vazio="Nenhum aberto"
+          />
+          <CartaoDeAtencao
+            rotulo="Subscrições a expirar (7 dias)"
+            to="/admin/subscricoes"
+            valor={valorDe(aExpirar, (lista) => lista.length)}
+            vazio="Nenhuma a expirar"
           />
           <CartaoDeAtencao
             rotulo="Alertas de segurança (24h)"

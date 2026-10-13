@@ -1502,3 +1502,14 @@ rollback;
 **E. Por verificar.** Contra o Supabase real: pedir o catálogo de um profissional com KYC aprovado e de outro sem. Os ecrãs continuam por ver num browser e num telemóvel.
 
 **Notas de deploy:** nenhuma migration, nenhuma variável. **Critérios de entrega correspondentes:** `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, Fase 9 e Fase 6; `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`, Fase 9.
+
+## Adendo v1.41
+
+### Painel de admin: subscrições e pagamentos (13/10/2026)
+
+**Contexto.** Na revisão do painel (Adendo v1.39) o financeiro parecia bloqueado pela «Fase 5 do backend, que não existe». Era um comentário desactualizado: a Fase 5 existe (subscrições, transacções, activação manual pelo admin). Faltava a visão global.
+
+**Decisão.** Modelo de cobrança **manual** (o admin confirma o pagamento recebido por fora; sem gateway). Três endpoints novos, sem migration: `GET /admin/subscriptions`, `GET /admin/payments`, `POST /admin/users/:id/subscription/revoke` (motivo obrigatório, vai para o audit log). Frontend: `/admin/subscricoes` e um cartão «a expirar (7 dias)» no dashboard. A janela de 7 dias é mais larga do que o aviso por email (3 dias) de propósito: o admin precisa de tempo para contactar.
+
+**Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** frontend Fase 13; backend Fase 15.
+

@@ -422,6 +422,21 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 13 — Subscrições e Pagamentos no Painel de Admin
+
+**Estado: implementada em `feat/dashboard-admin` (13/10/2026), só local, por validar no browser.** Ver Adendo v1.41 do TRD. Consome a Fase 15 do backend (backend primeiro).
+
+**Escopo:**
+- `pages/AdminSubscriptions.tsx` (`/admin/subscricoes`): separadores Subscrições (filtro: a expirar por omissão, activas, expiradas, sem pagamento) e Pagamentos (filtro por estado), paginados de 25 em 25; «Suspender» com motivo obrigatório.
+- `services/adminSubscriptions.ts`, `hooks/useAdminSubscriptions.ts`.
+- Dashboard: novo cartão «Subscrições a expirar (7 dias)»; entrada «Subscrições» na navegação (`destinos.ts`). A activação manual continua na ficha do utilizador (já existia).
+
+**Critérios de Entrega:**
+- [x] 4 estados (a carregar, erro, vazio, dados), motivo obrigatório antes de suspender, «Suspender» só em subscrições activas, separador de pagamentos — 5 testes (`AdminSubscriptions.test.tsx`); dashboard actualizado (6 testes).
+- [ ] Layout em 390 px e em desktop, e contra o backend real: não verificado.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
