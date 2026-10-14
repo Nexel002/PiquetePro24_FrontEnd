@@ -692,17 +692,22 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
-## Fase 30 — Correcção: novidades do aviso de nova versão
+## Fase 30 — Aviso de nova versão: mostra o que realmente muda
 
-**Estado: corrigida em `fix/novidades-do-aviso` (14/10/2026), só frontend.** Ver Adendo v1.55 do TRD.
+**Estado: implementada em `fix/novidades-do-aviso` (14/10/2026), só frontend.** Ver Adendo v1.55 do TRD.
 
-**Problema reportado:** o aviso «Nova versão disponível» mostrava novidades que não tinham a ver com a versão e uma data que não era a do dia. **Causa:** `public/novidades.json` é editado à mão em cada versão (Adendo v1.29, item C) e não foi actualizado nas entregas seguintes (pedido direto, contacto no catálogo, equipas, localização): ficou com o texto e a data de 13/10/2026.
+**Problema reportado:** o aviso «Nova versão disponível» mostrava novidades que não tinham a ver com a versão e uma data que não era a do dia, e tem de mostrar sempre o que realmente está a ser actualizado. **Causa:** `public/novidades.json` era editado à mão (Adendo v1.29, item C) e não foi actualizado nas entregas seguintes; e, mesmo actualizado, dizia «a última versão» a todos, mesmo a quem tinha saltado versões.
 
-**Feito:** o ficheiro passa a descrever o que mudou (contacto no catálogo e «Solicitar serviço», técnicos das empresas, captação de localização, Termos), com a data de 14/10/2026; regra nova no `CLAUDE.md` do frontend para o actualizar em cada entrega visível ao utilizador.
+**Feito:**
+- **Uma entrada por versão** em `src/data/novidadesPorVersao.json` (`versao`, `data`, 1 a 4 frases até 140 caracteres). A versão do `package.json` (agora `0.1.0`) é a que a app conhece de si própria (`__APP_VERSION__`, `define` do Vite).
+- **O `/novidades.json` é gerado no build** (plugin em `vite.config.ts`; em desenvolvimento é servido pelo servidor do Vite). O ficheiro `public/novidades.json` deixou de existir. Repete a versão publicada no formato antigo (`atualizadoEm`, `novidades`) para as apps já instaladas, e traz `versoes`.
+- **`vite build` falha** se a versão do `package.json` não tiver entrada, se a entrada tiver data inventada, frases a mais ou compridas, ou se o histórico tiver uma versão mais recente do que o pacote. Em desenvolvimento só avisa.
+- **O aviso mostra só o que falta a quem o vê:** as entradas posteriores à versão instalada (quem saltou versões vê todas, até 4, as mais recentes primeiro), com a data da versão mais recente. Quem já tem a última, ou se o ficheiro falha, vê a mensagem genérica, sem novidades inventadas.
+- Regra no `CLAUDE.md` do frontend: cada entrega visível sobe a versão e acrescenta a entrada.
 
 **Critérios de Entrega:**
-- [x] Ficheiro actualizado (4 itens, até 140 caracteres) e regra escrita.
-- [ ] Ver o aviso no browser depois do deploy (o texto é lido da rede, sem cache, por quem tem a versão antiga aberta).
+- [x] `versoes.test.ts` (comparação de versões, datas, só o que falta a quem está a ver, limites, falhas do histórico, ficheiro gerado, histórico real válido) e `novidades.test.ts` (por versão instalada, formato antigo); build real gera `dist/novidades.json`; build com versão sem entrada falha. Suite completa: 606 testes, `tsc` e lint sem erros.
+- [ ] Ver o aviso no browser depois do deploy. As apps já instaladas (sem versão) lêem o formato antigo e mostram a entrada 0.1.0; a partir daí, cada uma vê só o que lhe falta.
 
 ---
 
