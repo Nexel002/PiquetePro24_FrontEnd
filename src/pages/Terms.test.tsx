@@ -26,6 +26,50 @@ describe('Termos de utilização — conteúdo', () => {
   })
 })
 
+describe('Termos de utilização — empresas e técnicos', () => {
+  const texto = (id: string) => {
+    const seccao = TERMOS_DE_UTILIZACAO.find((x) => x.id === id)
+    return [...(seccao?.paragrafos ?? []), ...(seccao?.lista ?? []), seccao?.nota ?? ''].join(' ')
+  }
+
+  it('a numeração das secções é contínua, sem saltos nem repetições', () => {
+    const numeros = TERMOS_DE_UTILIZACAO.map((s) => Number(s.titulo.split('.')[0]))
+    expect(numeros).toEqual(numeros.map((_, i) => i + 1))
+  })
+
+  it('tem uma secção para empresas, a seguir à dos profissionais', () => {
+    const ids = TERMOS_DE_UTILIZACAO.map((s) => s.id)
+    expect(ids.indexOf('empresas-e-tecnicos')).toBe(ids.indexOf('profissionais') + 1)
+  })
+
+  it('diz que a empresa responde pelos técnicos (decisão do utilizador)', () => {
+    expect(texto('empresas-e-tecnicos')).toMatch(/a empresa responde pelos seus técnicos/i)
+  })
+
+  it('diz o limite de 15 técnicos, que o técnico tem identidade verificada própria e que a subscrição é a mesma', () => {
+    const empresa = texto('empresas-e-tecnicos')
+    expect(empresa).toMatch(/15 técnicos/)
+    expect(empresa).toMatch(/identidade verificada/i)
+    expect(empresa).toMatch(/mesma de qualquer profissional/i)
+  })
+
+  it('diz a quem se revela o contacto do cliente, e a quem não', () => {
+    expect(texto('empresas-e-tecnicos')).toMatch(/só é revelado à empresa e ao técnico a quem o trabalho foi atribuído/i)
+  })
+
+  it('diz que um singular não se converte em empresa, na secção da conta', () => {
+    expect(texto('a-tua-conta')).toMatch(/não se converte em empresa/i)
+  })
+
+  it('as referências cruzadas apontam para secções que existem e dizem o que se espera', () => {
+    const titulo = (n: number) => TERMOS_DE_UTILIZACAO[n - 1]?.titulo ?? ''
+    expect(titulo(5)).toMatch(/empresa/i)
+    expect(titulo(8)).toMatch(/Avaliações e conteúdos/)
+    // «(ver a secção 8)» na secção dos profissionais refere-se aos conteúdos que se publicam.
+    expect(texto('profissionais')).toContain('(ver a secção 8)')
+  })
+})
+
 describe('Termos de utilização — página', () => {
   it('mostra o título, a data da última atualização e todas as secções', () => {
     mostrar()

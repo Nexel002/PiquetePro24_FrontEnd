@@ -6,6 +6,7 @@ import type { ProjectPhoto } from '../services/portfolio'
 import { BackButton } from '../components/BackButton'
 import { ApresentacaoDoProfissional } from '../components/catalogo/ApresentacaoDoProfissional'
 import { AvaliacoesDoProfissional } from '../components/catalogo/AvaliacoesDoProfissional'
+import { EquipaDaEmpresa } from '../components/catalogo/EquipaDaEmpresa'
 import { EsqueletoDoCatalogo } from '../components/catalogo/EsqueletoDoCatalogo'
 import { FotoDoCatalogo } from '../components/catalogo/FotoDoCatalogo'
 import { LayoutDividido } from '../components/layout/LayoutDividido'
@@ -50,6 +51,7 @@ export function ProfessionalCatalog() {
         <LayoutDividido foto={<FotoDoCatalogo catalog={catalog} capa={capa} ehDono={ehDono} />}>
           <ApresentacaoDoProfissional catalog={catalog} ehDono={ehDono} />
           <TrabalhosRealizados projects={catalog.projects} ehDono={ehDono} aoAbrirFoto={(photos, index) => setOpenPhotos({ photos, index })} />
+          <EquipaDaEmpresa team={catalog.team ?? []} />
           <AvaliacoesDoProfissional reviews={catalog.reviews} media={catalog.rating_avg} podeDenunciar={!ehDono} />
           {!ehDono && (
             <div className="px-2">

@@ -7,6 +7,7 @@ import { Login } from './pages/Login'
 import { AuthCallback } from './pages/AuthCallback'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { RotaDeAdmin } from './components/admin/RotaDeAdmin'
+import { RotaDeEmpresa, RotaDeTecnico } from './components/equipa/RotaDeEmpresa'
 import { OnboardingGate } from './components/OnboardingGate'
 import { AuthProvider } from './store/AuthContext'
 import { IndicadorDeLigacao } from './components/IndicadorDeLigacao'
@@ -47,6 +48,8 @@ const AdminReports = lazy(() => import('./pages/AdminReports').then((m) => ({ de
 const AdminSecurity = lazy(() => import('./pages/AdminSecurity').then((m) => ({ default: m.AdminSecurity })))
 const AdminSystem = lazy(() => import('./pages/AdminSystem').then((m) => ({ default: m.AdminSystem })))
 const AdminAdmins = lazy(() => import('./pages/AdminAdmins').then((m) => ({ default: m.AdminAdmins })))
+const CompanyTeam = lazy(() => import('./pages/CompanyTeam').then((m) => ({ default: m.CompanyTeam })))
+const TechnicianJobs = lazy(() => import('./pages/TechnicianJobs').then((m) => ({ default: m.TechnicianJobs })))
 const AdminMetrics = lazy(() => import('./pages/AdminMetrics').then((m) => ({ default: m.AdminMetrics })))
 const DefinirNovaPassword = lazy(() => import('./pages/DefinirNovaPassword').then((m) => ({ default: m.DefinirNovaPassword })))
 
@@ -397,6 +400,30 @@ function App() {
                   <RotaDeAdmin>
                     <AdminAdmins />
                   </RotaDeAdmin>
+                </ProtectedRoute>
+              }
+            />
+            {/* Empresas e equipas (Fases 23 e 24). A equipa é só da empresa; «Os meus trabalhos» só do técnico
+                (sem OnboardingGate de telefone/localização: ver OnboardingGate). */}
+            <Route
+              path="/equipa"
+              element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <RotaDeEmpresa>
+                      <CompanyTeam />
+                    </RotaDeEmpresa>
+                  </OnboardingGate>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/tecnico/trabalhos"
+              element={
+                <ProtectedRoute>
+                  <RotaDeTecnico>
+                    <TechnicianJobs />
+                  </RotaDeTecnico>
                 </ProtectedRoute>
               }
             />

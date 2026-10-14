@@ -16,6 +16,10 @@ const O_QUE_SE_PERDE: Record<Exclude<UserRole, 'ADMIN'>, string[]> = {
     'Os teus pedidos de serviço e as propostas que recebeste.',
     'As avaliações que deste a profissionais.',
   ],
+  TECHNICIAN: [
+    'O teu perfil, a foto e os dados pessoais.',
+    'A verificação de identidade e a ligação à tua empresa. Os trabalhos que fizeste ficam no histórico da empresa, sem o teu nome.',
+  ],
   PROFESSIONAL: [
     'O teu perfil, a foto e os dados pessoais.',
     'A verificação de identidade, a subscrição e o catálogo (fotos e avaliações recebidas).',

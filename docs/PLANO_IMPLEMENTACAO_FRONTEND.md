@@ -207,7 +207,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - [ ] Última localização conhecida é reutilizada corretamente quando GPS falha. **Implementado** (`lib/ultimaLocalizacao.ts`, `useGeolocation`, aviso em `FindProfessionals` e `NearbyServiceRequests`; Adendo v1.25): 18 testes novos. **Falta verificar num browser/telemóvel real** com o GPS recusado ou em modo avião.
 - [ ] Criar um pedido em modo offline não perde os dados — é enfileirado e sincronizado ao reconectar, sem duplicação. **Implementado** (Adendo v1.27; backend Fase 13, Adendo v1.26, já em produção): fila em IndexedDB (`lib/filaOffline.ts`), `Idempotency-Key` gerada por formulário e guardada com o pedido, envio automático (`ProcessadorDaFila`), lista «Por enviar» em `MyServiceRequests`. 29 testes novos (a chave usada na tentativa é a mesma do item guardado; reenvio sem duplicar; 4xx recusa em vez de reenviar; isolamento por utilizador). **Falta verificar num browser real** (modo avião a meio de criar um pedido; fechar e reabrir a app com pedidos guardados) e que a criação com chave funciona contra o backend de produção. **E2E (12/10/2026, Adendo v1.31, item B):** `e2e/modo-aviao.spec.ts` corta a ligação antes de enviar, vê o pedido em «Por enviar» e confirma que, ao voltar a rede, é enviado **uma só vez** com `Idempotency-Key` — num Microsoft Edge real (emulação de rede e IndexedDB reais), mas com o backend simulado e sem service worker. **Continua por fazer** o teste num telemóvel e contra o backend de produção.
 - [ ] Indicador de conectividade reflete o estado real da rede. **Implementado** (`lib/conectividade.ts`, `IndicadorDeLigacao`, ligado ao interceptor de `lib/api.ts`; Adendo v1.25): distingue «sem internet» de «servidor sem resposta». 6 testes. **Falta verificar com o modo avião e com throttling no DevTools.**
-- [ ] Lighthouse PWA audit mantém pontuação alta (>90) após as mudanças desta fase.
+- [ ] Lighthouse PWA audit mantém pontuação alta (>90) após as mudanças desta fase.
 - [x] **(Adendo v1.29, 13/10/2026 — branch `feat/aviso-nova-versao-centrado`, pedido do utilizador)** O aviso de nova versão passa a ser um cartão ao centro do ecrã, com a data da actualização e um resumo das novidades em linguagem simples (`components/AvisoDeNovaVersao.tsx`, `lib/novidades.ts`, `lib/novaVersao.ts`, `public/novidades.json`), em vez do botão pequeno no topo. Continua a nunca recarregar sozinho. **Processo novo:** editar `public/novidades.json` em cada versão a anunciar. 18 testes novos (suite a 222). `tsc -b`, `eslint` e `vite build` limpos. **Só aparece a partir da versão seguinte à que o traz, e não foi visto num browser real** (precisa de dois deploys seguidos).
 - [x] **(Adendo v1.20, 07/10/2026 — branch `feat/pwa-aviso-nova-versao`, descoberto em produção)** Aviso de nova versão da PWA: o site publicado mostrava o ecrã antigo porque o service worker (`autoUpdate` sem recarregar) mantinha a versão antiga em quem deixava a app aberta. `registerType: 'prompt'` + `src/lib/pwaUpdate.ts` + registo em `main.tsx`: aviso persistente «Há uma nova versão disponível — Actualizar» (só activa e recarrega ao aceitar, para não apagar formulários a meio) e verificação de hora a hora com rede. 7 testes novos (suite a 88). `tsc -b`, `eslint` e `vite build` limpos. **Fluxo completo não verificado num browser real** (precisa de dois deploys seguidos); o primeiro browser com o service worker antigo precisa de um carregamento extra, uma única vez.
 
@@ -575,6 +575,64 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 **Critérios de Entrega:**
 - [x] 4 estados na lista, sem «Remover» na própria conta, confirmação ao remover, erro do servidor, validação do formulário, palavra-passe mostrada uma vez e fechável, promoção sem palavra-passe, erro ao adicionar — 9 testes (`AdminAdmins.test.tsx`).
 - [ ] Contra o backend real e num telemóvel: não verificado.
+
+---
+
+## Fase 23 — Empresas e Equipas: papel do técnico e ecrã «A minha equipa»
+
+**Estado: plano APROVADO pelo utilizador a 14/10/2026; implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.** Ver Adendo v1.51 do TRD e as Fases 25 a 28 do backend (modelo, regras e decisões). Backend primeiro.
+
+**Decisões (resumo):** o técnico tem **login próprio** (papel `TECHNICIAN`), criado pelo administrador da empresa; subscrição única da empresa; **máximo 15 técnicos**; **KYC da empresa e de cada técnico com a lógica que já existe**; técnico atribuído **só depois de a empresa ser escolhida**; **avaliação da empresa e do técnico**; um singular **não** se converte em empresa; Termos a dizer que a empresa responde pelos técnicos.
+
+**Escopo:**
+- `UserRole` ganha `TECHNICIAN` (`services/profile.ts`); os mapas por papel (`ACCOES_RAPIDAS`, `papeis.ts`, rótulos de perfil e de admin, `DeleteAccountSection`) ganham o técnico. O **`OnboardingGate` deixa o técnico passar** sem telefone nem localização (não os tem e não os usa); o que lhe falta é o KYC, no ecrã que já existe (`/verificacao-identidade`), e «Os meus trabalhos». **Desvio:** a página `/tecnico/trabalhos` (`TechnicianJobs`, que o plano punha na Fase 24) fica **aqui**, para o atalho do técnico não apontar para uma rota que ainda não existe.
+- Componentes partilhados novos: `ContactoCliente` (extraído de «Trabalhos aceites», agora usado também pelo técnico) e `PalavraPasseProvisoria` (partilhado com a criação de administradores).
+- `pages/CompanyTeam.tsx` (`/equipa`, só para `professional_type === 'COMPANY'`, guard `RotaDeEmpresa`): lista os técnicos com o **estado do KYC de cada um**, o título e os serviços; **adicionar** (nome, email, título, serviços; mostra a palavra-passe provisória **uma só vez**); editar; desactivar/reactivar; contador «X de 15». Atalho no menu do profissional **só para empresas**.
+- Os 4 estados em cada ecrã; «vazio» explica o que fazer.
+
+**Critérios de Entrega:**
+- [x] `/equipa`: 4 estados, KYC e trabalhos em curso por técnico, «X de 15», botão de adicionar desativado nos 15 (e desativados não contam), adicionar com validação, serviços obrigatórios, palavra-passe provisória mostrada uma vez, erro do servidor, editar só título e serviços, desativar bloqueado com trabalhos em curso, reativar — 12 testes (`CompanyTeam.test.tsx`). `TechnicianJobs` (4 estados, contacto só ao pedir, avisos de KYC e de empresa sem elegibilidade) — 7 testes. Guards `RotaDeEmpresa` / `RotaDeTecnico` — 9 testes. `OnboardingGate` (técnico passa) e atalhos (só a empresa tem «A minha equipa») — 5 testes.
+- [ ] Não verificado no browser nem contra o backend real (as migrations das Fases 25 a 27 do backend têm de estar aplicadas).
+
+---
+
+## Fase 24 — Empresas e Equipas: atribuir técnico ao pedido
+
+**Estado: implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.** (A página «Os meus trabalhos» do técnico passou para a Fase 23.)
+
+- Em «Trabalhos aceites» da **empresa**: cada pedido ganha **«Atribuir técnico»** (só técnicos activos, com KYC aprovado e que façam o serviço do pedido) e um aviso para os pedidos **ainda sem técnico**.
+- O cliente, em «Os meus pedidos», vê o técnico do pedido: «Vem o João · Canalizador», com a foto ou a inicial. Nunca telefone nem email.
+- `AtribuirTecnico` (`components/equipa/`): mostra o técnico atual ou «Este trabalho ainda não tem técnico», e deixa atribuir/mudar entre os técnicos **elegíveis** (ativo, identidade verificada, faz o serviço do pedido; a mesma regra do backend, que é quem decide). Sem nenhum elegível, explica porquê. A lista da equipa só se pede a uma **empresa** (um singular não tem rota nem equipa).
+
+**Critérios de Entrega:**
+- [x] Regra dos técnicos elegíveis, atribuir/mudar, sem escolher, sem elegíveis, erro do servidor — 8 testes (`AtribuirTecnico.test.tsx`); aviso de quantos trabalhos em curso ainda não têm técnico («1 trabalho… / 2 trabalhos…»), só em pedidos em curso, só para empresas — 6 testes (`AssignedServiceRequests.test.tsx`); o cliente vê quem vem, com foto ou inicial, e nunca telefone nem email — 5 testes (`MyServiceRequests.test.tsx`).
+- [ ] Não verificado no browser nem contra o backend real.
+
+---
+
+## Fase 25 — Empresas e Equipas: equipa no catálogo e avaliação do técnico
+
+**Estado: implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.**
+
+- `ProfessionalCatalog`: secção **«A equipa»** (foto, nome próprio, título, nota; nunca telefone), só técnicos aprovados.
+- Formulário de avaliação (`MyServiceRequests`): nota da **empresa** e, se o pedido teve técnico, nota **opcional do técnico**; as avaliações do catálogo da empresa mostram o técnico.
+
+**Critérios de Entrega:**
+- [x] Secção «A equipa» (técnico, título, nota e nº de avaliações; «Ainda sem avaliações»; ausente em singulares e em empresas sem técnicos; nunca telefone nem email); a avaliação diz «Feito por João · Canalizador» e a nota dele; sem técnico não menciona nenhum — 6 testes novos em `ProfessionalCatalog.test.tsx`. Formulário de avaliação: a nota do técnico só aparece se o pedido teve técnico, é opcional, tocar outra vez tira-a, e sem ela a avaliação da empresa segue sozinha — 5 testes novos em `MyServiceRequests.test.tsx`.
+- [ ] Não verificado no browser nem contra o backend real (migration `20261015120000_avaliacao_do_tecnico.sql`).
+
+---
+
+## Fase 26 — Empresas e Equipas: termos e administração
+
+**Estado: implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.**
+
+- **Termos de utilização** (`data/termosDeUtilizacao.ts`): **secção nova «5. Se és uma empresa»** (a empresa é o profissional perante o cliente e paga a subscrição única que cobre a equipa; **responde pelos seus técnicos**; máximo de 15 técnicos ativos; cada técnico tem conta e identidade verificada próprias; o contacto do cliente só é revelado à empresa e ao técnico atribuído, com a empresa verificada e subscrita; o cliente vê o primeiro nome, o título e a foto do técnico e avalia a empresa e o técnico; a empresa garante que o técnico aceita o tratamento dos seus dados; um técnico só pode estar numa empresa de cada vez). A secção 2 diz que **um singular não se converte em empresa**. As secções 5 a 12 passam a 6 a 13 e as referências cruzadas foram ajustadas; data de atualização passa a 15 de outubro de 2026. **Rascunho de produto: tem de ser revisto por um jurista antes de ser vinculativo**, em especial a secção 5.
+- **Admin:** `EquipaNaFicha` (ficha de uma empresa: técnicos com KYC, título, email e trabalhos em curso, cada nome a levar à ficha do técnico), `EmpresaNaFicha` (ficha de um técnico: a empresa e o estado dele nela); filtro «Técnicos» na lista de utilizadores; «Técnicos» nas métricas.
+
+**Critérios de Entrega:**
+- [x] Numeração dos Termos contínua; secção de empresas logo a seguir à dos profissionais; diz que a empresa responde pelos técnicos, o limite de 15, a identidade verificada de cada técnico, a subscrição única, a quem se revela o contacto e que um singular não se converte — 7 testes novos em `Terms.test.tsx`; ficha da empresa com a equipa e do técnico com a empresa — 5 testes (`EquipaNaFicha.test.tsx`).
+- [ ] Revisão jurídica do texto dos Termos.
 
 ---
 

@@ -29,6 +29,13 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
     return <ErroAoCarregarPerfil aoTentarDeNovo={() => void refetch()} />
   }
 
+  // O técnico entra com o email que a empresa lhe deu e não tem telefone nem morada a completar: a
+  // localização serve para ser encontrado na pesquisa (que ele nunca integra) e o telefone é do
+  // cliente. O que lhe falta é o KYC, e esse tem o seu próprio ecrã.
+  if (profile.role === 'TECHNICIAN') {
+    return <>{children}</>
+  }
+
   const step = getOnboardingStep(profile)
   const requiredPath = step === 'complete' ? null : ONBOARDING_PATHS[step]
 

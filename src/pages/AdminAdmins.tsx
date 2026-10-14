@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { BackButton } from '../components/BackButton'
 import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
+import { PalavraPasseProvisoria } from '../components/PalavraPasseProvisoria'
 import { Button } from '../components/ui/Button'
 import { Card } from '../components/ui/Card'
 import { useAddAdmin, useAdmins, useRevokeAdmin } from '../hooks/useAdminAccounts'
@@ -10,18 +11,7 @@ import type { AddAdminResult, AdminAccount } from '../services/adminAccounts'
 
 const dataFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'medium', timeZone: 'Africa/Maputo' })
 
-// Mostrada uma só vez, logo a seguir a criar a conta: o backend não guarda a palavra-passe. Fica
-// no ecrã até o admin a fechar; recarregar a página perde-a.
 function CredenciaisNovas({ resultado, aoFechar }: { resultado: AddAdminResult; aoFechar: () => void }) {
-  async function copiar() {
-    try {
-      await navigator.clipboard.writeText(resultado.temporary_password ?? '')
-      toast.success('Palavra-passe copiada.')
-    } catch {
-      toast.error('Não foi possível copiar. Seleciona o texto e copia à mão.')
-    }
-  }
-
   if (resultado.promoted) {
     return (
       <Card variant="solid" className="flex flex-col gap-2 border-emerald-200 p-4" role="status">
@@ -35,23 +25,11 @@ function CredenciaisNovas({ resultado, aoFechar }: { resultado: AddAdminResult; 
   }
 
   return (
-    <Card variant="solid" className="flex flex-col gap-2 border-amber-200 bg-amber-50 p-4" role="status">
-      <p className="text-sm font-bold text-amber-900">Conta criada para {resultado.account.email}.</p>
-      <p className="text-sm text-amber-900">Palavra-passe provisória (só aparece agora):</p>
-      <code className="select-all break-all rounded-lg bg-white px-3 py-2 font-mono text-sm text-gray-900">{resultado.temporary_password}</code>
-      <p className="text-xs text-amber-800">
-        Entrega-a por um canal privado e pede para a mudar no primeiro acesso (ou usar «Esqueci a palavra-passe»). Depois de fechares isto,
-        não há como voltar a vê-la.
-      </p>
-      <div className="flex gap-2">
-        <Button type="button" size="sm" onClick={copiar}>
-          Copiar
-        </Button>
-        <Button type="button" variant="ghost" size="sm" onClick={aoFechar}>
-          Já guardei, fechar
-        </Button>
-      </div>
-    </Card>
+    <PalavraPasseProvisoria
+      titulo={`Conta criada para ${resultado.account.email}.`}
+      palavraPasse={resultado.temporary_password ?? ''}
+      aoFechar={aoFechar}
+    />
   )
 }
 

@@ -4,6 +4,7 @@ export const ROTULO_PAPEL: Record<UserRole, string> = {
   CLIENT: 'Cliente',
   PROFESSIONAL: 'Profissional',
   ADMIN: 'Administrador',
+  TECHNICIAN: 'Técnico',
 }
 
 // A ligação que cada papel mais usa. Aparece em texto na barra (ecrã largo) e dentro do
@@ -12,4 +13,5 @@ export const LIGACAO_DO_PAPEL: Record<UserRole, { to: string; rotulo: string }> 
   CLIENT: { to: '/os-meus-pedidos', rotulo: 'Os meus pedidos' },
   PROFESSIONAL: { to: '/pedidos-recebidos', rotulo: 'Pedidos recebidos' },
   ADMIN: { to: '/admin', rotulo: 'Painel admin' },
+  TECHNICIAN: { to: '/tecnico/trabalhos', rotulo: 'Os meus trabalhos' },
 }

@@ -13,15 +13,17 @@ import { usePedidosPendentes } from '../hooks/usePedidosPendentes'
 // Formulário de avaliação (Fase 9, TRD Adendo v1.17): só para pedidos COMPLETED sem
 // avaliação ainda (has_review, calculado pelo backend). Sem edição posterior — uma
 // vez submetida, desaparece (decisão do Adendo v1.17, item E).
-function ReviewForm({ requestId, professionalId }: { requestId: string; professionalId: string }) {
+function ReviewForm({ requestId, professionalId, technicianName }: { requestId: string; professionalId: string; technicianName?: string }) {
   const submitReview = useSubmitReview(professionalId)
   const [rating, setRating] = useState(5)
   const [comment, setComment] = useState('')
+  // Nota do técnico: opcional, só existe se o pedido teve técnico. null = não avaliar o técnico.
+  const [memberRating, setMemberRating] = useState<number | null>(null)
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
     submitReview.mutate(
-      { requestId, payload: { rating, comment: comment.trim() || undefined } },
+      { requestId, payload: { rating, comment: comment.trim() || undefined, member_rating: technicianName && memberRating !== null ? memberRating : undefined } },
       {
         onSuccess: () => toast.success('Avaliação enviada. Obrigado!'),
         onError: () => toast.error('Não foi possível enviar a tua avaliação. Tenta novamente.'),
@@ -44,6 +46,28 @@ function ReviewForm({ requestId, professionalId }: { requestId: string; professi
           </button>
         ))}
       </div>
+      {technicianName && (
+        <div className="flex flex-col gap-1 rounded-xl bg-gray-50 p-2">
+          <p className="text-xs font-semibold text-gray-600">
+            Avaliar também o {technicianName} <span className="font-normal">(opcional)</span>
+          </p>
+          <div className="flex items-center gap-1" role="group" aria-label={`Nota do ${technicianName}`}>
+            {[1, 2, 3, 4, 5].map((value) => (
+              <button
+                key={value}
+                type="button"
+                // Voltar a tocar na nota escolhida tira-a: o técnico deixa de ser avaliado.
+                onClick={() => setMemberRating(memberRating === value ? null : value)}
+                aria-label={`${value} estrela${value === 1 ? '' : 's'} para ${technicianName}`}
+                aria-pressed={memberRating !== null && value <= memberRating}
+                className={`text-xl ${memberRating !== null && value <= memberRating ? 'text-piquete-yellow' : 'text-gray-300'}`}
+              >
+                ★
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <textarea
         value={comment}
         onChange={(event) => setComment(event.target.value)}
@@ -151,6 +175,21 @@ export function MyServiceRequests() {
                 </p>
               )}
 
+              {serviceRequest.technician && (
+                <div className="flex items-center gap-2 rounded-xl bg-piquete-blue/5 px-3 py-2 text-xs text-piquete-blue">
+                  {serviceRequest.technician.avatar_url ? (
+                    <img src={serviceRequest.technician.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
+                  ) : (
+                    <span aria-hidden className="flex h-8 w-8 items-center justify-center rounded-full bg-piquete-blue/10 font-bold">
+                      {serviceRequest.technician.first_name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span>
+                    Vem o <span className="font-bold">{serviceRequest.technician.first_name}</span> · {serviceRequest.technician.title}
+                  </span>
+                </div>
+              )}
+
               {(serviceRequest.invited_count ?? 0) > 0 && (
                 <Link
                   to={`/os-meus-pedidos/${serviceRequest.id}/propostas`}
@@ -165,7 +204,7 @@ export function MyServiceRequests() {
               )}
 
               {serviceRequest.status === 'COMPLETED' && serviceRequest.professional_id && serviceRequest.has_review === false && (
-                <ReviewForm requestId={serviceRequest.id} professionalId={serviceRequest.professional_id} />
+                <ReviewForm requestId={serviceRequest.id} professionalId={serviceRequest.professional_id} technicianName={serviceRequest.technician?.first_name} />
               )}
 
               {serviceRequest.professional_id && serviceRequest.status !== 'OPEN' && (

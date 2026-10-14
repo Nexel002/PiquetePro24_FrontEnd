@@ -16,6 +16,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   CLIENT: 'Cliente',
   PROFESSIONAL: 'Profissional',
   ADMIN: 'Administrador',
+  TECHNICIAN: 'Técnico',
 }
 
 const selectClassName =
@@ -81,6 +82,7 @@ export function AdminUsers() {
           <option value="CLIENT">Clientes</option>
           <option value="PROFESSIONAL">Profissionais</option>
           <option value="ADMIN">Administradores</option>
+          <option value="TECHNICIAN">Técnicos</option>
         </select>
       </div>
 

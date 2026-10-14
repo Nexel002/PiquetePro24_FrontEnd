@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { useAdminUserDetail, useBanUser, useChangeUserRole, useResendEmail, useUnbanUser } from '../hooks/useAdminUsers'
 import { useActivateSubscriptionManually, useUserSubscription } from '../hooks/useSubscription'
 import { NotasInternas } from '../components/admin/NotasInternas'
+import { EmpresaNaFicha, EquipaNaFicha } from '../components/admin/EquipaNaFicha'
 import type { SubscriptionStatus } from '../services/subscriptions'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
@@ -17,6 +18,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
   CLIENT: 'Cliente',
   PROFESSIONAL: 'Profissional',
   ADMIN: 'Administrador',
+  TECHNICIAN: 'Técnico',
 }
 
 const KYC_STATUS_LABELS: Record<NonNullable<AdminUserDetailData['kyc_status']>, string> = {
@@ -200,6 +202,9 @@ export function AdminUserDetail() {
           </Link>
 
           {user.role === 'PROFESSIONAL' && <SubscricaoDoProfissional userId={user.id} />}
+
+          {user.team && <EquipaNaFicha team={user.team} />}
+          {user.company && <EmpresaNaFicha company={user.company} />}
 
           <NotasInternas targetType="USER" targetId={user.id} />
 

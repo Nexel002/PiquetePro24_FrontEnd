@@ -1617,3 +1617,29 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 
 **Notas de deploy:** nenhuma migration nem variável. Backend primeiro. **Critérios de entrega correspondentes:** backend Fase 24; frontend Fase 22.
 
+## Adendo v1.51
+
+### Empresas e equipas de técnicos (14/10/2026)
+
+**Estado: plano aprovado pelo utilizador; implementado em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser e contra o Supabase real.**
+
+**Contexto.** O Adendo v1.4, item F, introduziu `professional_type` (`SINGULAR` / `COMPANY`) deixando o desenho para depois («o onboarding de empresa deve ser mais complexo»). A 14/10/2026 a verificação no código mostrou que `COMPANY` era só uma etiqueta: a empresa passava pelo mesmo KYC, pagava a mesma subscrição e era convidada, escolhida e atribuída como uma pessoa. Não havia forma de registar os profissionais da empresa nem de dizer ao cliente quem ia a casa dele.
+
+**Decisões do utilizador:**
+1. O **técnico tem login próprio**, criado pelo administrador da empresa (que lhe entrega uma palavra-passe provisória).
+2. **Subscrição igual para todos** (paga a empresa, uma só). **Máximo de 15 técnicos activos por empresa.**
+3. **KYC da empresa e de cada técnico**, os dois com a lógica que já existe para o singular. Não se cria KYC novo de empresa.
+4. O técnico é atribuído **só depois de a empresa ser escolhida** pelo cliente.
+5. **Avaliação da empresa e do técnico.**
+6. Um singular **não se converte** em empresa (o histórico ficaria inconsistente): cria-se outra conta.
+7. Os **Termos de utilização** dizem que a empresa responde pelos técnicos.
+
+**Desenho.** A empresa **continua a ser o profissional** perante o sistema: convites, propostas, subscrição, catálogo e a nota que alimenta a pesquisa. O técnico é uma **conta própria com um papel novo, `TECHNICIAN`**, ligada à empresa por `company_members`. Um papel novo, e não um `PROFESSIONAL` disfarçado, é seguro por omissão: todas as rotas de profissional exigem `requireRole('PROFESSIONAL')`, logo o técnico não acede a nenhuma, e a pesquisa de profissionais nunca o lista. A elegibilidade do técnico para trabalhar é a da **empresa** (KYC + subscrição) **e** o **seu próprio KYC** aprovado. O contacto do cliente só vai à empresa e ao técnico atribuído (Secção 5 do TRD).
+
+**Alternativa rejeitada.** Cada técnico como um profissional independente associado a uma empresa: duplicava subscrição e catálogo por pessoa, fazia o técnico aparecer na pesquisa e obrigava a reescrever convites e elegibilidade.
+
+**Fases:** backend 25 (modelo e gestão da equipa), 26 (atribuição e trabalho do técnico), 27 (equipa no catálogo e avaliação do técnico), 28 (termos e administração); frontend 23 a 26.
+
+**Fora de âmbito, como sugestões futuras:** documentos de empresa (alvará, representante legal) no KYC; agenda por técnico; atribuição sugerida por serviço e zona; aviso por WhatsApp ao técnico; selo «Equipa verificada».
+
+**Notas de deploy:** 4 migrations, **por esta ordem**, aplicadas à mão antes do backend: `20261015090000_papel_tecnico.sql` (**sozinha**: um valor novo de enum não se usa na transação que o cria), `20261015100000_equipas_de_empresa.sql`, `20261015110000_atribuicao_de_tecnico.sql` e `20261015120000_avaliacao_do_tecnico.sql`. As duas últimas usam `on delete set null` para um técnico poder eliminar a conta mesmo com trabalhos no histórico. Backend primeiro, frontend depois. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fases 25 a 28; frontend Fases 23 a 26.

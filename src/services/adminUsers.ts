@@ -1,4 +1,5 @@
 import { api } from '../lib/api'
+import type { TeamMember } from './companyTeam'
 import type { ProfessionalType, UserRole } from './profile'
 
 // Espelha AdminUserSummary do backend (src/services/adminUserService.ts).
@@ -22,6 +23,10 @@ export interface AdminUserDetail extends AdminUserSummary {
   service_requests_as_client: number
   service_requests_as_professional: number
   banned_until: string | null
+  // Só numa empresa: a equipa, com o KYC e os trabalhos em curso de cada técnico (Backend Fase 28).
+  team?: TeamMember[]
+  // Só num técnico: a empresa a que pertence e o estado dele nela.
+  company?: { id: string; full_name: string; title: string; status: 'ACTIVE' | 'INACTIVE' }
 }
 
 export interface AdminUserFilters {

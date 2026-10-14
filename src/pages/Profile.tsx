@@ -4,6 +4,7 @@ import { LocationForm } from '../components/LocationForm'
 import { LayoutDividido } from '../components/layout/LayoutDividido'
 import { Button } from '../components/ui/Button'
 import { AtalhoDoCatalogo } from '../components/profile/AtalhoDoCatalogo'
+import { AtalhoDaEquipa } from '../components/profile/AtalhoDaEquipa'
 import { DefinicoesDaConta } from '../components/profile/DefinicoesDaConta'
 import { EstatisticasDaConta } from '../components/profile/EstatisticasDaConta'
 import { FotoDoPerfil } from '../components/profile/FotoDoPerfil'
@@ -81,6 +82,7 @@ export function Profile() {
           )}
 
           {profile.role === 'PROFESSIONAL' && <AtalhoDoCatalogo />}
+          {profile.role === 'PROFESSIONAL' && profile.professional_type === 'COMPANY' && <AtalhoDaEquipa />}
 
           <EstatisticasDaConta profile={profile} />
 

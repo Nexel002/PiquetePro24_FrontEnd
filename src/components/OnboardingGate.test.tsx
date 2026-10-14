@@ -54,6 +54,12 @@ describe('OnboardingGate', () => {
     expect(screen.getByText('conteúdo protegido')).toBeTruthy()
   })
 
+  it('um técnico não passa pelo onboarding de telefone nem de localização', () => {
+    mostrar({ data: perfil({ role: 'TECHNICIAN', phone: null, province: null }), isLoading: false, isError: false })
+
+    expect(screen.getByText('conteúdo protegido')).toBeTruthy()
+  })
+
   it('sem telefone: leva ao passo do telefone', () => {
     mostrar({ data: perfil({ phone: null }), isLoading: false, isError: false })
 

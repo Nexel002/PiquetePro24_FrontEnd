@@ -26,6 +26,7 @@ function catalogo(extra: Partial<Catalogo> = {}): Catalogo {
     projects: [],
     rating_avg: null,
     rating_count: 0,
+    team: [],
     reviews: [],
     ...extra,
   }
@@ -44,6 +45,22 @@ function mostrar(resultado: Record<string, unknown>, perfil: Record<string, unkn
 }
 
 afterEach(cleanup)
+
+function avaliacaoBase() {
+  return {
+    id: 'r1',
+    service_request_id: 's1',
+    professional_id: 'p1',
+    client_id: 'c1',
+    client_full_name: 'Ana',
+    rating: 5,
+    comment: 'Bom trabalho',
+    comment_hidden: false,
+    member_rating: null,
+    technician: null,
+    created_at: '2026-10-02T10:00:00Z',
+  }
+}
 
 describe('ProfessionalCatalog', () => {
   it('mostra o esqueleto a carregar e o erro, sem catálogo', () => {
@@ -121,6 +138,8 @@ describe('ProfessionalCatalog', () => {
       rating: 4,
       comment: 'Bom trabalho',
       comment_hidden: false,
+      member_rating: null,
+      technician: null,
       created_at: '2026-10-02T10:00:00Z',
     }
 
@@ -155,6 +174,54 @@ describe('ProfessionalCatalog', () => {
 
       expect(screen.getByText('Comentário removido pela moderação.')).toBeTruthy()
       expect(screen.queryByRole('button', { name: 'Denunciar a avaliação de Ana' })).toBeNull()
+    })
+  })
+
+  describe('equipa e técnico', () => {
+    const tecnico = { id: 'm1', first_name: 'João', title: 'Canalizador', avatar_url: null, services: [], rating_avg: 4.5, rating_count: 2 }
+
+    it('uma empresa com equipa mostra os técnicos, com título e nota', () => {
+      mostrar({ data: catalogo({ professional_type: 'COMPANY', team: [tecnico] }), isLoading: false, isError: false })
+
+      const equipa = screen.getByRole('region', { name: 'A equipa' })
+      expect(equipa.textContent).toContain('João')
+      expect(equipa.textContent).toContain('Canalizador')
+      expect(equipa.textContent).toContain('4.5 (2)')
+    })
+
+    it('um técnico sem avaliações diz que ainda não tem', () => {
+      mostrar({ data: catalogo({ team: [{ ...tecnico, rating_avg: null, rating_count: 0 }] }), isLoading: false, isError: false })
+      expect(screen.getByText('Ainda sem avaliações')).toBeTruthy()
+    })
+
+    it('sem equipa (singular ou empresa sem técnicos) a secção não aparece', () => {
+      mostrar({ data: catalogo({ team: [] }), isLoading: false, isError: false })
+      expect(screen.queryByRole('region', { name: 'A equipa' })).toBeNull()
+    })
+
+    it('a avaliação diz quem fez o trabalho e a nota que teve', () => {
+      mostrar({
+        data: catalogo({
+          reviews: [{ ...avaliacaoBase(), technician: { first_name: 'João', title: 'Canalizador' }, member_rating: 4 }],
+          rating_avg: 5,
+          rating_count: 1,
+        }),
+        isLoading: false,
+        isError: false,
+      })
+
+      expect(screen.getByText(/feito por/i).textContent).toContain('João')
+      expect(screen.getByRole('img', { name: '4 de 5 estrelas' })).toBeTruthy()
+    })
+
+    it('uma avaliação de um pedido sem técnico não menciona nenhum', () => {
+      mostrar({ data: catalogo({ reviews: [avaliacaoBase()], rating_avg: 5, rating_count: 1 }), isLoading: false, isError: false })
+      expect(screen.queryByText(/feito por/i)).toBeNull()
+    })
+
+    it('nunca mostra telefone nem email de um técnico', () => {
+      mostrar({ data: catalogo({ team: [tecnico] }), isLoading: false, isError: false })
+      expect(document.body.textContent).not.toMatch(/@|[+]258/)
     })
   })
 
