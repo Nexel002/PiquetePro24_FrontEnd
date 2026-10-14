@@ -13,5 +13,8 @@ export function useReverseGeocode(coordinates: { latitude: number; longitude: nu
     // O nome de um lugar não muda — evita reconsultar a API paga do Google para as
     // mesmas coordenadas ao longo da sessão.
     staleTime: Infinity,
+    // O nome do lugar é um extra: com o retry por omissão (3, com espera crescente) uma falha do
+    // serviço atrasava ~7 s a gravação da localização, que só avança quando isto deixa de carregar.
+    retry: 1,
   })
 }

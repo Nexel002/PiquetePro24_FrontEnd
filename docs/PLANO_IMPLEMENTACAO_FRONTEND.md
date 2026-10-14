@@ -675,6 +675,23 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 29 — Correcção: captar a localização
+
+**Estado: corrigida em `fix/captar-localizacao` (16/10/2026), só local, por validar no telemóvel e no browser.** Ver Adendo v1.54 do TRD. Só frontend; o backend não mudou.
+
+**Problema reportado:** «a funcionalidade captar localização não está a funcionar». O sintoma exato não foi indicado; a análise do código encontrou quatro causas prováveis, todas tratadas:
+- **Só GPS, 10 s:** `getCurrentPosition` com `enableHighAccuracy: true` e sem `maximumAge` dava TIMEOUT/POSITION_UNAVAILABLE em portáteis e em telemóveis dentro de casa, embora o browser soubesse a zona por Wi-Fi. Agora tenta o GPS (8 s) e, se falhar sem ser por permissão, a localização aproximada (15 s, aceita posição de há até 10 min).
+- **Página não segura:** em `http://` por IP (POS no telemóvel, rede local) o browser recusa a localização e o erro aparecia como «permissão negada». Agora diz que exige HTTPS.
+- **Fora de Moçambique:** o backend recusa coordenadas fora de lat -27..-10 / lng 30..41 (400) e o ecrã mostrava um «não foi possível guardar» sem causa. Agora a captura diz «fora de Moçambique» e remete para a seleção manual; o erro do servidor, quando existe, passa a ser mostrado.
+- **Gravação lenta:** a geocodificação inversa repetia 3 vezes com espera crescente (~7 s) antes de a localização ser gravada, quando o serviço falhava. Agora repete 1 vez.
+- A mensagem de permissão negada explica como a ativar (cadeado junto ao endereço).
+
+**Critérios de Entrega:**
+- [x] `useGeolocation.test.ts` (4 testes novos): timeout do GPS → localização aproximada; permissão negada não repete e explica; fora de Moçambique não é «success»; página não segura. Suite completa: 584 testes, `tsc` e lint sem erros.
+- [ ] Validar num telemóvel real, em HTTPS, dentro e fora de casa; confirmar o sintoma original.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

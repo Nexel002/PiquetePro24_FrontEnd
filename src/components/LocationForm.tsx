@@ -205,7 +205,7 @@ export function LocationForm({
 
       {updateLocation.isError && (
         <p className="text-sm font-medium text-red-600 text-center bg-red-50 p-2 rounded-lg mt-2">
-          Não foi possível guardar a localização. Tenta novamente.
+          {updateLocation.error?.message || 'Não foi possível guardar a localização. Tenta novamente.'}
         </p>
       )}
     </div>

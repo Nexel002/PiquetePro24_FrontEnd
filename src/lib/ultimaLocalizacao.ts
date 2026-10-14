@@ -8,6 +8,11 @@ export interface UltimaLocalizacao {
 
 const CHAVE = 'piquete:ultima-localizacao'
 
+// Mesmos limites de Moçambique que o backend aplica (profileController.coordinatesSchema).
+export function dentroDeMocambique({ latitude, longitude }: { latitude: number; longitude: number }): boolean {
+  return latitude >= -27 && latitude <= -10 && longitude >= 30 && longitude <= 41
+}
+
 // Depois disto a posição já não presta como substituta do GPS (a pessoa pode estar noutra
 // cidade): é preferível a lista sem distâncias do que distâncias de um sítio onde já não está.
 export const IDADE_MAXIMA_MS = 30 * 24 * 60 * 60 * 1000
@@ -22,10 +27,7 @@ function valida(valor: unknown, agora: number): valor is UltimaLocalizacao {
     typeof latitude === 'number' &&
     typeof longitude === 'number' &&
     typeof guardadaEm === 'number' &&
-    latitude >= -27 &&
-    latitude <= -10 &&
-    longitude >= 30 &&
-    longitude <= 41 &&
+    dentroDeMocambique({ latitude, longitude }) &&
     guardadaEm <= agora &&
     agora - guardadaEm <= IDADE_MAXIMA_MS
   )

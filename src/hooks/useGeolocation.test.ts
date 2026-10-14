@@ -76,3 +76,62 @@ describe('useGeolocation — última localização conhecida', () => {
     expect(result.current.coordinates).toEqual(MAPUTO)
   })
 })
+
+function simularSequencia(respostas: Array<{ ok: GeolocationCoordinates } | { erro: number }>) {
+  const getCurrentPosition = vi.fn((...args: [Sucesso, Falha, PositionOptions?]) => {
+    const [sucesso, falha] = args
+    const resposta = respostas.shift()!
+    if ('ok' in resposta) sucesso({ coords: resposta.ok } as GeolocationPosition)
+    else falha({ code: resposta.erro, PERMISSION_DENIED: 1, POSITION_UNAVAILABLE: 2, TIMEOUT: 3 } as GeolocationPositionError)
+  })
+  Object.defineProperty(navigator, 'geolocation', { value: { getCurrentPosition }, configurable: true })
+  return getCurrentPosition
+}
+
+describe('useGeolocation — captar a localização', () => {
+  afterEach(() => {
+    Reflect.deleteProperty(window, 'isSecureContext')
+  })
+
+  it('se o GPS dá timeout, tenta a localização aproximada (rede/Wi-Fi) e consegue', () => {
+    const gps = simularSequencia([{ erro: 3 }, { ok: MAPUTO as GeolocationCoordinates }])
+    const { result } = renderHook(() => useGeolocation())
+
+    act(() => result.current.locate())
+
+    expect(gps).toHaveBeenCalledTimes(2)
+    expect(gps.mock.calls[0][2]).toMatchObject({ enableHighAccuracy: true })
+    expect(gps.mock.calls[1][2]).toMatchObject({ enableHighAccuracy: false })
+    expect(result.current.state).toMatchObject({ status: 'success', coordinates: MAPUTO })
+  })
+
+  it('sem permissão não repete o pedido e explica como a ativar', () => {
+    const gps = simularSequencia([{ erro: 1 }])
+    const { result } = renderHook(() => useGeolocation())
+
+    act(() => result.current.locate())
+
+    expect(gps).toHaveBeenCalledTimes(1)
+    expect(result.current.state).toMatchObject({ status: 'error', message: expect.stringMatching(/definições do browser/i) })
+  })
+
+  it('uma posição fora de Moçambique não é «success»: o backend recusava-a, e o utilizador fica a saber porquê', () => {
+    simularSequencia([{ ok: { latitude: 38.7, longitude: -9.1 } as GeolocationCoordinates }])
+    const { result } = renderHook(() => useGeolocation())
+
+    act(() => result.current.locate())
+
+    expect(result.current.state).toMatchObject({ status: 'error', message: expect.stringMatching(/fora de Moçambique/i) })
+  })
+
+  it('numa página não segura (http por IP) diz isso, em vez de «permissão negada»', () => {
+    const gps = simularSequencia([{ ok: MAPUTO as GeolocationCoordinates }])
+    Object.defineProperty(window, 'isSecureContext', { value: false, configurable: true })
+    const { result } = renderHook(() => useGeolocation())
+
+    act(() => result.current.locate())
+
+    expect(gps).not.toHaveBeenCalled()
+    expect(result.current.state).toMatchObject({ status: 'error', message: expect.stringMatching(/HTTPS/) })
+  })
+})
