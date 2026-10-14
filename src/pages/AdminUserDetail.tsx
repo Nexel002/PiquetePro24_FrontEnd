@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAdminUserDetail, useBanUser, useChangeUserRole, useResendEmail, useUnbanUser } from '../hooks/useAdminUsers'
@@ -7,12 +6,12 @@ import { useActivateSubscriptionManually, useUserSubscription } from '../hooks/u
 import { NotasInternas } from '../components/admin/NotasInternas'
 import { EmpresaNaFicha, EquipaNaFicha } from '../components/admin/EquipaNaFicha'
 import type { SubscriptionStatus } from '../services/subscriptions'
-import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { Card, CardContent } from '../components/ui/Card'
 import type { ProfessionalType, UserRole } from '../services/profile'
 import type { AdminUserDetail as AdminUserDetailData, ResendEmailTemplate } from '../services/adminUsers'
+import { LayoutDividido, ColunaDaFoto } from '../components/layout/LayoutDividido'
 
 const ROLE_LABELS: Record<UserRole, string> = {
   CLIENT: 'Cliente',
@@ -41,15 +40,10 @@ const PROFESSIONAL_TYPE_LABELS: Record<ProfessionalType, string> = {
 const memberSinceFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long' })
 const banExpiryFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long', timeStyle: 'short' })
 
-// Adendo v1.9, item G: ban_duration indefinido (876000h, ~100 anos) faz
-// banned_until cair muito longe no futuro — qualquer data futura já conta como
-// "banido" para efeitos da UI, sem precisar de um valor sentinela especial.
 function isBanned(bannedUntil: string | null): boolean {
   return bannedUntil !== null && new Date(bannedUntil).getTime() > Date.now()
 }
 
-// TRD Adendo v1.9, item B. Mesma convenção de guard de role dentro do próprio
-// componente já usada em AdminKyc.tsx/AdminAuditLog.tsx/AdminUsers.tsx.
 export function AdminUserDetail() {
   const { id } = useParams<{ id: string }>()
   const { data: user, isLoading, isError } = useAdminUserDetail(id ?? '')
@@ -77,8 +71,6 @@ export function AdminUserDetail() {
           if (result.enviado) {
             toast.success('Email reenviado.')
           } else if (result.motivo === 'desligado') {
-            // Estado válido em dev/test (sem SMTP configurado) — não é um erro do
-            // admin nem do utilizador, mas também não é "sucesso" no sentido normal.
             toast.info('Envio de email está desligado neste ambiente (sem SMTP configurado).')
           } else {
             toast.error('Não foi possível enviar o email. Tenta novamente.')
@@ -127,95 +119,167 @@ export function AdminUserDetail() {
     )
   }
 
-  return (
-    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
-      <header className="flex items-center gap-3">
-        <BackButton />
-        <h1 className="text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">Ficha de utilizador</h1>
-      </header>
-
-      <NavegacaoAdmin />
-
-      {isLoading && (
-        <div className="flex flex-col gap-3">
-          <div className="h-6 w-40 animate-pulse rounded-xl bg-gray-200" />
-          <div className="h-24 animate-pulse rounded-3xl bg-gray-200" />
+  if (isLoading) {
+    return (
+      <main className="flex min-h-dvh items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
+          <p className="text-sm font-medium text-gray-600">A carregar ficha de utilizador...</p>
         </div>
-      )}
+      </main>
+    )
+  }
 
-      {isError && (
-        <p className="text-sm text-gray-600">Não foi possível carregar este utilizador. Verifica a tua ligação e tenta novamente.</p>
-      )}
+  if (isError || !user) {
+    return (
+      <main className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center">
+        <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 text-xl">
+          ⚠️
+        </div>
+        <p className="text-sm text-gray-700 max-w-sm">
+          Não foi possível carregar este utilizador. Verifica a tua ligação e tenta novamente.
+        </p>
+        <Link to="/admin/utilizadores">
+          <Button variant="outline" size="sm">
+            Voltar aos utilizadores
+          </Button>
+        </Link>
+      </main>
+    )
+  }
 
-      {user && (
-        <>
-          <Card variant="solid">
-            <CardContent className="flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                {user.avatar_url ? (
-                  <img src={user.avatar_url} alt="" className="h-14 w-14 rounded-full object-cover" />
-                ) : (
-                  <div
-                    aria-hidden
-                    className="flex h-14 w-14 items-center justify-center rounded-full bg-piquete-yellow/15 border border-piquete-yellow/30 text-lg font-bold text-piquete-blue"
-                  >
-                    {user.full_name.charAt(0).toUpperCase()}
+  const initial = (user.full_name || 'U').charAt(0).toUpperCase()
+  const localidade = [user.neighborhood, user.district, user.province].filter(Boolean).join(', ')
+
+  return (
+    <main className="min-h-dvh w-full pb-28 animate-fade-in lg:pb-0">
+      <LayoutDividido
+        foto={
+          <ColunaDaFoto
+            imagem={
+              user.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.full_name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-piquete-blue via-piquete-blue-light to-piquete-blue-bright p-8 text-white">
+                  <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white/10 border-2 border-white/25 text-5xl font-extrabold font-heading shadow-xl backdrop-blur-md">
+                    {initial}
                   </div>
-                )}
-                <div>
-                  <p className="text-lg font-bold text-piquete-blue">{user.full_name}</p>
-                  <Badge variant="info">{ROLE_LABELS[user.role]}</Badge>
+                  <p className="mt-4 text-xs font-semibold uppercase tracking-wider text-white/70">
+                    Sem fotografia registada
+                  </p>
                 </div>
+              )
+            }
+            identidade={
+              <div className="flex flex-col gap-2 text-white">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-white/20 text-white backdrop-blur-md border border-white/30">
+                    {ROLE_LABELS[user.role]}
+                  </span>
+                  {user.kyc_status && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-white/15 text-white/95 border border-white/20 backdrop-blur-md">
+                      KYC: {KYC_STATUS_LABELS[user.kyc_status]}
+                    </span>
+                  )}
+                  {isBanned(user.banned_until) && (
+                    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-500 text-white border border-rose-300">
+                      Conta Banida
+                    </span>
+                  )}
+                </div>
+
+                <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight font-heading drop-shadow-sm">
+                  {user.full_name}
+                </h1>
+
+                <p className="text-xs text-white/80">
+                  Membro desde {memberSinceFormatter.format(new Date(user.created_at))}
+                </p>
               </div>
+            }
+          />
+        }
+      >
+        {/* Lado direito: Ficha de dados e ações de administração */}
+        <section className="flex flex-col gap-5 rounded-[2.5rem] bg-white p-6 shadow-card border border-gray-100 sm:p-7">
+          <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Painel de Controlo</span>
+              <h2 className="text-lg font-bold text-piquete-blue font-heading">Ficha e Moderação de Conta</h2>
+            </div>
+            <Link to={`/admin/audit-log?user_id=${user.id}`}>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Histórico de ações</span>
+              </Button>
+            </Link>
+          </div>
 
-              <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm pt-1 border-t border-gray-100">
-                <dt className="text-gray-500 pt-1.5">Telefone</dt>
-                <dd className="text-gray-900 pt-1.5">{user.phone ?? 'sem telefone'}</dd>
+          {/* Dados Pessoais e Contacto */}
+          <div className="flex flex-col gap-3 rounded-2xl bg-gray-50/80 border border-gray-100 p-4">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">Dados do Registo</h3>
+            <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+              <dt className="text-gray-500 font-medium">Telefone</dt>
+              <dd className="text-gray-900 font-semibold flex items-center gap-2">
+                {user.phone ? (
+                  <>
+                    <span>{user.phone}</span>
+                    <a
+                      href={`tel:${user.phone}`}
+                      className="text-xs text-piquete-blue underline hover:text-piquete-blue-light"
+                    >
+                      Ligar
+                    </a>
+                  </>
+                ) : (
+                  <span className="text-gray-400 font-normal">Sem telefone registado</span>
+                )}
+              </dd>
 
-                <dt className="text-gray-500">Localização</dt>
-                <dd className="text-gray-900">
-                  {[user.neighborhood, user.district, user.province].filter(Boolean).join(', ') || 'não definida'}
-                </dd>
+              <dt className="text-gray-500 font-medium">Localização</dt>
+              <dd className="text-gray-900">
+                {localidade || <span className="text-gray-400 font-normal">Não definida</span>}
+              </dd>
 
-                <dt className="text-gray-500">Estado do KYC</dt>
-                <dd className="text-gray-900">{user.kyc_status ? KYC_STATUS_LABELS[user.kyc_status] : 'sem submissão'}</dd>
+              <dt className="text-gray-500 font-medium">Estado do KYC</dt>
+              <dd className="text-gray-900 font-medium">
+                {user.kyc_status ? (
+                  <Badge variant={user.kyc_status === 'APPROVED' ? 'approved' : user.kyc_status === 'REJECTED' ? 'rejected' : 'pending'}>
+                    {KYC_STATUS_LABELS[user.kyc_status]}
+                  </Badge>
+                ) : (
+                  <span className="text-gray-400 font-normal">Sem submissão de KYC</span>
+                )}
+              </dd>
 
-                <dt className="text-gray-500">Pedidos como cliente</dt>
-                <dd className="text-gray-900">{user.service_requests_as_client}</dd>
+              <dt className="text-gray-500 font-medium">Pedidos como cliente</dt>
+              <dd className="text-gray-900 font-semibold">{user.service_requests_as_client}</dd>
 
-                <dt className="text-gray-500">Pedidos como profissional</dt>
-                <dd className="text-gray-900">{user.service_requests_as_professional}</dd>
+              <dt className="text-gray-500 font-medium">Pedidos como profissional</dt>
+              <dd className="text-gray-900 font-semibold">{user.service_requests_as_professional}</dd>
+            </dl>
+          </div>
 
-                <dt className="text-gray-500">Membro desde</dt>
-                <dd className="text-gray-900">{memberSinceFormatter.format(new Date(user.created_at))}</dd>
-              </dl>
-            </CardContent>
-          </Card>
-
-          {/* Adendo v1.9, item B: liga à mesma tela de audit log já existente
-              (Adendo v1.8), filtrada por este utilizador — sem endpoint novo, o
-              backend já aceita user_id como filtro desde a Fase 8. */}
-          <Link to={`/admin/audit-log?user_id=${user.id}`} className="self-start">
-            <Button variant="outline" size="sm">
-              Ver histórico de ações
-            </Button>
-          </Link>
-
+          {/* Se for profissional singular ou empresa */}
           {user.role === 'PROFESSIONAL' && <SubscricaoDoProfissional userId={user.id} />}
 
+          {/* Equipa ou Empresa associada */}
           {user.team && <EquipaNaFicha team={user.team} />}
           {user.company && <EmpresaNaFicha company={user.company} />}
 
+          {/* Notas internas do Admin */}
           <NotasInternas targetType="USER" targetId={user.id} />
 
-          {/* Adendo v1.9, item F: sem endpoint novo de leitura — reaproveita o
-              EmailService já existente do lado do backend. Sem lógica de mostrar só
-              os templates "relevantes" para este utilizador (ex. esconder KYC para
-              um CLIENT sem submissão) — decisão consciente de simplicidade, o admin
-              sabe o que está a fazer ao escolher. */}
+          {/* Reenviar Email */}
           <Card variant="solid">
-            <CardContent className="flex flex-col gap-2">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Reenviar email</h2>
+            <CardContent className="flex flex-col gap-2 p-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">Reenviar email</h3>
               <div className="flex gap-2">
                 <select
                   value={resendTemplate}
@@ -228,39 +292,63 @@ export function AdminUserDetail() {
                     </option>
                   ))}
                 </select>
-                <Button type="button" variant="outline" size="sm" onClick={handleResendEmail} disabled={resendEmailMutation.isPending} isLoading={resendEmailMutation.isPending}>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleResendEmail}
+                  disabled={resendEmailMutation.isPending}
+                  isLoading={resendEmailMutation.isPending}
+                >
                   Reenviar
                 </Button>
               </div>
             </CardContent>
           </Card>
 
-          {/* Adendo v1.9, item G: moderação de contas. "sign-out" (revogar sessões
-              por ID) não existe nesta entrega — o SDK instalado exige o JWT da
-              sessão, não um ID de utilizador; ver TRD para o detalhe. Mudar role só
-              aparece para CLIENT/PROFESSIONAL — nunca para ADMIN, o backend rejeita
-              e a UI nem oferece a opção. */}
-          <Card variant="solid" className="border-rose-200">
-            <CardContent className="flex flex-col gap-3">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-rose-600">Moderação de conta</h2>
+          {/* Moderação de Conta */}
+          <Card variant="solid" className="border-rose-200 bg-rose-50/30">
+            <CardContent className="flex flex-col gap-3 p-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-rose-700">Moderação de conta</h3>
 
               <div className="flex flex-col gap-2">
                 <p className="text-sm text-gray-700">
                   {isBanned(user.banned_until)
                     ? `Conta banida até ${banExpiryFormatter.format(new Date(user.banned_until as string))}.`
-                    : 'Conta sem banimento ativo.'}
+                    : 'Conta com acesso ativo sem restrições.'}
                 </p>
 
                 {isBanned(user.banned_until) ? (
-                  <Button type="button" variant="outline" size="sm" onClick={handleUnban} disabled={unbanMutation.isPending} isLoading={unbanMutation.isPending} className="self-start">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUnban}
+                    disabled={unbanMutation.isPending}
+                    isLoading={unbanMutation.isPending}
+                    className="self-start"
+                  >
                     Levantar banimento
                   </Button>
                 ) : isConfirmingBan ? (
                   <div className="flex items-center gap-2">
-                    <Button type="button" variant="danger" size="sm" onClick={handleConfirmBan} disabled={banMutation.isPending} isLoading={banMutation.isPending}>
-                      Sim, banir
+                    <Button
+                      type="button"
+                      variant="danger"
+                      size="sm"
+                      onClick={handleConfirmBan}
+                      disabled={banMutation.isPending}
+                      isLoading={banMutation.isPending}
+                    >
+                      Confirmar Banimento
                     </Button>
-                    <Button type="button" variant="ghost" size="sm" onClick={() => setIsConfirmingBan(false)} disabled={banMutation.isPending}>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsConfirmingBan(false)}
+                      disabled={banMutation.isPending}
+                    >
                       Cancelar
                     </Button>
                   </div>
@@ -270,7 +358,7 @@ export function AdminUserDetail() {
                     variant="outline"
                     size="sm"
                     onClick={() => setIsConfirmingBan(true)}
-                    className="self-start border-rose-300 text-rose-600 hover:bg-rose-600 hover:text-white"
+                    className="self-start border-rose-300 text-rose-700 hover:bg-rose-600 hover:text-white transition-colors"
                   >
                     Banir conta
                   </Button>
@@ -299,10 +387,23 @@ export function AdminUserDetail() {
                         </select>
                       )}
                       <div className="flex items-center gap-2">
-                        <Button type="button" variant="danger" size="sm" onClick={handleConfirmRoleChange} disabled={changeRoleMutation.isPending} isLoading={changeRoleMutation.isPending}>
-                          {`Sim, mudar para ${user.role === 'CLIENT' ? 'Profissional' : 'Cliente'}`}
+                        <Button
+                          type="button"
+                          variant="danger"
+                          size="sm"
+                          onClick={handleConfirmRoleChange}
+                          disabled={changeRoleMutation.isPending}
+                          isLoading={changeRoleMutation.isPending}
+                        >
+                          {`Confirmar mudança para ${user.role === 'CLIENT' ? 'Profissional' : 'Cliente'}`}
                         </Button>
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setIsConfirmingRoleChange(false)} disabled={changeRoleMutation.isPending}>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setIsConfirmingRoleChange(false)}
+                          disabled={changeRoleMutation.isPending}
+                        >
                           Cancelar
                         </Button>
                       </div>
@@ -313,7 +414,7 @@ export function AdminUserDetail() {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsConfirmingRoleChange(true)}
-                      className="self-start border-rose-300 text-rose-600 hover:bg-rose-600 hover:text-white"
+                      className="self-start border-rose-300 text-rose-700 hover:bg-rose-600 hover:text-white transition-colors"
                     >
                       Mudar para {user.role === 'CLIENT' ? 'Profissional' : 'Cliente'}
                     </Button>
@@ -322,8 +423,8 @@ export function AdminUserDetail() {
               )}
             </CardContent>
           </Card>
-        </>
-      )}
+        </section>
+      </LayoutDividido>
     </main>
   )
 }
@@ -336,11 +437,6 @@ const SUBSCRIPTION_STATUS_LABELS: Record<SubscriptionStatus, string> = {
 
 const subscriptionDateFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'long', timeZone: 'Africa/Maputo' })
 
-// Backend TRD Adendo v1.12, item D: ativação manual — o caminho de produção enquanto não
-// houver integração M-Pesa/e-Mola real. Componente próprio (e não mais estado dentro de
-// AdminUserDetail) para os hooks de subscrição só correrem para perfis PROFESSIONAL: o
-// backend não tem subscrição para CLIENT/ADMIN e o pedido seria desperdício. Mesma
-// confirmação em dois passos das outras ações desta ficha.
 function SubscricaoDoProfissional({ userId }: { userId: string }) {
   const { data: summary, isLoading, isError } = useUserSubscription(userId)
   const activateMutation = useActivateSubscriptionManually()
@@ -367,8 +463,8 @@ function SubscricaoDoProfissional({ userId }: { userId: string }) {
 
   return (
     <Card variant="solid">
-      <CardContent className="flex flex-col gap-3">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Subscrição</h2>
+      <CardContent className="flex flex-col gap-3 p-4">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-500">Subscrição</h3>
 
         {isLoading && <div className="h-12 animate-pulse rounded-xl bg-gray-200" />}
 
@@ -413,7 +509,6 @@ function SubscricaoDoProfissional({ userId }: { userId: string }) {
               >
                 <label className="flex flex-col gap-1.5">
                   <span className="text-xs font-semibold uppercase tracking-wider text-piquete-blue-dark">Nota sobre o pagamento recebido</span>
-                  {/* Fica no audit log — é a única prova de um pagamento feito por fora. */}
                   <textarea
                     required
                     maxLength={500}

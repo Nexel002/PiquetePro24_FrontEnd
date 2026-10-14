@@ -11,6 +11,7 @@ export const DESTINOS_DE_ADMIN: DestinoDeAdmin[] = [
   { to: '/admin/kyc', rotulo: 'Verificações', descricao: 'Identidades por rever' },
   { to: '/admin/utilizadores', rotulo: 'Utilizadores', descricao: 'Contas, estados e moderação' },
   { to: '/admin/pedidos-servico', rotulo: 'Pedidos', descricao: 'Todos os pedidos de serviço' },
+  { to: '/admin/visao-geral', rotulo: 'Visão Geral', descricao: 'Métricas, alertas e atalhos' },
   { to: '/admin/subscricoes', rotulo: 'Subscrições', descricao: 'Quem expira, pagamentos e suspensões' },
   { to: '/admin/moderacao', rotulo: 'Moderação', descricao: 'Denúncias e conteúdo ocultado' },
   { to: '/admin/servicos', rotulo: 'Serviços', descricao: 'Categorias e palavras de pesquisa' },
