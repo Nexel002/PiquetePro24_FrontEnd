@@ -39,6 +39,11 @@ export interface ProfessionalCatalog {
   bio: string | null
   // true só com o KYC aprovado por um administrador (o backend decide; ver Adendo v1.39).
   identity_verified: boolean
+  // Contacto à vista no catálogo (Fase 28). O backend só envia o número se o profissional pode atender
+  // (KYC aprovado e subscrição ativa); sem isso `contact_available` é false e `phone` é null.
+  // `phone` null com `contact_available` true = ainda não registou telefone.
+  contact_available: boolean
+  phone: string | null
   services: ServiceCategory[]
   // O backend ainda envia `portfolio` (fotos soltas) por compatibilidade com versões antigas
   // do frontend (TRD Adendo v1.23, item D); esta versão só lê `projects`.

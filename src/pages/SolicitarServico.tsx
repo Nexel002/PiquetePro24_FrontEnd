@@ -108,7 +108,7 @@ export function SolicitarServico() {
         <CardContent className="flex flex-col gap-1">
           <p className="text-sm font-bold text-piquete-blue">{catalogo.full_name}</p>
           <p className="text-xs text-piquete-gray-dark">
-            Ao enviares o pedido, ele fica registado e o contacto de {catalogo.full_name} aparece para poderes ligar.
+            Ao enviares o pedido, ele fica registado e {catalogo.full_name} é avisado.
           </p>
         </CardContent>
       </Card>

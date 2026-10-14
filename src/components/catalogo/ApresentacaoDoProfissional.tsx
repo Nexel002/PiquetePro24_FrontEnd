@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import type { ProfessionalCatalog } from '../../services/catalog'
 import { INVITATIONS_PER_REQUEST } from '../../services/invitations'
+import { ContactoDoProfissional } from '../pedidos/ContactoDoProfissional'
 import { Mosaico } from '../ui/Mosaico'
 
 interface ApresentacaoDoProfissionalProps {
@@ -17,6 +18,24 @@ const CLASSE_DO_BOTAO =
 // vez de prometer «pedir a este profissional», que o fluxo não permite.
 function destinoDoPedido(catalog: ProfessionalCatalog) {
   return catalog.services.length === 1 ? `/profissionais?category=${encodeURIComponent(catalog.services[0].slug)}` : '/profissionais'
+}
+
+function ContactoNoCatalogo({ catalog }: { catalog: ProfessionalCatalog }) {
+  if (!catalog.contact_available) {
+    return (
+      <p className="rounded-2xl bg-gray-50 p-3 text-sm text-gray-700">
+        O contacto de {catalog.full_name} fica disponível quando tiver a conta verificada e a subscrição ativa.
+      </p>
+    )
+  }
+  if (!catalog.phone) {
+    return (
+      <p className="rounded-2xl bg-gray-50 p-3 text-sm text-gray-700">
+        {catalog.full_name} ainda não registou um número de telefone. Solicita o serviço e ele é avisado por email.
+      </p>
+    )
+  }
+  return <ContactoDoProfissional nome={catalog.full_name} telefone={catalog.phone} />
 }
 
 // Cartão de apresentação: descrição, estatísticas e a ação principal. O nome e os serviços
@@ -44,12 +63,14 @@ export function ApresentacaoDoProfissional({ catalog, ehDono }: ApresentacaoDoPr
         </Link>
       ) : (
         <div className="flex flex-col gap-2">
-          {/* «Solicitar serviço»: pedido direto a este profissional. O contacto dele só aparece depois de
-              enviar o pedido (decisão do utilizador, 16/10/2026). */}
+          {/* Contacto sempre à vista (decisão do utilizador, 16/10/2026): o cliente pode ligar logo. O número
+              só vem do servidor se o profissional pode atender (KYC e subscrição). «Solicitar serviço»
+              continua a ser a via que regista o pedido, para haver estado, fotos e avaliação. */}
+          <ContactoNoCatalogo catalog={catalog} />
           <Link to={`/solicitar/${catalog.id}`} className={CLASSE_DO_BOTAO}>
             Solicitar serviço
           </Link>
-          <p className="text-center text-xs text-piquete-gray">Ao enviares o pedido, vês o contacto e podes ligar.</p>
+          <p className="text-center text-xs text-piquete-gray">Regista o pedido para acompanhares o estado e avaliares o trabalho.</p>
           <Link to={destinoDoPedido(catalog)} className="text-center text-xs font-semibold text-piquete-blue underline">
             {nomeDoServico ? `Ou pede propostas de ${nomeDoServico} a ${INVITATIONS_PER_REQUEST} profissionais` : `Ou pede propostas a ${INVITATIONS_PER_REQUEST} profissionais`}
           </Link>

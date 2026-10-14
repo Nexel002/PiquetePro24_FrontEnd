@@ -63,12 +63,9 @@ describe('SolicitarServico — carregar', () => {
 })
 
 describe('SolicitarServico — formulário', () => {
-  it('avisa que o contacto só aparece depois de enviar, e mostra o local do perfil', () => {
+  it('mostra o local do perfil', () => {
     mostrar()
-    expect(screen.getByText(/o contacto de paulo canalizador aparece para poderes ligar/i)).toBeTruthy()
     expect(screen.getByText(/polana, kampfumo, maputo/i)).toBeTruthy()
-    // O número nunca está no formulário, antes de enviar.
-    expect(document.body.textContent).not.toMatch(/\+?258\d{9}/)
   })
 
   it('com um só serviço não pergunta qual; envia o profissional, o serviço e o local', () => {

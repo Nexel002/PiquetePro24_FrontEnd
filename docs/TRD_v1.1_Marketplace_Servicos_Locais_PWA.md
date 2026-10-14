@@ -1658,14 +1658,28 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 - só se pode pedir a um profissional **com KYC aprovado e subscrição ativa**: sem isso o número não sai, e não há pedido;
 - **um pedido direto em curso por cliente e profissional**: um clique por profissional não dá um directório de telefones;
 - o limite de criação de pedidos por hora do cliente aplica-se também aqui;
-- o catálogo e a pesquisa continuam a **não** mostrar telefones;
+- ~~o catálogo e a pesquisa continuam a não mostrar telefones~~ (o catálogo passou a mostrá-lo: Adendo v1.53);
 - o contacto do cliente continua a exigir, ao profissional, KYC aprovado e subscrição ativa (Secção 5, inalterada).
 
 **Efeito nos Termos de utilização.** A secção 3 dizia que os contactos «só se revelam depois da escolha»: passa a descrever os dois caminhos (frontend, Fase 27).
 
-**Alternativa rejeitada.** Mostrar o telefone no catálogo, para toda a gente: o utilizador rejeitou-a expressamente, pela razão acima.
+**Alternativa rejeitada** (depois revertida no Adendo v1.53): mostrar o telefone no catálogo, para toda a gente.
 
 **Fora de âmbito (a decidir):** o profissional recusar um pedido direto; lembretes para atualizar o estado do trabalho; exigir fotos ou avaliação antes de um novo pedido.
 
 **Notas de deploy:** **migration primeiro** (`20261016090000_pedido_direto.sql`, à mão), depois backend, depois frontend. Sem variáveis novas. **Critérios de entrega correspondentes:** backend Fase 29; frontend Fase 27.
+## Adendo v1.53
 
+### Contacto do profissional à vista no catálogo (16/10/2026)
+
+**Estado: implementado em `feat/pedido-direto`; por validar no browser e contra o Supabase real.**
+
+**Decisão.** Por decisão expressa do utilizador, o nome e o telefone do profissional (singular ou empresa) ficam **sempre visíveis no catálogo**, sem clicar. **Substitui** o que o Adendo v1.52 dizia sobre o catálogo («continuam a não mostrar telefones») e a «alternativa rejeitada» desse adendo: o catálogo passa a mostrar o contacto. A Secção 5 continua a valer para o contacto do **cliente**.
+
+**Como funciona.** `GET /professionals/:id/catalog` devolve `contact_available` e `phone`. O número só sai quando o profissional pode atender (KYC aprovado e subscrição ativa); caso contrário `phone` é `null` e o frontend explica porquê. É o telefone da empresa, nunca o de um técnico. A **pesquisa** continua sem telefones, para não haver uma lista de números.
+
+**Risco aceite.** O contacto é o ativo que protege a subscrição, e o cliente que liga diretamente deixa de ter motivo para registar o pedido (estado, fotos, avaliação, e a prova de que o trabalho existiu). O utilizador foi avisado e manteve a decisão. Atenuação: «Solicitar serviço» continua em destaque, com a razão para registar o pedido, e os Termos recomendam-no. A condição KYC + subscrição ativa mantém-se como único travão.
+
+**Efeito nos Termos de utilização.** A secção 3 deixa de dizer que os contactos «nunca estão à vista no catálogo»: descreve o telefone à vista enquanto o profissional estiver verificado e subscrito (frontend, Fase 28).
+
+**Notas de deploy:** sem migrations nem variáveis novas (a migration `20261016090000_pedido_direto.sql` da Fase 29 mantém-se por aplicar). Backend primeiro, depois frontend: um frontend novo contra o backend antigo mostraria «contacto indisponível» a todos. **Critérios de entrega correspondentes:** backend Fase 30; frontend Fase 28.

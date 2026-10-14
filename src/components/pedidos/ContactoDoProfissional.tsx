@@ -6,8 +6,8 @@ interface ContactoDoProfissionalProps {
   telefone: string | null
 }
 
-// O contacto de quem o cliente escolheu, com o número pronto a ligar. Aparece depois de «Solicitar
-// serviço» e na lista de pedidos do cliente; nunca no catálogo nem na pesquisa.
+// O contacto do profissional, com o número pronto a ligar. Aparece no catálogo (se o profissional pode
+// atender), depois de «Solicitar serviço» e na lista de pedidos do cliente.
 export function ContactoDoProfissional({ nome, telefone }: ContactoDoProfissionalProps) {
   if (!telefone) {
     return (
