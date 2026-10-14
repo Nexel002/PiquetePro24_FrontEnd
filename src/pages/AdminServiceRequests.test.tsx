@@ -2,10 +2,10 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AdminServiceRequests } from './AdminServiceRequests'
-import type { AdminServiceRequestSummary } from '../services/adminServiceRequests'
+import type { ServiceRequest } from '../services/serviceRequests'
 
 const estado = vi.hoisted(() => ({
-  lista: [] as AdminServiceRequestSummary[],
+  lista: [] as ServiceRequest[],
   isLoading: false,
   isError: false,
   cancelar: vi.fn(),
@@ -23,11 +23,10 @@ vi.mock('../hooks/useAdminServiceRequests', () => ({
   }),
 }))
 
-const REQUEST_MOCK: AdminServiceRequestSummary = {
+const REQUEST_MOCK: ServiceRequest = {
   id: 'r1',
   client_id: 'c1',
   category_id: 'cat1',
-  category_name: 'Cozinha',
   title: 'Quero melhorar minha cozinha americana',
   description: 'Instalar bancada e torneiras novas',
   status: 'OPEN',
@@ -35,7 +34,10 @@ const REQUEST_MOCK: AdminServiceRequestSummary = {
   district: 'Cidade de Maputo',
   neighborhood: 'Central C',
   created_at: '2026-10-06T15:34:00Z',
-  assigned_to_professional_id: null,
+  professional_id: null,
+  assigned_at: null,
+  completed_at: null,
+  assigned_member_id: null,
 }
 
 function mostrar() {
