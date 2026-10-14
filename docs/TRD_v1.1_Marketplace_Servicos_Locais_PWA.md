@@ -1683,3 +1683,15 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 **Efeito nos Termos de utilização.** A secção 3 deixa de dizer que os contactos «nunca estão à vista no catálogo»: descreve o telefone à vista enquanto o profissional estiver verificado e subscrito (frontend, Fase 28).
 
 **Notas de deploy:** sem migrations nem variáveis novas (a migration `20261016090000_pedido_direto.sql` da Fase 29 foi aplicada a 16/10/2026). Backend primeiro, depois frontend: um frontend novo contra o backend antigo mostraria «contacto indisponível» a todos. **Critérios de entrega correspondentes:** backend Fase 30; frontend Fase 28.
+
+## Adendo v1.54
+
+### Correcção: captar a localização (16/10/2026)
+
+**Estado: corrigido em `fix/captar-localizacao` (só frontend); por validar em dispositivo real.**
+
+**Causas tratadas** (o sintoma exato não foi descrito): GPS com 10 s e sem fallback (agora GPS 8 s, depois localização aproximada 15 s com `maximumAge` de 10 min; sem permissão não repete); página http não segura (mensagem própria, em vez de «permissão negada»); coordenadas fora de Moçambique (mensagem própria; o backend continua a recusar com 400 — Secção de perfil, inalterada); geocodificação inversa com retry por omissão a atrasar a gravação (agora 1 repetição); erro do servidor na gravação passa a ser mostrado.
+
+**Inalterado:** o contrato do backend (`PATCH /profile/location`, `GET /geocode/reverse`), a ordem Nominatim → OpenRouteService → Google, e a regra de que uma posição antiga nunca é tratada como atual.
+
+**Notas de deploy:** só frontend; sem migrations nem variáveis novas. **Critérios de entrega correspondentes:** frontend Fase 29.
