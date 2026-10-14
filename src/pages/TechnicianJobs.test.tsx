@@ -75,13 +75,13 @@ describe('TechnicianJobs', () => {
     mostrar({}, { data: [pedido()] })
     expect(screen.queryByText('Contacto de p1')).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Ver contacto do cliente' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Ver pedido de serviço' }))
     expect(screen.getByText('Contacto de p1')).toBeTruthy()
   })
 
   it('um trabalho concluído não oferece o contacto', () => {
     mostrar({}, { data: [pedido({ status: 'COMPLETED' })] })
-    expect(screen.queryByRole('button', { name: 'Ver contacto do cliente' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Ver pedido de serviço' })).toBeNull()
     expect(screen.getByText('Concluído')).toBeTruthy()
   })
 

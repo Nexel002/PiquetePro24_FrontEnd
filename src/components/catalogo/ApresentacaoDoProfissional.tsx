@@ -44,10 +44,15 @@ export function ApresentacaoDoProfissional({ catalog, ehDono }: ApresentacaoDoPr
         </Link>
       ) : (
         <div className="flex flex-col gap-2">
-          <Link to={destinoDoPedido(catalog)} className={CLASSE_DO_BOTAO}>
-            {nomeDoServico ? `Pedir ${nomeDoServico}` : 'Pedir um serviço'}
+          {/* «Solicitar serviço»: pedido direto a este profissional. O contacto dele só aparece depois de
+              enviar o pedido (decisão do utilizador, 16/10/2026). */}
+          <Link to={`/solicitar/${catalog.id}`} className={CLASSE_DO_BOTAO}>
+            Solicitar serviço
           </Link>
-          <p className="text-center text-xs text-piquete-gray">O pedido segue para {INVITATIONS_PER_REQUEST} profissionais à tua escolha.</p>
+          <p className="text-center text-xs text-piquete-gray">Ao enviares o pedido, vês o contacto e podes ligar.</p>
+          <Link to={destinoDoPedido(catalog)} className="text-center text-xs font-semibold text-piquete-blue underline">
+            {nomeDoServico ? `Ou pede propostas de ${nomeDoServico} a ${INVITATIONS_PER_REQUEST} profissionais` : `Ou pede propostas a ${INVITATIONS_PER_REQUEST} profissionais`}
+          </Link>
         </div>
       )}
     </section>

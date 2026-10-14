@@ -48,6 +48,7 @@ const AdminReports = lazy(() => import('./pages/AdminReports').then((m) => ({ de
 const AdminSecurity = lazy(() => import('./pages/AdminSecurity').then((m) => ({ default: m.AdminSecurity })))
 const AdminSystem = lazy(() => import('./pages/AdminSystem').then((m) => ({ default: m.AdminSystem })))
 const AdminAdmins = lazy(() => import('./pages/AdminAdmins').then((m) => ({ default: m.AdminAdmins })))
+const SolicitarServico = lazy(() => import('./pages/SolicitarServico').then((m) => ({ default: m.SolicitarServico })))
 const CompanyTeam = lazy(() => import('./pages/CompanyTeam').then((m) => ({ default: m.CompanyTeam })))
 const TechnicianJobs = lazy(() => import('./pages/TechnicianJobs').then((m) => ({ default: m.TechnicianJobs })))
 const AdminMetrics = lazy(() => import('./pages/AdminMetrics').then((m) => ({ default: m.AdminMetrics })))
@@ -400,6 +401,17 @@ function App() {
                   <RotaDeAdmin>
                     <AdminAdmins />
                   </RotaDeAdmin>
+                </ProtectedRoute>
+              }
+            />
+            {/* Fase 27: «Solicitar serviço» a um profissional. */}
+            <Route
+              path="/solicitar/:id"
+              element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <SolicitarServico />
+                  </OnboardingGate>
                 </ProtectedRoute>
               }
             />

@@ -636,6 +636,27 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 27 — Solicitar Serviço (pedido direto)
+
+**Estado: implementada em `feat/pedido-direto` (16/10/2026), só local, por validar no browser.** Ver Adendo v1.52 do TRD. Consome a Fase 29 do backend (migration primeiro).
+
+**Decisão do utilizador:** o cliente vê o telefone do profissional (singular ou empresa) **só depois de carregar em «Solicitar serviço»**, e o profissional vê o cliente **ao carregar em «Ver pedido de serviço»**. Obriga a seguir o fluxo: sem pedidos registados não há estados, fotos nem avaliações.
+
+**Escopo:**
+- **Catálogo (`ApresentacaoDoProfissional`):** o botão principal passa a **«Solicitar serviço»** (`/solicitar/:id`), com a frase «Ao enviares o pedido, vês o contacto e podes ligar». A alternativa «Ou pede propostas… a 3 profissionais» (o fluxo anterior) mantém-se como ligação secundária. O catálogo continua a **nunca** mostrar telefone.
+- **`pages/SolicitarServico.tsx`** (`/solicitar/:id`, `ProtectedRoute` + `OnboardingGate`): serviço (só se o profissional tem vários), «O que precisas?», detalhes e o local do perfil (helper partilhado `lib/localDoPedido.ts`, extraído do pedido a 3 profissionais). Enviar chama `POST /service_requests/direct` (`services/directRequest.ts`, `hooks/useDirectRequest.ts`, com `Idempotency-Key` por formulário; sem fila offline, o número exige o servidor). Só depois de enviado mostra **«Pedido enviado»** com o botão **«Ligar: +258…»** (`components/pedidos/ContactoDoProfissional`), ou, se o profissional não tem telefone, que foi avisado por email. Os erros do servidor (já há um pedido em curso com este profissional, profissional indisponível) aparecem como mensagem.
+- **«Os meus pedidos» (cliente):** em pedidos em curso, «Ver contacto do profissional» (pede o contacto só ao clicar, `GET /service_requests/:id/professional`), e para pedidos diretos «O profissional já viu o teu pedido» / «foi avisado e ainda não abriu o pedido».
+- **Profissional / empresa («Trabalhos aceites») e técnico («Os meus trabalhos»):** «Ver contacto do cliente» passa a **«Ver pedido de serviço»**; um pedido direto ainda por abrir leva o selo **«Novo pedido»**.
+- **Termos de utilização:** a secção 3 passa a descrever as duas formas de pedir, que os contactos «nunca estão à vista no catálogo nem na pesquisa», que o profissional vê o cliente ao abrir o pedido (com KYC e subscrição), e que o cliente deve manter o pedido atualizado e avaliar; não há dois pedidos em curso com o mesmo profissional. Data de atualização: 16 de outubro de 2026. Rascunho a rever por um jurista.
+
+**Critérios de Entrega:**
+- [x] `SolicitarServico` (a carregar, erro, formulário sem o número à vista, um serviço vs. vários, sem título, sem localização, profissional sem serviços, erro do servidor, **só depois de enviar mostra o telefone para ligar**, sem telefone) — 10 testes; contacto do profissional em «Os meus pedidos» (não está à vista, só ao pedir, carregar/erro, só em pedidos em curso, «visto» / «ainda não abriu», pedido não direto sem estado) — 6 testes novos; catálogo (botão principal, nunca mostra telefone, alternativa das 3 propostas) — 3 testes; Termos atualizados.
+- [ ] Não verificado no browser nem contra o backend real (migration `20261016090000_pedido_direto.sql`).
+
+**Por fazer (a decidir com o utilizador):** o profissional **recusar** um pedido direto; lembretes para atualizar o estado do trabalho; exigir fotos ou avaliação antes de um novo pedido.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

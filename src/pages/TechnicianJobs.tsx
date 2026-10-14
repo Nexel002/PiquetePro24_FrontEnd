@@ -45,7 +45,7 @@ function Trabalho({ pedido }: { pedido: ServiceRequest }) {
           <ContactoCliente requestId={pedido.id} />
         ) : (
           <Button type="button" size="sm" className="self-start" onClick={() => setMostrarContacto(true)}>
-            Ver contacto do cliente
+            Ver pedido de serviço
           </Button>
         ))}
     </li>

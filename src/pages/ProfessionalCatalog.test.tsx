@@ -91,11 +91,23 @@ describe('ProfessionalCatalog', () => {
     expect(screen.getByText('Identidade verificada')).toBeTruthy()
   })
 
-  it('com um só serviço, «Pedir» leva à busca já com esse serviço; com vários, à busca geral', () => {
+  it('o botão principal é «Solicitar serviço», um pedido direto a este profissional', () => {
     mostrar({ data: catalogo(), isLoading: false, isError: false })
-    const pedir = screen.getByRole('link', { name: 'Pedir Canalização' })
-    expect(pedir.getAttribute('href')).toBe('/profissionais?category=canalizacao')
-    expect(screen.getByText(/O pedido segue para 3 profissionais/)).toBeTruthy()
+
+    expect(screen.getByRole('link', { name: 'Solicitar serviço' }).getAttribute('href')).toBe('/solicitar/p1')
+    expect(screen.getByText(/ao enviares o pedido, vês o contacto/i)).toBeTruthy()
+  })
+
+  it('o catálogo nunca mostra o telefone: o contacto só aparece depois de solicitar o serviço', () => {
+    mostrar({ data: catalogo(), isLoading: false, isError: false })
+    expect(document.body.textContent).not.toMatch(/[+]?258[0-9]{9}/)
+    expect(screen.queryByRole('link', { name: /ligar/i })).toBeNull()
+  })
+
+  it('continua a haver a alternativa de pedir propostas a 3 profissionais, já com o serviço quando é um só', () => {
+    mostrar({ data: catalogo(), isLoading: false, isError: false })
+    const propostas = screen.getByRole('link', { name: /pede propostas de Canalização a 3 profissionais/i })
+    expect(propostas.getAttribute('href')).toBe('/profissionais?category=canalizacao')
     cleanup()
 
     mostrar({
@@ -108,15 +120,15 @@ describe('ProfessionalCatalog', () => {
       isLoading: false,
       isError: false,
     })
-    expect(screen.getByRole('link', { name: 'Pedir um serviço' }).getAttribute('href')).toBe('/profissionais')
+    expect(screen.getByRole('link', { name: /pede propostas a 3 profissionais/i }).getAttribute('href')).toBe('/profissionais')
   })
 
-  it('o dono vê «Editar o meu catálogo» e a dica de descrição em falta, em vez de «Pedir»', () => {
+  it('o dono vê «Editar o meu catálogo» e a dica de descrição em falta, em vez de «Solicitar serviço»', () => {
     mostrar({ data: catalogo({ bio: null }), isLoading: false, isError: false }, { data: { id: 'p1' } })
 
     expect(screen.getByRole('link', { name: 'Editar o meu catálogo' }).getAttribute('href')).toBe('/catalogo')
     expect(screen.getByText(/Ainda não escreveste uma descrição/)).toBeTruthy()
-    expect(screen.queryByRole('link', { name: /^Pedir/ })).toBeNull()
+    expect(screen.queryByRole('link', { name: 'Solicitar serviço' })).toBeNull()
   })
 
   describe('moderação', () => {

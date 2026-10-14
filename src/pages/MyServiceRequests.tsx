@@ -8,11 +8,33 @@ import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
 import { PedidosPorEnviar } from '../components/PedidosPorEnviar'
 import { BotaoDenunciar } from '../components/moderacao/BotaoDenunciar'
+import { ContactoDoProfissional } from '../components/pedidos/ContactoDoProfissional'
+import { useChosenProfessional } from '../hooks/useInvitations'
 import { usePedidosPendentes } from '../hooks/usePedidosPendentes'
 
 // Formulário de avaliação (Fase 9, TRD Adendo v1.17): só para pedidos COMPLETED sem
 // avaliação ainda (has_review, calculado pelo backend). Sem edição posterior — uma
 // vez submetida, desaparece (decisão do Adendo v1.17, item E).
+// O contacto do profissional do pedido, só quando o cliente o pede (o backend só o entrega ao dono do pedido).
+// É o mesmo endpoint dos pedidos de 3 profissionais, depois da escolha.
+function VerContactoDoProfissional({ requestId }: { requestId: string }) {
+  const [aberto, setAberto] = useState(false)
+  const contacto = useChosenProfessional(requestId, aberto)
+
+  if (!aberto) {
+    return (
+      <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => setAberto(true)}>
+        Ver contacto do profissional
+      </Button>
+    )
+  }
+  if (contacto.isLoading) return <div role="status" aria-label="A carregar" className="h-14 animate-pulse rounded-2xl bg-gray-200" />
+  if (contacto.isError || !contacto.data) {
+    return <p role="alert" className="text-xs text-gray-600">Não foi possível carregar o contacto. Tenta novamente.</p>
+  }
+  return <ContactoDoProfissional nome={contacto.data.full_name} telefone={contacto.data.phone} />
+}
+
 function ReviewForm({ requestId, professionalId, technicianName }: { requestId: string; professionalId: string; technicianName?: string }) {
   const submitReview = useSubmitReview(professionalId)
   const [rating, setRating] = useState(5)
@@ -174,6 +196,14 @@ export function MyServiceRequests() {
                   </Link>
                 </p>
               )}
+
+              {serviceRequest.is_direct && serviceRequest.status === 'ASSIGNED' && (
+                <p className="text-xs text-gray-600">
+                  {serviceRequest.client_contact_viewed_at ? '✓ O profissional já viu o teu pedido.' : 'O profissional foi avisado e ainda não abriu o pedido.'}
+                </p>
+              )}
+
+              {serviceRequest.professional_id && serviceRequest.status === 'ASSIGNED' && <VerContactoDoProfissional requestId={serviceRequest.id} />}
 
               {serviceRequest.technician && (
                 <div className="flex items-center gap-2 rounded-xl bg-piquete-blue/5 px-3 py-2 text-xs text-piquete-blue">

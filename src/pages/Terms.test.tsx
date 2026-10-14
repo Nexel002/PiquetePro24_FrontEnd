@@ -101,7 +101,7 @@ describe('Termos de utilização — página', () => {
   it('descreve o que a plataforma faz hoje: contactos só depois da escolha e pagamento fora da app', () => {
     mostrar()
 
-    expect(screen.getByText(/só se revelam depois da escolha/i)).toBeTruthy()
+    expect(screen.getByText(/nunca estão à vista no catálogo nem na pesquisa/i)).toBeTruthy()
     expect(screen.getByText(/não recebe nem retém o dinheiro do serviço/i)).toBeTruthy()
   })
 
