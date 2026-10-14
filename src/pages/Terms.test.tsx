@@ -98,10 +98,10 @@ describe('Termos de utilização — página', () => {
     expect(screen.getByRole('link', { name: 'Ir para o início' }).getAttribute('href')).toBe('/')
   })
 
-  it('descreve o que a plataforma faz hoje: contactos só depois da escolha e pagamento fora da app', () => {
+  it('descreve o que a plataforma faz hoje: contacto do profissional à vista e pagamento fora da app', () => {
     mostrar()
 
-    expect(screen.getByText(/só se revelam depois da escolha/i)).toBeTruthy()
+    expect(screen.getByText(/ficam à vista no catálogo dele, para o cliente poder ligar/i)).toBeTruthy()
     expect(screen.getByText(/não recebe nem retém o dinheiro do serviço/i)).toBeTruthy()
   })
 

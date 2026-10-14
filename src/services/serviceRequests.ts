@@ -29,6 +29,10 @@ export interface ServiceRequest {
   // Técnico da empresa que vai fazer o trabalho (Backend Fase 26); null até a empresa o escolher e
   // sempre null num pedido de um profissional singular.
   assigned_member_id: string | null
+  // Pedido direto («Solicitar serviço»): nasce já atribuído ao profissional escolhido (Backend Fase 29).
+  is_direct?: boolean
+  // Quando o profissional abriu o pedido e viu o contacto do cliente; null/ausente até lá.
+  client_contact_viewed_at?: string | null
   // Só nas listas do cliente e da empresa, num pedido com técnico: o que o cliente pode ver (primeiro
   // nome, título e foto). Nunca telefone nem email.
   technician?: AssignedTechnician

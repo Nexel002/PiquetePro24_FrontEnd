@@ -9,7 +9,7 @@ export interface SeccaoLegal {
 
 // "Última actualização" mostra-se na página e conta para o utilizador: mudar o texto sem mudar
 // esta data é dizer-lhe que nada mudou.
-export const TERMOS_ACTUALIZADOS_EM = '15 de outubro de 2026'
+export const TERMOS_ACTUALIZADOS_EM = '16 de outubro de 2026'
 
 // Texto redigido a partir do que a plataforma faz hoje (identidade verificada, subscrição do
 // profissional, pedido a 3 profissionais, partilha de contactos só depois da escolha,
@@ -40,8 +40,9 @@ export const TERMOS_DE_UTILIZACAO: SeccaoLegal[] = [
     id: 'como-funciona-um-pedido',
     titulo: '3. Como funciona um pedido',
     paragrafos: [
-      'O cliente descreve o serviço de que precisa e escolhe três profissionais. Cada um recebe o convite por email e pode responder com uma proposta: um preço em meticais (MZN) e uma mensagem. O cliente compara as propostas e escolhe uma.',
-      'Os contactos só se revelam depois da escolha: o cliente passa a ver o nome e o telefone do profissional escolhido, e esse profissional passa a ver o contacto e a morada exata do cliente. Antes disso, os profissionais convidados só veem o título, a descrição e a zona do pedido.',
+      'Há duas formas de pedir um serviço. Na primeira, o cliente carrega em «Solicitar serviço» no catálogo de um profissional ou de uma empresa: o pedido fica registado e o profissional é avisado. Na segunda, o cliente descreve o serviço, escolhe três profissionais, que respondem com uma proposta (um preço em meticais, MZN, e uma mensagem), compara-as e escolhe uma.',
+      'O nome e o telefone de um profissional (ou da empresa) ficam à vista no catálogo dele, para o cliente poder ligar, mas só enquanto o profissional tiver a identidade verificada e a subscrição ativa. Recomendamos registar o pedido em «Solicitar serviço» mesmo que a conversa comece por telefone: é o que permite acompanhar o estado, juntar fotos e avaliar o trabalho. O profissional vê o contacto e a morada exata do cliente quando abre o pedido, e só se tiver a identidade verificada e a subscrição ativa. Antes disso, os profissionais convidados a um pedido de três só veem o título, a descrição e a zona.',
+      'Para que o pedido seja registado e o PiquetePro24 funcione para todos, o cliente deve manter o pedido atualizado: dá-lo como concluído quando o trabalho acabar e avaliar o profissional. Não é possível ter dois pedidos em curso com o mesmo profissional.',
       'O que se combina a seguir — preço final, data, execução e pagamento do serviço — é um acordo entre cliente e profissional, feito fora da plataforma. O PiquetePro24 não recebe nem retém o dinheiro do serviço.',
     ],
   },

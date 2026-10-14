@@ -2,8 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useProfile } from '../hooks/useProfile'
 import { useCreateServiceRequest } from '../hooks/useServiceRequests'
-import type { ServiceRequestLocationInput } from '../services/serviceRequests'
-import type { UserProfile } from '../services/profile'
+import { localDoPedido, textoDoLocal } from '../lib/localDoPedido'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
 import { Card, CardContent } from '../components/ui/Card'
@@ -17,23 +16,6 @@ export interface NewServiceRequestState {
   categoryId: string
   categoryName: string
   professionals: { id: string; full_name: string }[]
-}
-
-// O local do serviço é o que o cliente já registou no perfil (o onboarding obriga a
-// ter localização) — não se pede outra vez. Sem província não há local válido para o
-// backend (province é obrigatória em ambas as variantes).
-function locationFromProfile(profile: UserProfile): ServiceRequestLocationInput | null {
-  if (!profile.province) return null
-
-  const hierarchy = {
-    province: profile.province,
-    district: profile.district ?? undefined,
-    neighborhood: profile.neighborhood ?? undefined,
-  }
-
-  return profile.latitude !== null && profile.longitude !== null
-    ? { latitude: profile.latitude, longitude: profile.longitude, ...hierarchy }
-    : hierarchy
 }
 
 // Novo pedido dirigido (Backend Fase 11, TRD Adendo v1.18): o cliente descreve o que
@@ -53,10 +35,8 @@ export function NewServiceRequest() {
     return <Navigate to="/profissionais" replace />
   }
 
-  const serviceLocation = profile ? locationFromProfile(profile) : null
-  const locationText = serviceLocation
-    ? [serviceLocation.neighborhood, serviceLocation.district, serviceLocation.province].filter(Boolean).join(', ')
-    : null
+  const serviceLocation = profile ? localDoPedido(profile) : null
+  const locationText = textoDoLocal(serviceLocation)
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()

@@ -107,7 +107,11 @@ function TrabalhoAceite({ request, equipa }: { request: ServiceRequest; equipa: 
     <li className="flex flex-col gap-2.5 rounded-2xl bg-white border border-gray-100 shadow-card p-4 transition-all duration-300 hover:shadow-card-hover">
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-bold text-piquete-blue">{request.title}</p>
-        <Badge variant={STATUS_BADGE_VARIANT[request.status]}>{STATUS_LABELS[request.status]}</Badge>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <Badge variant={STATUS_BADGE_VARIANT[request.status]}>{STATUS_LABELS[request.status]}</Badge>
+          {/* Pedido direto que ainda ninguém abriu: é o que o profissional deve ver primeiro. */}
+          {request.is_direct && !request.client_contact_viewed_at && request.status === 'ASSIGNED' && <Badge variant="warning">Novo pedido</Badge>}
+        </div>
       </div>
       {request.description && <p className="text-xs text-gray-600 leading-relaxed">{request.description}</p>}
       <p className="text-[11px] text-gray-400">
@@ -124,7 +128,7 @@ function TrabalhoAceite({ request, equipa }: { request: ServiceRequest; equipa: 
           <ContactoCliente requestId={request.id} />
         ) : (
           <Button type="button" variant="primary" size="sm" onClick={() => setMostrarContacto(true)} className="self-start">
-            Ver contacto do cliente
+            Ver pedido de serviço
           </Button>
         ))}
     </li>

@@ -636,6 +636,45 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 27 — Solicitar Serviço (pedido direto)
+
+**Estado: implementada em `feat/pedido-direto` (16/10/2026), só local, por validar no browser.** Ver Adendo v1.52 do TRD. Consome a Fase 29 do backend (migration primeiro).
+
+**Decisão do utilizador:** o cliente vê o telefone do profissional (singular ou empresa) **só depois de carregar em «Solicitar serviço»**, e o profissional vê o cliente **ao carregar em «Ver pedido de serviço»**. Obriga a seguir o fluxo: sem pedidos registados não há estados, fotos nem avaliações.
+
+**Escopo:**
+- **Catálogo (`ApresentacaoDoProfissional`):** o botão principal passa a **«Solicitar serviço»** (`/solicitar/:id`), com a frase «Ao enviares o pedido, vês o contacto e podes ligar». A alternativa «Ou pede propostas… a 3 profissionais» (o fluxo anterior) mantém-se como ligação secundária. (Superado pela Fase 28: o catálogo passou a mostrar o contacto.)
+- **`pages/SolicitarServico.tsx`** (`/solicitar/:id`, `ProtectedRoute` + `OnboardingGate`): serviço (só se o profissional tem vários), «O que precisas?», detalhes e o local do perfil (helper partilhado `lib/localDoPedido.ts`, extraído do pedido a 3 profissionais). Enviar chama `POST /service_requests/direct` (`services/directRequest.ts`, `hooks/useDirectRequest.ts`, com `Idempotency-Key` por formulário; sem fila offline, o número exige o servidor). Só depois de enviado mostra **«Pedido enviado»** com o botão **«Ligar: +258…»** (`components/pedidos/ContactoDoProfissional`), ou, se o profissional não tem telefone, que foi avisado por email. Os erros do servidor (já há um pedido em curso com este profissional, profissional indisponível) aparecem como mensagem.
+- **«Os meus pedidos» (cliente):** em pedidos em curso, «Ver contacto do profissional» (pede o contacto só ao clicar, `GET /service_requests/:id/professional`), e para pedidos diretos «O profissional já viu o teu pedido» / «foi avisado e ainda não abriu o pedido».
+- **Profissional / empresa («Trabalhos aceites») e técnico («Os meus trabalhos»):** «Ver contacto do cliente» passa a **«Ver pedido de serviço»**; um pedido direto ainda por abrir leva o selo **«Novo pedido»**.
+- **Termos de utilização:** a secção 3 passa a descrever as duas formas de pedir, que os contactos «nunca estão à vista no catálogo nem na pesquisa», que o profissional vê o cliente ao abrir o pedido (com KYC e subscrição), e que o cliente deve manter o pedido atualizado e avaliar; não há dois pedidos em curso com o mesmo profissional. Data de atualização: 16 de outubro de 2026. Rascunho a rever por um jurista.
+
+**Critérios de Entrega:**
+- [x] `SolicitarServico` (a carregar, erro, formulário sem o número à vista, um serviço vs. vários, sem título, sem localização, profissional sem serviços, erro do servidor, **só depois de enviar mostra o telefone para ligar**, sem telefone) — 10 testes; contacto do profissional em «Os meus pedidos» (não está à vista, só ao pedir, carregar/erro, só em pedidos em curso, «visto» / «ainda não abriu», pedido não direto sem estado) — 6 testes novos; catálogo (botão principal, nunca mostra telefone, alternativa das 3 propostas) — 3 testes; Termos atualizados.
+- [ ] Não verificado no browser nem contra o backend real (migration `20261016090000_pedido_direto.sql`).
+
+**Por fazer (a decidir com o utilizador):** o profissional **recusar** um pedido direto; lembretes para atualizar o estado do trabalho; exigir fotos ou avaliação antes de um novo pedido.
+
+---
+
+## Fase 28 — Contacto do profissional à vista no catálogo
+
+**Estado: implementada em `feat/pedido-direto` (16/10/2026), só local, por validar no browser.** Ver Adendo v1.53 do TRD. Consome a Fase 30 do backend. Substitui a regra «o catálogo nunca mostra telefone» da Fase 27.
+
+**Decisão do utilizador:** nome e telefone do profissional (singular ou empresa) explícitos e sempre visíveis no catálogo, sem clicar. O botão «Solicitar serviço» mantém-se como a via que **regista** o pedido.
+
+**Escopo:**
+- **`ApresentacaoDoProfissional`** (só para quem não é o dono): bloco do contacto no topo da ação — `ContactoDoProfissional` (nome + «Ligar: +258…», `tel:`); se `contact_available` é falso, «O contacto de X fica disponível quando tiver a conta verificada e a subscrição ativa»; se não tem telefone, «ainda não registou um número… Solicita o serviço e ele é avisado por email». Por baixo, «Solicitar serviço» com «Regista o pedido para acompanhares o estado e avaliares o trabalho».
+- **`SolicitarServico`:** a frase «o contacto aparece para poderes ligar» passa a «${nome} é avisado»; o telefone continua a aparecer em «Pedido enviado».
+- **Tipo `ProfessionalCatalog`:** `contact_available`, `phone`.
+- **Termos de utilização:** o telefone fica à vista no catálogo enquanto o profissional tiver identidade verificada e subscrição ativa; recomenda-se registar o pedido mesmo que a conversa comece por telefone. Rascunho a rever por um jurista.
+
+**Critérios de Entrega:**
+- [x] Catálogo: telefone à vista pronto a ligar, sem subscrição/KYC (explica, sem número), elegível sem telefone, dono não vê o seu contacto, técnico sem telefone — testes em `ProfessionalCatalog.test.tsx`; Termos e `SolicitarServico` ajustados. Suite completa: 574 testes, `tsc` e lint sem erros.
+- [ ] Não verificado no browser nem contra o backend real.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
