@@ -1682,4 +1682,4 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 
 **Efeito nos Termos de utilização.** A secção 3 deixa de dizer que os contactos «nunca estão à vista no catálogo»: descreve o telefone à vista enquanto o profissional estiver verificado e subscrito (frontend, Fase 28).
 
-**Notas de deploy:** sem migrations nem variáveis novas (a migration `20261016090000_pedido_direto.sql` da Fase 29 mantém-se por aplicar). Backend primeiro, depois frontend: um frontend novo contra o backend antigo mostraria «contacto indisponível» a todos. **Critérios de entrega correspondentes:** backend Fase 30; frontend Fase 28.
+**Notas de deploy:** sem migrations nem variáveis novas (a migration `20261016090000_pedido_direto.sql` da Fase 29 foi aplicada a 16/10/2026). Backend primeiro, depois frontend: um frontend novo contra o backend antigo mostraria «contacto indisponível» a todos. **Critérios de entrega correspondentes:** backend Fase 30; frontend Fase 28.
