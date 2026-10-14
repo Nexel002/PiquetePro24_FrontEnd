@@ -1695,3 +1695,9 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 **Inalterado:** o contrato do backend (`PATCH /profile/location`, `GET /geocode/reverse`), a ordem Nominatim → OpenRouteService → Google, e a regra de que uma posição antiga nunca é tratada como atual.
 
 **Notas de deploy:** só frontend; sem migrations nem variáveis novas. **Critérios de entrega correspondentes:** frontend Fase 29.
+
+## Adendo v1.55
+
+### Correcção: novidades e data do aviso de nova versão (14/10/2026)
+
+**Estado: corrigido em `fix/novidades-do-aviso` (só frontend).** O aviso do Adendo v1.29 mostrava novidades e uma data de uma versão antiga: `public/novidades.json`, editado à mão (item C desse adendo), não tinha sido actualizado nas entregas seguintes. O ficheiro descreve agora as mudanças recentes, com a data do dia, e o `CLAUDE.md` do frontend passou a exigir a actualização em cada entrega visível ao utilizador. Alternativa não adoptada: gerar a data no build; resolveria só metade (a data), e o texto continuaria a ser escrito por quem entrega. **Notas de deploy:** só frontend, sem variáveis novas. **Critérios de entrega correspondentes:** frontend Fase 30.

@@ -692,6 +692,20 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 30 — Correcção: novidades do aviso de nova versão
+
+**Estado: corrigida em `fix/novidades-do-aviso` (14/10/2026), só frontend.** Ver Adendo v1.55 do TRD.
+
+**Problema reportado:** o aviso «Nova versão disponível» mostrava novidades que não tinham a ver com a versão e uma data que não era a do dia. **Causa:** `public/novidades.json` é editado à mão em cada versão (Adendo v1.29, item C) e não foi actualizado nas entregas seguintes (pedido direto, contacto no catálogo, equipas, localização): ficou com o texto e a data de 13/10/2026.
+
+**Feito:** o ficheiro passa a descrever o que mudou (contacto no catálogo e «Solicitar serviço», técnicos das empresas, captação de localização, Termos), com a data de 14/10/2026; regra nova no `CLAUDE.md` do frontend para o actualizar em cada entrega visível ao utilizador.
+
+**Critérios de Entrega:**
+- [x] Ficheiro actualizado (4 itens, até 140 caracteres) e regra escrita.
+- [ ] Ver o aviso no browser depois do deploy (o texto é lido da rede, sem cache, por quem tem a versão antiga aberta).
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

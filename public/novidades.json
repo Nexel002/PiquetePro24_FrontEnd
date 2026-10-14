@@ -1,9 +1,9 @@
 {
-  "atualizadoEm": "2026-10-13",
+  "atualizadoEm": "2026-10-14",
   "novidades": [
-    "Os trabalhos em destaque do ecrã inicial são agora trabalhos reais dos profissionais, com as avaliações de quem os contratou.",
-    "Se és profissional, o sino mostra quantos convites tens por responder.",
-    "Se o teu perfil não carregar ao fazer um pedido, avisamos e podes tentar de novo.",
-    "Se a internet falhar, o pedido fica guardado no telemóvel e é enviado sozinho quando a ligação voltar."
+    "Nos catálogos vês o nome e o telefone do profissional para ligares, e podes carregar em «Solicitar serviço» para registar o pedido.",
+    "As empresas já podem ter técnicos com conta própria, e vês quem vem fazer o trabalho e podes avaliá-lo.",
+    "Captar a localização está mais fiável: tenta o GPS e, se falhar, a localização aproximada, com mensagens mais claras.",
+    "Atualizámos os Termos de utilização com as novas regras de pedidos e contactos."
   ]
 }
