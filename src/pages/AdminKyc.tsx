@@ -97,12 +97,15 @@ export function AdminKyc() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
+    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
       <header className="flex items-center gap-3">
         <BackButton />
-        <h1 className="flex-1 text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">
-          Revisão de KYC
-        </h1>
+        <div className="flex-1">
+          <h1 className="text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">
+            Revisão de KYC
+          </h1>
+          <p className="text-xs sm:text-sm text-gray-500">Pedidos de adesão e verificação de identidade</p>
+        </div>
       </header>
 
       <NavegacaoAdmin />
