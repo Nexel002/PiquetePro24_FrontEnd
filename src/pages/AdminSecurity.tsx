@@ -1,3 +1,4 @@
+import { useLocation } from 'react-router-dom'
 import { toast } from 'sonner'
 import { BackButton } from '../components/BackButton'
 import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
@@ -13,6 +14,9 @@ export function AdminSecurity() {
   const estado = useEstadoDoMfa()
   const iniciar = useIniciarRegistoDeFactor()
   const registo = iniciar.data
+  // Chega com este estado quando o backend recusou um ecrã de admin por falta do segundo factor
+  // (ReencaminharParaSegundoFactor): explica porque é que o painel não abriu.
+  const exigido = (useLocation().state as { segundoFactorExigido?: boolean } | null)?.segundoFactorExigido === true
 
   function comecar() {
     iniciar.mutate(undefined, {
@@ -28,6 +32,13 @@ export function AdminSecurity() {
       </header>
 
       <NavegacaoAdmin />
+
+      {exigido && (
+        <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+          <p className="font-semibold">O painel de administração exige verificação em dois passos.</p>
+          <p className="mt-1">Ativa-a aqui em baixo e volta a abrir o ecrã que querias ver.</p>
+        </div>
+      )}
 
       <Card variant="solid" className="flex flex-col gap-3 p-4">
         <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Verificação em dois passos</h2>

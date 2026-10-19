@@ -1711,3 +1711,31 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 **Limite conhecido.** A obrigação cobre «publicar uma versão nova sem texto», não «mexer no código sem subir a versão»: essa fica na regra do `CLAUDE.md` do frontend (cada entrega visível sobe a versão).
 
 **Notas de deploy:** só frontend; sem variáveis novas. A Vercel corre `npm run build`, que passa a falhar sem entrada para a versão. **Critérios de entrega correspondentes:** frontend Fase 30.
+
+## Adendo v1.56
+
+### Refinamento dos ecrãs de admin: KYC à entrada, «Visão Geral» à parte (14/10/2026)
+
+**Estado: implementado em `refactor/refinamento-telas-admin`, integrado em `main` (só frontend). Altera a entrada do admin decidida no Adendo v1.39 (dashboard em `/admin`).** Documentado a posteriori (19/10/2026): a entrega entrou sem esta entrada.
+
+**Decisão.** (1) `/admin` abre `AdminKyc` (pedidos de adesão e verificação de identidade); o dashboard passou para `/admin/visao-geral`, com o separador «Visão Geral» em `destinos.ts`. (2) `NavegacaoAdmin` reorganizada: separadores principais e um menu «Mais» para as ferramentas secundárias (fecha ao clicar fora; `aria-expanded` e `aria-current`). (3) Listas de utilizadores (pesquisa por nome ou telefone e filtro por tipo) e de pedidos (filtro local por título ou localização) com estado vazio próprio, distinto de erro e de carregamento. (4) Ficha do utilizador reestruturada em secções: dados, subscrição, reenvio de email, moderação de conta e histórico de acções. (5) Na Home do admin ficou só o atalho «Painel Admin» (verificações pendentes); «Utilizadores» e «Pedidos» passaram a alcançar-se pela navegação do painel. (6) Testes novos: `AdminUsers.test.tsx` e `AdminServiceRequests.test.tsx`.
+
+**Consequência a registar.** O aviso «Protege a tua conta de administrador» (Fase 20) vive no dashboard, que deixou de ser o ecrã de entrada: um admin sem segundo factor já não o vê ao entrar. Foi o que tornou o problema do Adendo v1.57 visível em produção.
+
+**Notas de deploy:** só frontend; sem migrations nem variáveis novas. **Critérios de entrega correspondentes:** frontend Fase 31.
+
+## Adendo v1.57
+
+### Admin sem segundo factor é levado à Segurança em vez de ver 403 (19/10/2026)
+
+**Estado: implementado em `fix/mfa-admin-reencaminha-para-seguranca`, por validar no browser contra o backend real (só frontend).** Completa a Fase 20 / Adendo v1.48.
+
+**Contexto.** Com `ADMIN_REQUIRE_MFA=true` no backend, qualquer pedido a `/admin/*` de uma sessão que não é `aal2` recebe 403 («O painel de administração exige verificação em dois passos. Ativa-a em Segurança.»). O `RotaDeAdmin` só intercepta quem **já tem** factor (mostra o desafio). Quem ainda não o registou entrava no painel e via cada lista falhar com 403, sem nada que dissesse o que fazer — o aviso que existia estava no dashboard, e o Adendo v1.56 tirou-o do ecrã de entrada. Aconteceu em produção: a variável foi ligada antes de existir factor e o admin ficou sem acesso aos ecrãs, sem saber porquê.
+
+**Decisão.** (1) O interceptor de `lib/api.ts` reconhece o 403 pela mensagem (`lib/segundoFactorExigido.ts`) e avisa por um pequeno emissor de eventos, no padrão de `conectividade.ts`. (2) `ReencaminharParaSegundoFactor`, montado no `App` dentro do router, leva o admin a `/admin/seguranca` (`replace`, com `state.segundoFactorExigido`) e não navega se já lá estiver. (3) `AdminSecurity` mostra um aviso a explicar o motivo quando chega por esse caminho.
+
+**Alternativa não adoptada:** um campo `code` no 403 do backend, mais robusto do que comparar texto. Obrigava a publicar o backend antes do frontend; ficou como melhoria futura. **Limite conhecido:** se a mensagem do backend mudar, o reencaminhamento deixa de funcionar sem erro — `segundoFactorExigido.test.ts` fixa a frase actual para falhar quando isso acontecer. Um 403 por falta de papel ADMIN não reencaminha (a Segurança não o resolveria).
+
+**Ordem de activação (inalterada):** registar o factor de cada admin **antes** de `fly secrets set ADMIN_REQUIRE_MFA=true`. Se alguém ficar trancado: `fly secrets set ADMIN_REQUIRE_MFA=false` (sem deploy).
+
+**Notas de deploy:** só frontend; sem migrations nem variáveis novas. **Critérios de entrega correspondentes:** frontend Fase 32.

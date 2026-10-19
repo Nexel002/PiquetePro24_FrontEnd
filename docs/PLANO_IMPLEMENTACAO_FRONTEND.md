@@ -537,7 +537,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 **Escopo:**
 - `services/mfa.ts` + `hooks/useMfa.ts`: estado (factor TOTP confirmado? nível da sessão), registo de factor (apaga antes os factores abandonados a meio, que o Supabase não deixa duplicar) e verificação do código — tudo directamente contra `supabase.auth.mfa`.
 - `pages/AdminSecurity.tsx` (`/admin/seguranca`): ativar (código QR + segredo em texto + código de 6 dígitos). **Não há «desativar»** de propósito: tirar a protecção a partir de uma sessão que pode estar roubada é o que o segundo factor existe para impedir; a recuperação de um telemóvel perdido é feita no painel do Supabase.
-- `RotaDeAdmin`: um admin com factor mas sessão `aal1` vê `DesafioMfa` antes de qualquer ecrã de admin. Sem factor, entra (o aviso para o ativar está no dashboard). Se o estado do MFA não puder ser lido, **deixa passar**: quem protege é o backend, e trancar o painel por uma falha de leitura seria pior do que deixar o backend dizer 403.
+- `RotaDeAdmin`: um admin com factor mas sessão `aal1` vê `DesafioMfa` antes de qualquer ecrã de admin. Sem factor, entra (o aviso para o ativar está no dashboard) — mas o primeiro 403 do backend leva-o à Segurança (Fase 32). Se o estado do MFA não puder ser lido, **deixa passar**: quem protege é o backend, e trancar o painel por uma falha de leitura seria pior do que deixar o backend dizer 403.
 - `FormularioDeCodigo` (partilhado): só aceita dígitos, 6 no máximo; código incompleto é recusado sem gastar um pedido; erros do Supabase traduzidos para português; campo limpo ao falhar.
 - Dashboard: aviso «Protege a tua conta de administrador» só quando se sabe que **não** há segundo factor (não alarma durante o carregamento nem numa falha). «Segurança» na navegação.
 
@@ -708,6 +708,42 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 **Critérios de Entrega:**
 - [x] `versoes.test.ts` (comparação de versões, datas, só o que falta a quem está a ver, limites, falhas do histórico, ficheiro gerado, histórico real válido) e `novidades.test.ts` (por versão instalada, formato antigo); build real gera `dist/novidades.json`; build com versão sem entrada falha. Suite completa: 606 testes, `tsc` e lint sem erros.
 - [ ] Ver o aviso no browser depois do deploy. As apps já instaladas (sem versão) lêem o formato antigo e mostram a entrada 0.1.0; a partir daí, cada uma vê só o que lhe falta.
+
+---
+
+## Fase 31 — Refinamento dos ecrãs de admin
+
+**Estado: implementada em `refactor/refinamento-telas-admin` (14/10/2026), integrada em `main`, só frontend.** Ver Adendo v1.56 do TRD. Documentada a posteriori (19/10/2026).
+
+**Feito:**
+- `/admin` abre a revisão de KYC; o dashboard passou para `/admin/visao-geral` (separador «Visão Geral»).
+- `NavegacaoAdmin` com separadores principais e menu «Mais» para as ferramentas secundárias.
+- Utilizadores e Pedidos com pesquisa e estado vazio próprio; ficha do utilizador em secções (dados, subscrição, reenvio de email, moderação, histórico).
+- Na Home do admin, só o atalho «Painel Admin».
+
+**Critérios de Entrega:**
+- [x] `AdminUsers.test.tsx` e `AdminServiceRequests.test.tsx`; `tsc` e build sem erros (corrigidos os tipos dos mocks em `fix/testes-admin-tipos`).
+- [ ] Ver os ecrãs em 390 px, tablet e desktop num browser.
+- [ ] **Divergência a decidir:** o aviso «Protege a tua conta de administrador» (Fase 20) ficou no dashboard, que já não é o ecrã de entrada. A Fase 32 resolve o caso do 403; o aviso proactivo pode voltar a aparecer no ecrã de entrada.
+
+---
+
+## Fase 32 — Admin sem segundo factor é levado à Segurança
+
+**Estado: implementada em `fix/mfa-admin-reencaminha-para-seguranca` (19/10/2026), só frontend, por validar no browser.** Ver Adendo v1.57 do TRD. Completa a Fase 20.
+
+**Problema reportado:** com `ADMIN_REQUIRE_MFA=true` e uma conta ADMIN sem factor registado, o painel abria e todas as listas davam 403 (`GET /admin/users` → 403), sem indicação do que fazer.
+
+**Feito:**
+- `lib/segundoFactorExigido.ts`: reconhece o 403 dos dois passos (só com a mensagem do backend; um 403 por papel não conta) e emite o aviso.
+- `lib/api.ts`: o interceptor avisa; o erro continua a chegar a quem fez o pedido.
+- `components/admin/ReencaminharParaSegundoFactor.tsx` (montado no `App`): navega para `/admin/seguranca` com `replace`; já lá, não navega.
+- `AdminSecurity`: aviso «O painel de administração exige verificação em dois passos» quando chega reencaminhado.
+
+**Critérios de Entrega:**
+- [x] `segundoFactorExigido.test.ts` (inclui a frase exacta do backend), `api.test.ts` (avisa no 403 dos dois passos; não avisa no 403 por papel nem no 401), `ReencaminharParaSegundoFactor.test.tsx`, `AdminSecurity.test.tsx`; `tsc` sem erros.
+- [ ] **No browser, contra o backend real:** com `ADMIN_REQUIRE_MFA=true` e uma conta sem factor, abrir `/admin/utilizadores` leva a `/admin/seguranca` com o aviso; registar o factor, sair, entrar, e a lista abre.
+- [ ] Melhoria futura: `code` no 403 do backend, para o frontend deixar de depender do texto.
 
 ---
 
