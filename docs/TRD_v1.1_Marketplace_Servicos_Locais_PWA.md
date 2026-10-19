@@ -1739,3 +1739,15 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 **Ordem de activação (inalterada):** registar o factor de cada admin **antes** de `fly secrets set ADMIN_REQUIRE_MFA=true`. Se alguém ficar trancado: `fly secrets set ADMIN_REQUIRE_MFA=false` (sem deploy).
 
 **Notas de deploy:** só frontend; sem migrations nem variáveis novas. **Critérios de entrega correspondentes:** frontend Fase 32.
+
+---
+
+## Adendo v1.58
+
+### Localização captada: melhor leitura com precisão mínima (19/10/2026)
+
+**Contexto:** pontos gravados a mais de 1 km do local real. O hook aceitava a primeira leitura de `getCurrentPosition` (antena/Wi-Fi) ou uma posição em cache (`maximumAge`), sem verificar `accuracy`.
+
+**Decisão:** `useGeolocation` usa `watchPosition` (`enableHighAccuracy`, `maximumAge: 0`) durante até 15 s e fica com a leitura de menor `accuracy`; termina logo se ≤ 50 m; acima de 500 m recusa («pouco precisa») e o ecrã cai na selecção manual / última posição conhecida. Substitui o fallback «aproximado» do Adendo v1.54, que era a fonte dos pontos imprecisos. **Limite conhecido:** em interiores a captura pode ser recusada por precisão; é o comportamento pretendido (melhor pedir selecção manual do que gravar um ponto errado).
+
+**Notas de deploy:** só frontend; sem migrations nem variáveis novas.
