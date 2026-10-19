@@ -66,7 +66,7 @@ describe('AdminServiceRequests', () => {
     expect(screen.getByText(/Central C/)).toBeTruthy()
 
     const linkHistorico = screen.getByRole('link', { name: /ver histórico/i })
-    expect(linkHistorico.getAttribute('href')).toBe('/admin/audit-log?entity_type=service_requests&entity_id=r1')
+    expect(linkHistorico.getAttribute('href')).toBe('/admin/visao-geral?tab=auditoria&entity_type=service_requests&entity_id=r1')
   })
 
   it('cancelar exige confirmação em dois passos', () => {

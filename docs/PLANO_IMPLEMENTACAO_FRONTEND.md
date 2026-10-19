@@ -764,6 +764,26 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 34 — Painel de admin: menu lateral e secções com separadores
+
+**Estado: implementada em `feat/redesign-tela-usuarios-admin` (19/10/2026), só frontend, por commitar e validar no browser.** Ver Adendo v1.59 do TRD. Pedido do utilizador: adoptar a lógica do menu lateral e dos separadores do ControlCore.
+
+**Feito:**
+- `components/admin/layout/`: `LayoutDeAdmin` (barra fixa em `lg+`, recolhível; gaveta abaixo de `lg`), `BarraLateral` (grupos, secção acesa, selo de KYC, perfil e terminar sessão), `Cabecalho` (☰ e nome da secção), `caminhoActivo`, `seccoes`, `rotas` (secções, separadores e rotas antigas), `ParaOSeparador`.
+- `components/admin/estrutura/`: `Separadores` + `SeccaoComSeparadores` (tablist ARIA com teclado), `useSeparadorDoEndereco` (`?tab=` com `replace`), `ConteudoDoSeparador` (substitui `PaginaDeAdmin`), e os componentes partilhados da reorganização dos ecrãs (`EstadosDaLista`, `Paginacao`, `CamposDeFiltro`, `CamposDeFormulario`, `FiltroEmPilulas`, `IconeDeAdmin`).
+- Secções: KYC, Utilizadores e Pedidos com os filtros de estado/cargo como separadores; `pages/AdminVisaoGeral.tsx` (Painel, Métricas, Relatórios, Auditoria, Sistema) e `pages/AdminMais.tsx` (Subscrições, Moderação, Serviços, Comunicados, Administradores, Segurança).
+- `App.tsx`: todas as rotas `/admin/*` filhas de um só `RotaDeAdmin` + `LayoutDeAdmin`; `/admin` → `/admin/kyc`; as rotas antigas de cada ferramenta redireccionam para o separador, com parâmetros e `state`.
+- `ReencaminharParaSegundoFactor` aponta para `/admin/mais?tab=seguranca`. Atalhos (Painel, Sistema, «Ver histórico», ficha do utilizador) construídos a partir de `layout/rotas.ts`. `NavegacaoAdmin` e `PaginaDeAdmin` removidos.
+- Antes disto, na mesma branch: os 14 ecrãs reorganizados para não haver componentes que fazem tudo — cada linha/cartão no seu ficheiro em `components/admin/<área>/`, com o seu estado.
+
+**Critérios de Entrega:**
+- [x] `caminhoActivo.test.ts`, `Separadores.test.tsx` (endereço, teclado, selo), `LayoutDeAdmin.test.tsx` (secção acesa, selo de KYC, recolher, gaveta, terminar sessão, rotas antigas com parâmetros e `state`), `ReencaminharParaSegundoFactor.test.tsx` actualizado; 641 testes, `tsc`, lint e `vite build` sem erros.
+- [ ] Ver no browser a 390 px, tablet e desktop: gaveta, barra recolhida, separadores com scroll horizontal no telemóvel.
+- [ ] A ficha do utilizador (`AdminUserDetail`, layout dividido com foto) dentro do novo layout: confirmar que a coluna da foto se comporta bem ao lado da barra lateral.
+- [ ] Decisão em aberto: a lista de utilizadores mostra sempre «Activo» na coluna Estado (o `AdminUserSummary` não traz `banned_until`); precisa do campo no `GET /admin/users` do backend.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

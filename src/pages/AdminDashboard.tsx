@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom'
-import { BackButton } from '../components/BackButton'
 import { CartaoDeAtencao } from '../components/admin/CartaoDeAtencao'
 import { DESTINOS_DE_ADMIN } from '../components/admin/destinos'
-import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
+import { ConteudoDoSeparador } from '../components/admin/estrutura/ConteudoDoSeparador'
+import { noSeparador, rotaDaAuditoria, ROTA_DE_SEGURANCA, SECCAO_KYC, SECCAO_MAIS, SECCAO_PEDIDOS } from '../components/admin/layout/rotas'
 import { Card } from '../components/ui/Card'
 import { useAdminMetrics } from '../hooks/useAdminMetrics'
 import { useAdminSecurityAlerts } from '../hooks/useAdminSecurityAlerts'
@@ -34,78 +34,77 @@ export function AdminDashboard() {
   const mfa = useEstadoDoMfa()
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
-      <header className="flex items-center gap-3">
-        <BackButton />
-        <h1 className="flex-1 text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">
-          Administração
-        </h1>
-      </header>
+    <ConteudoDoSeparador
+      icone="grelha"
+      titulo="Painel Geral"
+      subtitulo="Métricas em tempo real e monitorização de serviços"
+      selo="Área de gestão restrita com auditoria ativa"
+    >
+      <div className="border-t border-slate-100 p-4 sm:p-6 flex flex-col gap-6">
+        {mfa.data && !mfa.data.temFactor && (
+          <Link
+            to={ROTA_DE_SEGURANCA}
+            className="block rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 transition-colors hover:bg-amber-100/70"
+          >
+            <span className="font-bold">Protege a tua conta de administrador.</span> Ativa a verificação em dois passos.
+          </Link>
+        )}
 
-      <NavegacaoAdmin />
+        <section className="flex flex-col gap-3">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Precisa de atenção</h3>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <CartaoDeAtencao
+              rotulo="Verificações em análise"
+              to={SECCAO_KYC}
+              valor={valorDe(metricas, (m) => m.kycByStatus.PENDING ?? 0)}
+              vazio="Tudo em dia"
+              destaque
+            />
+            <CartaoDeAtencao
+              rotulo="Pedidos abertos"
+              to={SECCAO_PEDIDOS}
+              valor={valorDe(metricas, (m) => m.serviceRequestsByStatus.OPEN ?? 0)}
+              vazio="Nenhum aberto"
+            />
+            <CartaoDeAtencao
+              rotulo="Subscrições a expirar (7 dias)"
+              to={noSeparador(SECCAO_MAIS, 'subscricoes')}
+              valor={valorDe(aExpirar, (lista) => lista.length)}
+              vazio="Nenhuma a expirar"
+            />
+            <CartaoDeAtencao
+              rotulo="Denúncias por tratar"
+              to={noSeparador(SECCAO_MAIS, 'moderacao')}
+              valor={valorDe(denuncias, (lista) => lista.length)}
+              vazio="Nenhuma por tratar"
+              destaque
+            />
+            <CartaoDeAtencao
+              rotulo="Alertas de segurança (24h)"
+              to={rotaDaAuditoria()}
+              valor={valorDe(alertas, (lista) => lista.length)}
+              vazio="Sem alertas"
+              destaque
+            />
+          </div>
+        </section>
 
-      {/* Só quando se sabe que não há segundo factor: durante o carregamento ou numa falha de
-          leitura não se alarma ninguém. */}
-      {mfa.data && !mfa.data.temFactor && (
-        <Link to="/admin/seguranca" className="block rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-          <span className="font-bold">Protege a tua conta de administrador.</span> Ativa a verificação em dois passos.
-        </Link>
-      )}
-
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Precisa de atenção</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <CartaoDeAtencao
-            rotulo="Verificações em análise"
-            to="/admin/kyc"
-            valor={valorDe(metricas, (m) => m.kycByStatus.PENDING ?? 0)}
-            vazio="Tudo em dia"
-            destaque
-          />
-          <CartaoDeAtencao
-            rotulo="Pedidos abertos"
-            to="/admin/pedidos-servico"
-            valor={valorDe(metricas, (m) => m.serviceRequestsByStatus.OPEN ?? 0)}
-            vazio="Nenhum aberto"
-          />
-          <CartaoDeAtencao
-            rotulo="Subscrições a expirar (7 dias)"
-            to="/admin/subscricoes"
-            valor={valorDe(aExpirar, (lista) => lista.length)}
-            vazio="Nenhuma a expirar"
-          />
-          <CartaoDeAtencao
-            rotulo="Denúncias por tratar"
-            to="/admin/moderacao"
-            valor={valorDe(denuncias, (lista) => lista.length)}
-            vazio="Nenhuma por tratar"
-            destaque
-          />
-          <CartaoDeAtencao
-            rotulo="Alertas de segurança (24h)"
-            to="/admin/audit-log"
-            valor={valorDe(alertas, (lista) => lista.length)}
-            vazio="Sem alertas"
-            destaque
-          />
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-2">
-        <h2 className="text-xs font-bold uppercase tracking-wider text-gray-500">Ecrãs</h2>
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {DESTINOS_DE_ADMIN.map((destino) => (
-            <li key={destino.to}>
-              <Link to={destino.to} className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-piquete-blue">
-                <Card variant="interactive" className="flex flex-col gap-0.5 p-4">
-                  <span className="font-bold text-piquete-blue">{destino.rotulo}</span>
-                  <span className="text-sm text-gray-600">{destino.descricao}</span>
-                </Card>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </section>
-    </main>
+        <section className="flex flex-col gap-3 pt-2">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Ecrãs e Ferramentas</h3>
+          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {DESTINOS_DE_ADMIN.map((destino) => (
+              <li key={destino.to}>
+                <Link to={destino.to} className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-piquete-blue">
+                  <Card variant="interactive" className="flex flex-col gap-1 p-4 border border-slate-200/70 hover:border-piquete-blue-bright/40 transition-all">
+                    <span className="font-bold text-slate-900 text-sm sm:text-base">{destino.rotulo}</span>
+                    <span className="text-xs sm:text-sm text-slate-500 line-clamp-2">{destino.descricao}</span>
+                  </Card>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </ConteudoDoSeparador>
   )
 }

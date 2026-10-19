@@ -7,8 +7,8 @@ import { ReencaminharParaSegundoFactor } from './ReencaminharParaSegundoFactor'
 afterEach(cleanup)
 
 function Local() {
-  const { pathname, state } = useLocation()
-  return <p data-testid="local">{`${pathname}|${(state as { segundoFactorExigido?: boolean } | null)?.segundoFactorExigido ?? ''}`}</p>
+  const { pathname, search, state } = useLocation()
+  return <p data-testid="local">{`${pathname}${search}|${(state as { segundoFactorExigido?: boolean } | null)?.segundoFactorExigido ?? ''}`}</p>
 }
 
 function mostrar(inicial: string) {
@@ -23,20 +23,28 @@ function mostrar(inicial: string) {
 }
 
 describe('ReencaminharParaSegundoFactor', () => {
-  it('leva o admin de qualquer ecrã de admin para a Segurança, a dizer porquê', () => {
-    mostrar('/admin/users')
-    expect(screen.getByTestId('local').textContent).toBe('/admin/users|')
+  it('leva o admin de qualquer ecrã de admin para o separador Segurança, a dizer porquê', () => {
+    mostrar('/admin/utilizadores')
+    expect(screen.getByTestId('local').textContent).toBe('/admin/utilizadores|')
 
     act(() => avisarQueFaltaSegundoFactor())
 
-    expect(screen.getByTestId('local').textContent).toBe('/admin/seguranca|true')
+    expect(screen.getByTestId('local').textContent).toBe('/admin/mais?tab=seguranca|true')
   })
 
   it('já na Segurança não navega outra vez (não apaga o aviso nem pisca o ecrã)', () => {
-    mostrar('/admin/seguranca')
+    mostrar('/admin/mais?tab=seguranca')
 
     act(() => avisarQueFaltaSegundoFactor())
 
-    expect(screen.getByTestId('local').textContent).toBe('/admin/seguranca|')
+    expect(screen.getByTestId('local').textContent).toBe('/admin/mais?tab=seguranca|')
+  })
+
+  it('noutro separador de «Mais» ainda leva à Segurança', () => {
+    mostrar('/admin/mais?tab=moderacao')
+
+    act(() => avisarQueFaltaSegundoFactor())
+
+    expect(screen.getByTestId('local').textContent).toBe('/admin/mais?tab=seguranca|true')
   })
 })
