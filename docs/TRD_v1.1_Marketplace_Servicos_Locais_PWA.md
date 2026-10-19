@@ -1696,6 +1696,22 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 
 **Notas de deploy:** só frontend; sem migrations nem variáveis novas. **Critérios de entrega correspondentes:** frontend Fase 29.
 
+## Adendo v1.55
+
+### O aviso de nova versão mostra o que realmente muda (14/10/2026)
+
+**Estado: implementado em `fix/novidades-do-aviso` (só frontend).** Substitui o item C do Adendo v1.29 (ficheiro editado à mão).
+
+**Contexto.** O aviso mostrava novidades e uma data de uma versão antiga: `public/novidades.json` não tinha sido actualizado nas entregas seguintes, e dizia «a última versão» a todos. O utilizador exige que mostre sempre o que realmente está a ser actualizado.
+
+**Decisão.** (1) Histórico por versão em `src/data/novidadesPorVersao.json` (`versao`, `data`, 1 a 4 frases); a versão do `package.json` é a identidade da app (`__APP_VERSION__`). (2) O `/novidades.json` é gerado no build por um plugin do Vite, a partir do histórico, e **o build falha** se a versão do `package.json` não tiver entrada ou se esta for inválida. (3) O cliente mostra só as entradas **posteriores à versão que tem instalada**, com a data da mais recente; sem entradas novas, ou com o ficheiro em falha, o aviso aparece sem lista. (4) O ficheiro mantém `atualizadoEm` e `novidades` da versão publicada, porque as apps já instaladas (anteriores a esta versão) só conhecem esse formato.
+
+**Alternativa não adoptada:** gerar as frases a partir dos commits. As mensagens de commit são técnicas e o aviso é para o utilizador final; manteve-se texto escrito à mão, agora obrigatório por versão.
+
+**Limite conhecido.** A obrigação cobre «publicar uma versão nova sem texto», não «mexer no código sem subir a versão»: essa fica na regra do `CLAUDE.md` do frontend (cada entrega visível sobe a versão).
+
+**Notas de deploy:** só frontend; sem variáveis novas. A Vercel corre `npm run build`, que passa a falhar sem entrada para a versão. **Critérios de entrega correspondentes:** frontend Fase 30.
+
 ## Adendo v1.56
 
 ### Refinamento dos ecrãs de admin: KYC à entrada, «Visão Geral» à parte (14/10/2026)

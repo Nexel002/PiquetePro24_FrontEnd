@@ -1,11 +1,52 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { readFileSync } from 'node:fs'
+import { defineConfig, type Plugin } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { montarFicheiro, validarHistorico } from './src/lib/versoes.ts'
+
+const versao = (JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }).version
+
+// Gera o /novidades.json (o texto do aviso «Nova versão disponível») a partir de
+// src/data/novidadesPorVersao.json. No build, uma versão do package.json sem entrada falha o build:
+// antes o ficheiro era editado à mão e esquecia-se, e o aviso mostrava novidades e uma data de uma
+// versão antiga. Em desenvolvimento só avisa, para não impedir de trabalhar a meio de uma versão.
+function novidadesDaVersao(): Plugin {
+  const corpo = () => {
+    const historico = JSON.parse(readFileSync('src/data/novidadesPorVersao.json', 'utf8')) as unknown
+    return JSON.stringify(montarFicheiro(validarHistorico(historico, versao), versao), null, 2)
+  }
+  let emBuild = false
+  return {
+    name: 'novidades-da-versao',
+    configResolved(config) {
+      emBuild = config.command === 'build'
+    },
+    buildStart() {
+      if (!emBuild) return
+      this.emitFile({ type: 'asset', fileName: 'novidades.json', source: corpo() })
+    },
+    configureServer(servidor) {
+      servidor.middlewares.use('/novidades.json', (_pedido, resposta) => {
+        try {
+          resposta.setHeader('Content-Type', 'application/json')
+          resposta.end(corpo())
+        } catch (erro) {
+          console.warn(`[novidades] ${(erro as Error).message}`)
+          resposta.statusCode = 404
+          resposta.end()
+        }
+      })
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Versão do package.json, lida por lib/novidades.ts para saber o que a app instalada já tem.
+  define: { __APP_VERSION__: JSON.stringify(versao) },
   plugins: [
     react(),
+    novidadesDaVersao(),
     VitePWA({
       // 'prompt' e não 'autoUpdate': a versão nova só é activada quando o utilizador aceita o
       // aviso (ver src/lib/pwaUpdate.ts). Com 'autoUpdate' e sem recarregar, quem deixava a

@@ -50,3 +50,31 @@ describe('formatarData', () => {
     expect(formatarData('2026-01-01')).toBe('1 de janeiro de 2026')
   })
 })
+
+describe('carregarNovidades — por versão instalada', () => {
+  const ficheiro = {
+    atualizadoEm: '2026-10-20',
+    novidades: ['B'],
+    versoes: [
+      { versao: '0.2.0', data: '2026-10-20', novidades: ['B'] },
+      { versao: '0.1.0', data: '2026-10-14', novidades: ['A'] },
+    ],
+  }
+
+  it('mostra só o que a versão instalada ainda não tem, com a data dessa versão', async () => {
+    expect(await carregarNovidades(resposta(ficheiro), '0.1.0')).toEqual({ atualizadoEm: '2026-10-20', novidades: ['B'] })
+  })
+
+  it('quem saltou uma versão vê as duas', async () => {
+    expect(await carregarNovidades(resposta(ficheiro), '0.0.0')).toEqual({ atualizadoEm: '2026-10-20', novidades: ['B', 'A'] })
+  })
+
+  it('já na última versão: nada a anunciar (não repete novidades antigas)', async () => {
+    expect(await carregarNovidades(resposta(ficheiro), '0.2.0')).toBeNull()
+  })
+
+  it('ignora entradas com versão ou data inválidas', async () => {
+    const mau = { versoes: [{ versao: 'x', data: '2026-10-20', novidades: ['Lixo'] }, { versao: '0.2.0', data: 'ontem', novidades: ['Lixo'] }] }
+    expect(await carregarNovidades(resposta(mau), '0.1.0')).toBeNull()
+  })
+})
