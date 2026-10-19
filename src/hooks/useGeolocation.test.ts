@@ -17,7 +17,9 @@ const leitura = (accuracy: number, extra: Partial<GeolocationCoordinates> = {}) 
 function simularWatch() {
   let sucesso: Sucesso = () => {}
   let falha: Falha = () => {}
-  const watchPosition = vi.fn((s: Sucesso, f: Falha, _opcoes?: PositionOptions) => {
+  // O terceiro argumento vai no tipo e não na assinatura: o teste lê-o em `mock.calls[0][2]`, mas
+  // a simulação não precisa dele.
+  const watchPosition = vi.fn<(s: Sucesso, f: Falha, opcoes?: PositionOptions) => number>((s, f) => {
     sucesso = s
     falha = f
     return 7
