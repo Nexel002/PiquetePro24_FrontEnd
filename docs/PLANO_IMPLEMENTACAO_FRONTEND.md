@@ -780,6 +780,8 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - [x] `caminhoActivo.test.ts`, `Separadores.test.tsx` (endereço, teclado, selo), `LayoutDeAdmin.test.tsx` (secção acesa, selo de KYC, recolher, gaveta, terminar sessão, rotas antigas com parâmetros e `state`), `ReencaminharParaSegundoFactor.test.tsx` actualizado; 641 testes, `tsc`, lint e `vite build` sem erros.
 - [ ] Ver no browser a 390 px, tablet e desktop: gaveta, barra recolhida, separadores com scroll horizontal no telemóvel.
 - [ ] A ficha do utilizador (`AdminUserDetail`, layout dividido com foto) dentro do novo layout: confirmar que a coluna da foto se comporta bem ao lado da barra lateral.
+- [x] Correcções (`fix/botao-voltar`): «voltar» no cabeçalho do painel com destino quando não há ecrã anterior (`BackButton.test.tsx`, `LayoutDeAdmin.test.tsx`); «voltar» em `/definir-nova-password`; logótipo oficial (`public/logo.png`) na barra lateral. Lint do CI corrigido (`useGeolocation.test.ts`).
+- [ ] Ver o logótipo oficial no browser em ecrã de alta densidade (o PNG tem só 234 px de desenho; um SVG ou PNG maior evitaria a imagem suave).
 - [ ] Decisão em aberto: a lista de utilizadores mostra sempre «Activo» na coluna Estado (o `AdminUserSummary` não traz `banned_until`); precisa do campo no `GET /admin/users` do backend.
 
 ---

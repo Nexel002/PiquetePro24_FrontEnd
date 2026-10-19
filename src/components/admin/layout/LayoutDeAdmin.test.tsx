@@ -32,6 +32,7 @@ function mostrar(inicial: string | { pathname: string; state?: unknown }) {
   render(
     <MemoryRouter initialEntries={[inicial]}>
       <Routes>
+        <Route path="/" element={<Local />} />
         <Route path="/admin" element={<LayoutDeAdmin />}>
           <Route path="*" element={<Local />} />
           {ROTAS_ANTIGAS.map((antiga) => (
@@ -87,6 +88,15 @@ describe('LayoutDeAdmin', () => {
     fireEvent.click(gaveta.getByRole('link', { name: 'Pedidos' }))
     expect(screen.queryByRole('button', { name: 'Fechar menu' })).toBeNull()
     expect(screen.getByTestId('local').textContent).toBe('/admin/pedidos-servico|')
+  })
+
+  it('o cabeçalho tem «voltar»: sem ecrã anterior, a ficha volta à lista e a secção volta à Home', () => {
+    mostrar('/admin/utilizadores/123')
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }))
+    expect(screen.getByTestId('local').textContent).toBe('/admin/utilizadores|')
+
+    fireEvent.click(screen.getByRole('button', { name: 'Voltar' }))
+    expect(screen.getByTestId('local').textContent).toBe('/|')
   })
 
   it('o menu do perfil termina a sessão', () => {

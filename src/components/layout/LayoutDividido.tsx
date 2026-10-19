@@ -31,9 +31,11 @@ interface ColunaDaFotoProps {
   // sítio do ecrã com o <h1>, e por isso muda de lugar por CSS em vez de existir duas vezes
   // (um <h1> escondido com `lg:hidden` deixava o desktop sem título para leitores de ecrã).
   identidade: ReactNode
+  // Dentro do painel de admin o «voltar» já está no cabeçalho do layout; dois seguidos confundiam.
+  semVoltar?: boolean
 }
 
-export function ColunaDaFoto({ imagem, acoes, identidade }: ColunaDaFotoProps) {
+export function ColunaDaFoto({ imagem, acoes, identidade, semVoltar = false }: ColunaDaFotoProps) {
   return (
     <aside className="relative w-full lg:sticky lg:top-0 lg:h-dvh lg:self-start lg:overflow-hidden">
       <div className="relative aspect-[4/5] w-full overflow-hidden rounded-b-[2.5rem] bg-gradient-to-br from-piquete-blue via-piquete-blue-light to-piquete-blue-bright shadow-card-hover sm:aspect-[16/10] lg:aspect-auto lg:h-full lg:rounded-none lg:shadow-none">
@@ -43,9 +45,11 @@ export function ColunaDaFoto({ imagem, acoes, identidade }: ColunaDaFotoProps) {
         {/* Só em desktop: é onde o nome fica sobre a foto e precisa de contraste. */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 hidden h-2/5 bg-gradient-to-t from-piquete-blue-deep via-piquete-blue-deep/50 to-transparent lg:block" />
 
-        <div className="absolute left-4 top-4 z-20 lg:left-8 lg:top-8">
-          <BackButton className={CLASSE_BOTAO_SOBRE_FOTO} />
-        </div>
+        {!semVoltar && (
+          <div className="absolute left-4 top-4 z-20 lg:left-8 lg:top-8">
+            <BackButton className={CLASSE_BOTAO_SOBRE_FOTO} />
+          </div>
+        )}
 
         {acoes && <div className="absolute right-4 top-4 z-20 flex items-center gap-2 lg:right-8 lg:top-8">{acoes}</div>}
       </div>
