@@ -5,6 +5,7 @@ import { useAdminUserDetail, useBanUser, useChangeUserRole, useResendEmail, useU
 import { useActivateSubscriptionManually, useUserSubscription } from '../hooks/useSubscription'
 import { NotasInternas } from '../components/admin/NotasInternas'
 import { EmpresaNaFicha, EquipaNaFicha } from '../components/admin/EquipaNaFicha'
+import { rotaDaAuditoria } from '../components/admin/layout/rotas'
 import type { SubscriptionStatus } from '../services/subscriptions'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
@@ -121,18 +122,18 @@ export function AdminUserDetail() {
 
   if (isLoading) {
     return (
-      <main className="flex min-h-dvh items-center justify-center p-6">
+      <div className="flex min-h-dvh items-center justify-center p-6">
         <div className="flex flex-col items-center gap-3">
           <div className="h-10 w-10 animate-spin rounded-full border-4 border-piquete-yellow border-t-piquete-blue" />
           <p className="text-sm font-medium text-gray-600">A carregar ficha de utilizador...</p>
         </div>
-      </main>
+      </div>
     )
   }
 
   if (isError || !user) {
     return (
-      <main className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center">
+      <div className="flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center">
         <div className="w-12 h-12 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 text-xl">
           ⚠️
         </div>
@@ -144,7 +145,7 @@ export function AdminUserDetail() {
             Voltar aos utilizadores
           </Button>
         </Link>
-      </main>
+      </div>
     )
   }
 
@@ -152,7 +153,7 @@ export function AdminUserDetail() {
   const localidade = [user.neighborhood, user.district, user.province].filter(Boolean).join(', ')
 
   return (
-    <main className="min-h-dvh w-full pb-28 animate-fade-in lg:pb-0">
+    <div className="min-h-dvh w-full pb-28 animate-fade-in lg:pb-0">
       <LayoutDividido
         foto={
           <ColunaDaFoto
@@ -211,7 +212,7 @@ export function AdminUserDetail() {
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Painel de Controlo</span>
               <h2 className="text-lg font-bold text-piquete-blue font-heading">Ficha e Moderação de Conta</h2>
             </div>
-            <Link to={`/admin/audit-log?user_id=${user.id}`}>
+            <Link to={rotaDaAuditoria({ user_id: user.id })}>
               <Button variant="outline" size="sm" className="gap-1.5">
                 <svg className="w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -425,7 +426,7 @@ export function AdminUserDetail() {
           </Card>
         </section>
       </LayoutDividido>
-    </main>
+    </div>
   )
 }
 

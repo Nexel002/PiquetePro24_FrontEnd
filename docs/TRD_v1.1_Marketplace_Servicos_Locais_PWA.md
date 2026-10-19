@@ -1751,3 +1751,25 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 **Decisão:** `useGeolocation` usa `watchPosition` (`enableHighAccuracy`, `maximumAge: 0`) durante até 15 s e fica com a leitura de menor `accuracy`; termina logo se ≤ 50 m; acima de 500 m recusa («pouco precisa») e o ecrã cai na selecção manual / última posição conhecida. Substitui o fallback «aproximado» do Adendo v1.54, que era a fonte dos pontos imprecisos. **Limite conhecido:** em interiores a captura pode ser recusada por precisão; é o comportamento pretendido (melhor pedir selecção manual do que gravar um ponto errado).
 
 **Notas de deploy:** só frontend; sem migrations nem variáveis novas.
+
+## Adendo v1.59
+
+### Painel de admin: menu lateral e secções com separadores (19/10/2026)
+
+**Contexto.** Os 14 ecrãs do painel tinham cada um a sua rota, a sua moldura copiada à mão (cabeçalho, cartão, abas) e uma barra de abas com quatro entradas fixas e um menu «Mais» para as outras dez. A estrutura repetia-se em cada ficheiro e quatro ecrãs (Auditoria, Administradores, Métricas, Sistema) ainda tinham o layout anterior ao redesign. Pedido do utilizador: adoptar a lógica do menu lateral e dos separadores do ControlCore (`ControleCore_FrontEnd`: `app/layout/Sidebar.tsx`, `caminhoActivo.ts`, `shared/ui/Tabs.tsx`).
+
+**Decisão.**
+- **Layout único** (`components/admin/layout/LayoutDeAdmin.tsx`) à volta de todas as rotas `/admin/*`, que passam a ser filhas de um só `<ProtectedRoute><RotaDeAdmin>` no `App.tsx`. Barra lateral fixa em desktop (`lg+`), recolhível a só ícones; abaixo de `lg` é uma gaveta sobre fundo escurecido que fecha ao mudar de secção, com Escape ou ao tocar fora. Cabeçalho fixo com ☰ (telemóvel) e o nome da secção; os ecrãs deixaram de ter o seu `<h1>`.
+- **Cinco secções no menu**, em dois grupos: Operação (Revisão de KYC, Utilizadores, Pedidos) e Gestão (Visão Geral, Mais). A secção acesa resolve-se pelo caminho mais específico (`caminhoActivo`, por segmentos), pelo que a ficha `/admin/utilizadores/:id` acende «Utilizadores». Selo âmbar em «Revisão de KYC» com as verificações por rever (mesma query de `GET /admin/metrics` do Painel); zero não mostra selo. Rodapé com o perfil, «Voltar à aplicação» e «Terminar sessão».
+- **Subsecções em separadores** (`estrutura/Separadores.tsx`, padrão ARIA `tablist`: `aria-selected`, setas/Home/End, só o activo na ordem do Tab), com o activo em `?tab=` e `replace` (`useSeparadorDoEndereco`). Cada separador só é montado quando activo.
+  - KYC: Em análise · Aprovados · Rejeitados · Todos (eram os filtros em pílula).
+  - Utilizadores: Todos · Clientes · Profissionais · Técnicos (era o select de cargo; gerir administradores fica em Mais).
+  - Pedidos: Todos · Abertos · Atribuídos · Concluídos · Cancelados.
+  - Visão Geral: Painel · Métricas · Relatórios · Auditoria · Sistema.
+  - Mais: Subscrições · Moderação · Serviços · Comunicados · Administradores · Segurança.
+- **Rotas antigas redireccionam** para o separador respectivo (`ROTAS_ANTIGAS` + `ParaOSeparador`), preservando os parâmetros e o `state`: `/admin/audit-log?entity_type=…` continua filtrado e `/admin/seguranca` continua a mostrar o aviso do segundo factor. O reencaminhamento do Adendo v1.57 aponta agora para `/admin/mais?tab=seguranca`.
+- **Componentes partilhados do painel** (`components/admin/estrutura/`): `ConteudoDoSeparador`, `EstadosDaLista` (a carregar com `role="status"`, erro, vazio), `Paginacao`, `CamposDeFiltro`, `CamposDeFormulario`, `FiltroEmPilulas`, `IconeDeAdmin` + `icones.ts`. As linhas e cartões de cada ecrã vivem em `components/admin/<área>/` com o seu próprio estado e mutações; `NavegacaoAdmin` foi removido.
+
+**Desvios ao ControlCore, deliberados.** Sem `zustand` nem `lucide-react`: o estado da barra é local ao layout e os ícones são os traçados de `icones.ts` (CLAUDE.md §0–§1: peso do bundle e Context API). Sem grupo de assistente IA nem selector de língua (não existem neste produto). «Voltar à aplicação» acrescentado: o painel vive dentro da app do consumidor.
+
+**Notas de deploy:** só frontend; sem migrations nem variáveis novas. Versão 0.2.0.

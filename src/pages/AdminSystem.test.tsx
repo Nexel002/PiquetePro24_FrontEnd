@@ -82,7 +82,7 @@ describe('AdminSystem', () => {
 
     const denuncias = screen.getByRole('link', { name: /denúncias por tratar/i })
     expect(within(denuncias).getByText('3')).toBeTruthy()
-    expect(denuncias.getAttribute('href')).toBe('/admin/moderacao')
+    expect(denuncias.getAttribute('href')).toBe('/admin/mais?tab=moderacao')
     expect(within(screen.getByRole('link', { name: /comunicados presos/i })).getByText('Nenhum')).toBeTruthy()
   })
 })

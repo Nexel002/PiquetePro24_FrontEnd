@@ -10,6 +10,8 @@ import { RotaDeAdmin } from './components/admin/RotaDeAdmin'
 import { RotaDeEmpresa, RotaDeTecnico } from './components/equipa/RotaDeEmpresa'
 import { OnboardingGate } from './components/OnboardingGate'
 import { ReencaminharParaSegundoFactor } from './components/admin/ReencaminharParaSegundoFactor'
+import { ParaOSeparador } from './components/admin/layout/ParaOSeparador'
+import { ROTAS_ANTIGAS } from './components/admin/layout/rotas'
 import { AuthProvider } from './store/AuthContext'
 import { IndicadorDeLigacao } from './components/IndicadorDeLigacao'
 import { AvisoDeNovaVersao } from './components/AvisoDeNovaVersao'
@@ -35,24 +37,16 @@ const NewServiceRequest = lazy(() => import('./pages/NewServiceRequest').then((m
 const ReceivedInvitations = lazy(() => import('./pages/ReceivedInvitations').then((m) => ({ default: m.ReceivedInvitations })))
 const RequestProposals = lazy(() => import('./pages/RequestProposals').then((m) => ({ default: m.RequestProposals })))
 const ProfessionalCatalog = lazy(() => import('./pages/ProfessionalCatalog').then((m) => ({ default: m.ProfessionalCatalog })))
-const AdminDashboard = lazy(() => import('./pages/AdminDashboard').then((m) => ({ default: m.AdminDashboard })))
 const AdminKyc = lazy(() => import('./pages/AdminKyc').then((m) => ({ default: m.AdminKyc })))
-const AdminAuditLog = lazy(() => import('./pages/AdminAuditLog').then((m) => ({ default: m.AdminAuditLog })))
 const AdminUsers = lazy(() => import('./pages/AdminUsers').then((m) => ({ default: m.AdminUsers })))
 const AdminUserDetail = lazy(() => import('./pages/AdminUserDetail').then((m) => ({ default: m.AdminUserDetail })))
 const AdminServiceRequests = lazy(() => import('./pages/AdminServiceRequests').then((m) => ({ default: m.AdminServiceRequests })))
-const AdminSubscriptions = lazy(() => import('./pages/AdminSubscriptions').then((m) => ({ default: m.AdminSubscriptions })))
-const AdminModeration = lazy(() => import('./pages/AdminModeration').then((m) => ({ default: m.AdminModeration })))
-const AdminServices = lazy(() => import('./pages/AdminServices').then((m) => ({ default: m.AdminServices })))
-const AdminBroadcasts = lazy(() => import('./pages/AdminBroadcasts').then((m) => ({ default: m.AdminBroadcasts })))
-const AdminReports = lazy(() => import('./pages/AdminReports').then((m) => ({ default: m.AdminReports })))
-const AdminSecurity = lazy(() => import('./pages/AdminSecurity').then((m) => ({ default: m.AdminSecurity })))
-const AdminSystem = lazy(() => import('./pages/AdminSystem').then((m) => ({ default: m.AdminSystem })))
-const AdminAdmins = lazy(() => import('./pages/AdminAdmins').then((m) => ({ default: m.AdminAdmins })))
+const AdminVisaoGeral = lazy(() => import('./pages/AdminVisaoGeral').then((m) => ({ default: m.AdminVisaoGeral })))
+const AdminMais = lazy(() => import('./pages/AdminMais').then((m) => ({ default: m.AdminMais })))
+const LayoutDeAdmin = lazy(() => import('./components/admin/layout/LayoutDeAdmin').then((m) => ({ default: m.LayoutDeAdmin })))
 const SolicitarServico = lazy(() => import('./pages/SolicitarServico').then((m) => ({ default: m.SolicitarServico })))
 const CompanyTeam = lazy(() => import('./pages/CompanyTeam').then((m) => ({ default: m.CompanyTeam })))
 const TechnicianJobs = lazy(() => import('./pages/TechnicianJobs').then((m) => ({ default: m.TechnicianJobs })))
-const AdminMetrics = lazy(() => import('./pages/AdminMetrics').then((m) => ({ default: m.AdminMetrics })))
 const DefinirNovaPassword = lazy(() => import('./pages/DefinirNovaPassword').then((m) => ({ default: m.DefinirNovaPassword })))
 
 const queryClient = new QueryClient()
@@ -256,162 +250,34 @@ function App() {
               }
             />
 
-            {/* Painel do Admin: a primeira tela ao entrar em /admin é o KYC (pedidos de adesão ao sistema) */}
+            {/* Painel do Admin (Fase 34): uma só fronteira de acesso para todos os ecrãs e o layout com a
+                barra lateral à volta deles. Cada secção tem separadores em `?tab=`; as rotas antigas de
+                cada ferramenta redireccionam para o separador respectivo. `/admin` abre o KYC. */}
             <Route
               path="/admin"
               element={
                 <ProtectedRoute>
                   <RotaDeAdmin>
-                    <AdminKyc />
+                    <LayoutDeAdmin />
                   </RotaDeAdmin>
                 </ProtectedRoute>
               }
-            />
-            <Route
-              path="/admin/kyc"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminKyc />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/visao-geral"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminDashboard />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* TRD Adendo v1.8: mesma convenção do painel de KYC acima — guard de
-                role dentro do próprio componente (ver AdminAuditLog.tsx). */}
-            <Route
-              path="/admin/audit-log"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminAuditLog />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-
-            {/* TRD Adendo v1.9, item B — mesma convenção dos ecrãs de admin acima. */}
-            <Route
-              path="/admin/utilizadores"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminUsers />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/utilizadores/:id"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminUserDetail />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/pedidos-servico"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminServiceRequests />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/subscricoes"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminSubscriptions />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/moderacao"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminModeration />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/servicos"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminServices />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/comunicados"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminBroadcasts />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/relatorios"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminReports />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/seguranca"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminSecurity />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/sistema"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminSystem />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/administradores"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminAdmins />
-                  </RotaDeAdmin>
-                </ProtectedRoute>
-              }
-            />
+            >
+              <Route index element={<Navigate to="kyc" replace />} />
+              <Route path="kyc" element={<AdminKyc />} />
+              <Route path="utilizadores" element={<AdminUsers />} />
+              <Route path="utilizadores/:id" element={<AdminUserDetail />} />
+              <Route path="pedidos-servico" element={<AdminServiceRequests />} />
+              <Route path="visao-geral" element={<AdminVisaoGeral />} />
+              <Route path="mais" element={<AdminMais />} />
+              {ROTAS_ANTIGAS.map((antiga) => (
+                <Route
+                  key={antiga.caminho}
+                  path={antiga.caminho}
+                  element={<ParaOSeparador seccao={antiga.seccao} separador={antiga.separador} />}
+                />
+              ))}
+            </Route>
             {/* Fase 27: «Solicitar serviço» a um profissional. */}
             <Route
               path="/solicitar/:id"
@@ -444,16 +310,6 @@ function App() {
                   <RotaDeTecnico>
                     <TechnicianJobs />
                   </RotaDeTecnico>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/admin/metricas"
-              element={
-                <ProtectedRoute>
-                  <RotaDeAdmin>
-                    <AdminMetrics />
-                  </RotaDeAdmin>
                 </ProtectedRoute>
               }
             />

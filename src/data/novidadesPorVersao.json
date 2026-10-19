@@ -8,5 +8,12 @@
       "Captar a localização está mais precisa: espera pela melhor leitura do GPS e avisa quando o sinal é fraco.",
       "Atualizámos os Termos de utilização com as novas regras de pedidos e contactos."
     ]
+  },
+  {
+    "versao": "0.2.0",
+    "data": "2026-10-19",
+    "novidades": [
+      "O painel de administração tem agora um menu lateral, e cada secção arruma as suas ferramentas em separadores."
+    ]
   }
 ]

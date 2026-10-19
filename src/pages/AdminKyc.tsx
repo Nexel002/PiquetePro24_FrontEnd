@@ -1,233 +1,74 @@
-import { useState } from 'react'
-import { NavegacaoAdmin } from '../components/admin/NavegacaoAdmin'
-import { toast } from 'sonner'
-import { useKycSubmissions, useReopenKyc, useReviewKyc } from '../hooks/useKyc'
-import { esperaDaSubmissao, MOTIVOS_DE_REJEICAO_KYC } from '../lib/esperaKyc'
-import type { KycStatus, ProfessionalKyc } from '../services/kyc'
-import { BackButton } from '../components/BackButton'
-import { Button } from '../components/ui/Button'
-import { Badge } from '../components/ui/Badge'
-import { Card } from '../components/ui/Card'
+import { useKycSubmissions } from '../hooks/useKyc'
+import type { KycStatus } from '../services/kyc'
+import { ConteudoDoSeparador } from '../components/admin/estrutura/ConteudoDoSeparador'
+import { ACarregar, ErroAoCarregar, ListaVazia } from '../components/admin/estrutura/EstadosDaLista'
+import { SeccaoComSeparadores, type DefinicaoDeSeparador } from '../components/admin/estrutura/Separadores'
+import { useSeparadorDoEndereco } from '../components/admin/estrutura/useSeparadorDoEndereco'
+import { CartaoDeKyc } from '../components/admin/kyc/CartaoDeKyc'
 
-const STATUS_LABELS: Record<KycStatus, string> = {
-  PENDING: 'Em análise',
-  APPROVED: 'Aprovado',
-  REJECTED: 'Rejeitado',
+type Separador = 'pendentes' | 'aprovados' | 'rejeitados' | 'todos'
+
+// A fila abre no que falta decidir: é por isso que se entra aqui.
+const SEPARADORES: DefinicaoDeSeparador<Separador>[] = [
+  { id: 'pendentes', rotulo: 'Em análise' },
+  { id: 'aprovados', rotulo: 'Aprovados' },
+  { id: 'rejeitados', rotulo: 'Rejeitados' },
+  { id: 'todos', rotulo: 'Todos' },
+]
+const IDS = SEPARADORES.map((s) => s.id)
+
+const ESTADO_DO_SEPARADOR: Record<Separador, KycStatus | undefined> = {
+  pendentes: 'PENDING',
+  aprovados: 'APPROVED',
+  rejeitados: 'REJECTED',
+  todos: undefined,
 }
 
-const STATUS_BADGE_VARIANT: Record<KycStatus, 'pending' | 'approved' | 'rejected'> = {
-  PENDING: 'pending',
-  APPROVED: 'approved',
-  REJECTED: 'rejected',
-}
-
-const STATUS_FILTERS: Array<KycStatus | 'ALL'> = ['PENDING', 'APPROVED', 'REJECTED', 'ALL']
-
-const STATUS_FILTER_LABELS: Record<KycStatus | 'ALL', string> = {
-  PENDING: 'Em análise',
-  APPROVED: 'Aprovados',
-  REJECTED: 'Rejeitados',
-  ALL: 'Todos',
-}
-
-// Há quanto tempo a submissão espera. O alerta tem texto («em atraso») e não só cor.
-function EsperaNaFila({ submittedAt }: { submittedAt: string }) {
-  const espera = esperaDaSubmissao(submittedAt)
-
-  return (
-    <p className={`text-xs ${espera.emAtraso ? 'font-semibold text-amber-700' : 'text-gray-500'}`}>
-      Em espera há {espera.texto}
-      {espera.emAtraso && ' — em atraso'}
-    </p>
-  )
-}
-
-// TRD Adendo v1.6: superfície mínima para o ADMIN exercer GET/PATCH /admin/kyc — não
-// é um "painel" com métricas, só a fila de revisão. Guard de role feito aqui (não há
-// convenção de RequireRole dedicada no projeto ainda — ver OnboardingGate.tsx para a
-// mesma decisão tomada para onboarding): sem role ADMIN, redireciona para a Home em
-// vez de mostrar um ecrã vazio ou um 403 cru do backend.
+// TRD Adendo v1.6: superfície mínima para o ADMIN exercer GET/PATCH /admin/kyc — não é um
+// "painel" com métricas, só a fila de revisão. O guard de role está na rota (RotaDeAdmin).
 export function AdminKyc() {
-  const [statusFilter, setStatusFilter] = useState<KycStatus | 'ALL'>('PENDING')
-  const { data: submissions, isLoading, isError } = useKycSubmissions(statusFilter === 'ALL' ? undefined : statusFilter)
-  const reviewKycMutation = useReviewKyc()
-  const reopenMutation = useReopenKyc()
-  const [rejectingId, setRejectingId] = useState<string | null>(null)
-  const [rejectNotes, setRejectNotes] = useState('')
-
-  function handleApprove(kyc: ProfessionalKyc) {
-    reviewKycMutation.mutate(
-      { kycId: kyc.id, payload: { status: 'APPROVED' } },
-      {
-        onSuccess: () => toast.success(`Submissão de ${kyc.bi_number} aprovada.`),
-        onError: (err) => toast.error(err instanceof Error ? err.message : 'Não foi possível aprovar esta submissão.'),
-      },
-    )
-  }
-
-  function handleReopen(kyc: ProfessionalKyc) {
-    reopenMutation.mutate(kyc.id, {
-      onSuccess: () => toast.success(`Revisão de ${kyc.bi_number} reaberta.`),
-      onError: (err) => toast.error(err instanceof Error ? err.message : 'Não foi possível reabrir esta submissão.'),
-    })
-  }
-
-  function handleStartReject(kycId: string) {
-    setRejectingId(kycId)
-    setRejectNotes('')
-  }
-
-  function handleConfirmReject(kyc: ProfessionalKyc) {
-    if (!rejectNotes.trim()) {
-      toast.error('Indica o motivo da rejeição.')
-      return
-    }
-
-    reviewKycMutation.mutate(
-      { kycId: kyc.id, payload: { status: 'REJECTED', review_notes: rejectNotes.trim() } },
-      {
-        onSuccess: () => {
-          toast.success(`Submissão de ${kyc.bi_number} rejeitada.`)
-          setRejectingId(null)
-          setRejectNotes('')
-        },
-        onError: (err) => toast.error(err instanceof Error ? err.message : 'Não foi possível rejeitar esta submissão.'),
-      },
-    )
-  }
+  const [separador, mudarSeparador] = useSeparadorDoEndereco(IDS)
+  const { data: submissions, isLoading, isError } = useKycSubmissions(ESTADO_DO_SEPARADOR[separador])
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-2xl flex-col gap-6 p-4 sm:p-6 pb-12 animate-fade-in">
-      <header className="flex items-center gap-3">
-        <BackButton />
-        <div className="flex-1">
-          <h1 className="text-xl sm:text-2xl font-extrabold text-piquete-blue tracking-tight font-heading">
-            Revisão de KYC
-          </h1>
-          <p className="text-xs sm:text-sm text-gray-500">Pedidos de adesão e verificação de identidade</p>
-        </div>
-      </header>
+    <SeccaoComSeparadores rotulo="Estados da verificação" separadores={SEPARADORES} activo={separador} aoMudar={mudarSeparador}>
+      <ConteudoDoSeparador
+        icone="escudo"
+        titulo="Fila de Verificação"
+        subtitulo={submissions ? `${submissions.length} pedidos nesta listagem` : 'Carregando fila...'}
+        selo="Documentos confidenciais sob sigilo de auditoria"
+        iconeDoSelo="cadeado"
+      >
+        {isLoading && (
+          <div className="p-4 sm:p-6">
+            <ACarregar blocos={3} bloco="h-28" />
+          </div>
+        )}
 
-      <NavegacaoAdmin />
+        {isError && (
+          <div className="m-4 sm:m-6">
+            <ErroAoCarregar>Não foi possível carregar as submissões. Verifica a tua ligação e tenta novamente.</ErroAoCarregar>
+          </div>
+        )}
 
-      <div className="flex gap-2 text-sm">
-        {STATUS_FILTERS.map((filter) => (
-          <button
-            key={filter}
-            type="button"
-            onClick={() => setStatusFilter(filter)}
-            className={`rounded-xl px-3 py-1.5 font-semibold transition-colors ${
-              statusFilter === filter ? 'bg-piquete-blue text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-            }`}
-          >
-            {STATUS_FILTER_LABELS[filter]}
-          </button>
-        ))}
-      </div>
+        {submissions && submissions.length === 0 && (
+          <ListaVazia
+            icone="circuloVerificado"
+            titulo="Não há submissões neste estado"
+            descricao="Todos os pedidos foram processados ou não correspondem ao filtro."
+          />
+        )}
 
-      {isLoading && (
-        <div className="flex flex-col gap-2">
-          <div className="h-24 animate-pulse rounded-2xl bg-gray-200" />
-          <div className="h-24 animate-pulse rounded-2xl bg-gray-200" />
-        </div>
-      )}
-
-      {isError && (
-        <p className="text-sm text-gray-600">Não foi possível carregar as submissões. Verifica a tua ligação e tenta novamente.</p>
-      )}
-
-      {submissions && submissions.length === 0 && <p className="text-sm text-gray-600">Não há submissões neste estado.</p>}
-
-      {submissions && submissions.length > 0 && (
-        <ul className="flex flex-col gap-3">
-          {submissions.map((kyc) => (
-            <li key={kyc.id}>
-              <Card variant="solid" className="flex flex-col gap-2 p-4">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-sm font-bold text-piquete-blue">BI {kyc.bi_number}</p>
-                    <p className="text-xs text-gray-500">NUIT {kyc.nuit_number}</p>
-                  </div>
-                  <Badge variant={STATUS_BADGE_VARIANT[kyc.status]}>{STATUS_LABELS[kyc.status]}</Badge>
-                </div>
-
-                {kyc.status === 'PENDING' && (
-                  <EsperaNaFila submittedAt={kyc.submitted_at} />
-                )}
-
-                {kyc.review_notes && <p className="text-sm text-gray-600">Motivo: {kyc.review_notes}</p>}
-
-                {kyc.status === 'REJECTED' && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="self-start"
-                    onClick={() => handleReopen(kyc)}
-                    disabled={reopenMutation.isPending}
-                  >
-                    Reabrir revisão
-                  </Button>
-                )}
-
-                {kyc.status === 'PENDING' && (
-                  <div className="flex flex-col gap-2">
-                    {rejectingId === kyc.id ? (
-                      <div className="flex flex-col gap-2">
-                        <div className="flex flex-wrap gap-1.5" aria-label="Motivos frequentes">
-                          {MOTIVOS_DE_REJEICAO_KYC.map((motivo) => (
-                            <button
-                              key={motivo}
-                              type="button"
-                              onClick={() => setRejectNotes(motivo)}
-                              className="rounded-full bg-gray-100 px-2.5 py-1 text-xs text-gray-700 hover:bg-gray-200"
-                            >
-                              {motivo.split('.')[0]}
-                            </button>
-                          ))}
-                        </div>
-                        <label className="flex flex-col gap-1.5">
-                          <span className="text-xs font-semibold uppercase tracking-wider text-piquete-blue-dark">Motivo da rejeição</span>
-                          <textarea
-                            value={rejectNotes}
-                            onChange={(event) => setRejectNotes(event.target.value)}
-                            rows={2}
-                            className="rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-900 shadow-sm focus:outline-none focus:ring-2 focus:ring-piquete-blue/20 focus:border-piquete-blue"
-                          />
-                        </label>
-                        <div className="flex gap-2">
-                          <Button type="button" variant="danger" size="sm" onClick={() => handleConfirmReject(kyc)} disabled={reviewKycMutation.isPending}>
-                            Confirmar rejeição
-                          </Button>
-                          <Button type="button" variant="ghost" size="sm" onClick={() => setRejectingId(null)}>
-                            Cancelar
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        <Button type="button" variant="primary" size="sm" onClick={() => handleApprove(kyc)} disabled={reviewKycMutation.isPending}>
-                          Aprovar
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleStartReject(kyc.id)}
-                          disabled={reviewKycMutation.isPending}
-                          className="border-rose-300 text-rose-600 hover:bg-rose-600 hover:text-white"
-                        >
-                          Rejeitar
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </Card>
-            </li>
-          ))}
-        </ul>
-      )}
-    </main>
+        {submissions && submissions.length > 0 && (
+          <ul className="divide-y divide-slate-100 border-t border-slate-100">
+            {submissions.map((kyc) => (
+              <li key={kyc.id}>
+                <CartaoDeKyc kyc={kyc} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </ConteudoDoSeparador>
+    </SeccaoComSeparadores>
   )
 }
