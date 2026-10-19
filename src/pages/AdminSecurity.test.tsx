@@ -29,10 +29,10 @@ afterEach(() => {
   estado.sucesso.mockReset()
 })
 
-function mostrar(fonte: FonteEstado) {
+function mostrar(fonte: FonteEstado, state?: { segundoFactorExigido: boolean }) {
   estado.estado = fonte
   render(
-    <MemoryRouter>
+    <MemoryRouter initialEntries={[{ pathname: '/admin/seguranca', state }]}>
       <AdminSecurity />
     </MemoryRouter>,
   )
@@ -98,5 +98,19 @@ describe('AdminSecurity', () => {
 
     expect(estado.erro.mock.calls[0][0]).toMatch(/inválido ou expirado/)
     expect((screen.getByLabelText('Código de 6 dígitos') as HTMLInputElement).value).toBe('')
+  })
+})
+
+describe('AdminSecurity — aviso de que o backend exige os dois passos', () => {
+  const semFactor = pronto({ temFactor: false, nivelAtual: 'aal1', factorId: null })
+
+  it('explica porque é que o painel não abriu quando vem reencaminhado', () => {
+    mostrar(semFactor, { segundoFactorExigido: true })
+    expect(screen.getByRole('alert').textContent).toMatch(/exige verificação em dois passos/i)
+  })
+
+  it('aberto directamente, não mostra o aviso', () => {
+    mostrar(semFactor)
+    expect(screen.queryByRole('alert')).toBeNull()
   })
 })
