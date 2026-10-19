@@ -157,6 +157,7 @@ export function AdminUserDetail() {
       <LayoutDividido
         foto={
           <ColunaDaFoto
+            semVoltar
             imagem={
               user.avatar_url ? (
                 <img

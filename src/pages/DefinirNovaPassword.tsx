@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../store/AuthContext'
 import { describeAuthError } from '../lib/authErrors'
+import { BackButton } from '../components/BackButton'
 
 // Destino do redirectTo em requestPasswordRecovery (backend, TRD Adendo v1.7). O
 // link do email aponta para cá com o token de recuperação na URL — o supabase-js
@@ -81,7 +82,9 @@ export function DefinirNovaPassword() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-6 p-6">
-      <header>
+      <header className="flex items-center gap-2">
+        {/* Chega-se aqui pelo link do email, sem ecrã anterior nesta app: «voltar» leva ao início. */}
+        <BackButton destinoSemHistorico="/" />
         <h1 className="text-2xl font-semibold text-gray-900">Definir nova password</h1>
       </header>
 

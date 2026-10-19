@@ -1,4 +1,5 @@
 import { useLocation } from 'react-router-dom'
+import { BackButton } from '../../BackButton'
 import { IconeDeAdmin } from '../estrutura/IconeDeAdmin'
 import { caminhoActivo } from './caminhoActivo'
 import { SECCOES_DO_PAINEL } from './seccoes'
@@ -31,6 +32,10 @@ export function Cabecalho({ recolhida, aoAbrirMenu }: CabecalhoProps) {
       >
         <IconeDeAdmin nome="menu" className="w-[22px] h-[22px]" />
       </button>
+
+      {/* Sem ecrã anterior (link directo): de uma subpágina, como a ficha de um utilizador, volta à
+          sua secção; de uma secção, volta à Home da app. */}
+      <BackButton destinoSemHistorico={seccao && pathname !== seccao.to ? seccao.to : '/'} />
 
       <h1 className="text-base sm:text-lg font-bold text-piquete-blue font-heading truncate">{seccao?.rotulo ?? 'Administração'}</h1>
     </header>

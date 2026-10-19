@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAdminMetrics } from '../../../hooks/useAdminMetrics'
 import { useProfile } from '../../../hooks/useProfile'
 import { useAuth } from '../../../store/AuthContext'
-import { LogoIcon } from '../../ui/LogoIcon'
+import { LogoOficial } from '../../ui/LogoOficial'
 import { IconeDeAdmin } from '../estrutura/IconeDeAdmin'
 import { caminhoActivo } from './caminhoActivo'
 import { GRUPOS_DO_PAINEL, SECCOES_DO_PAINEL } from './seccoes'
@@ -46,12 +46,8 @@ export function BarraLateral({ recolhida, naGaveta = false, aoRecolher, aoFechar
       }`}
     >
       <div className={`flex items-center pt-6 pb-4 ${soIcones ? 'justify-center px-0' : 'justify-between px-6'}`}>
-        {!soIcones && (
-          <div className="flex items-center gap-3">
-            <LogoIcon size="sm" />
-            <span className="text-piquete-blue font-heading font-extrabold text-base leading-none">Painel Admin</span>
-          </div>
-        )}
+        {/* Recolhida, a barra tem 80 px: o logótipo não cabe legível, e fica só o botão de expandir. */}
+        {!soIcones && <LogoOficial largura={150} />}
 
         {naGaveta ? (
           <button type="button" onClick={aoFechar} className={CLASSE_DO_BOTAO_DE_CANTO} aria-label="Fechar menu">
