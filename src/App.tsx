@@ -9,6 +9,7 @@ import { ProtectedRoute } from './components/ProtectedRoute'
 import { RotaDeAdmin } from './components/admin/RotaDeAdmin'
 import { RotaDeEmpresa, RotaDeTecnico } from './components/equipa/RotaDeEmpresa'
 import { OnboardingGate } from './components/OnboardingGate'
+import { ReencaminharParaSegundoFactor } from './components/admin/ReencaminharParaSegundoFactor'
 import { AuthProvider } from './store/AuthContext'
 import { IndicadorDeLigacao } from './components/IndicadorDeLigacao'
 import { AvisoDeNovaVersao } from './components/AvisoDeNovaVersao'
@@ -65,6 +66,7 @@ function App() {
       <AuthProvider>
         <ProcessadorDaFila />
         <BrowserRouter>
+          <ReencaminharParaSegundoFactor />
           <ErroDeEcraPorRota>
           <Suspense fallback={<PaginaACarregar />}>
           <Routes>

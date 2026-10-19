@@ -1,6 +1,7 @@
 import axios, { type AxiosError } from 'axios'
 import { supabase } from './supabase'
 import { registarRespostaDoServidor } from './conectividade'
+import { avisarQueFaltaSegundoFactor, eRecusaPorFaltaDeSegundoFactor } from './segundoFactorExigido'
 
 interface ApiEnvelope<T> {
   success: boolean
@@ -54,6 +55,7 @@ api.interceptors.response.use(
     // resposta HTTP, mesmo 4xx/5xx, prova que o servidor está vivo.
     registarRespostaDoServidor(error.response !== undefined)
     const message = error.response?.data?.error ?? error.message
+    if (eRecusaPorFaltaDeSegundoFactor(error.response?.status, message)) avisarQueFaltaSegundoFactor()
     return Promise.reject(new ErroDeApi(message, error.response?.status))
   },
 )
