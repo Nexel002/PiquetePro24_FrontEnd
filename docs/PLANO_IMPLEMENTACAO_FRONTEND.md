@@ -747,6 +747,23 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 33 — Localização captada a mais de 1 km do sítio real
+
+**Estado: implementada (19/10/2026), só frontend, por validar no telemóvel.** Ver Adendo v1.58 do TRD.
+
+**Problema reportado:** o serviço de localização grava, em alguns casos, um ponto a mais de 1 km de onde o utilizador está.
+
+**Causa:** `useGeolocation` aceitava a primeira leitura devolvida por `getCurrentPosition`, sem olhar a `coords.accuracy`. A primeira leitura é tipicamente de antena/Wi-Fi (km de erro), e `maximumAge` (60 s no GPS, 10 min no fallback «aproximado» da Fase 29) ainda deixava passar posições em cache.
+
+**Feito:** `watchPosition` com `maximumAge: 0`; conclui logo com precisão ≤ 50 m, senão ao fim de 15 s fica com a melhor leitura; acima de 500 m não é `success` (erro «pouco precisa», cai na selecção manual / última conhecida). O fallback aproximado da Fase 29 foi retirado. O watch pára ao concluir, ao relocalizar e ao desmontar.
+
+**Critérios de Entrega:**
+- [x] `useGeolocation.test.ts` (15 testes): sem cache; ignora a leitura grosseira; melhor leitura da janela; >500 m recusada; sem leitura; limpeza no desmontar; erro passageiro não aborta.
+- [ ] **No telemóvel:** captar a localização em sítio aberto e dentro de casa e comparar com o ponto real (esperado < 100 m ao ar livre; dentro de casa pode recusar por precisão).
+- [ ] Decisão em aberto: o limiar de 500 m (`PRECISAO_MAXIMA_M`) pode ter de baixar/subir conforme o resultado em campo.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { dentroDeMocambique, guardarUltimaLocalizacao, lerUltimaLocalizacao, type UltimaLocalizacao } from '../lib/ultimaLocalizacao'
 
 interface Coordinates {
@@ -15,12 +15,18 @@ type GeolocationState =
   // reage a 'success', e gravar uma posição antiga como se fosse a actual seria um dado errado.
   | { status: 'error'; message: string; ultimaConhecida: UltimaLocalizacao | null }
 
-// Primeiro tenta o GPS; se não responde, a localização aproximada (rede/Wi-Fi). Só com
-// `enableHighAccuracy: true` e 10 s, um portátil ou um telemóvel dentro de casa — sem sinal de GPS —
-// dava TIMEOUT ou POSITION_UNAVAILABLE e a captura «não funcionava», embora o browser soubesse
-// a zona por Wi-Fi. `maximumAge` aceita uma posição de há instantes em vez de esperar por outra.
-const OPCOES_GPS: PositionOptions = { enableHighAccuracy: true, timeout: 8_000, maximumAge: 60_000 }
-const OPCOES_APROXIMADAS: PositionOptions = { enableHighAccuracy: false, timeout: 15_000, maximumAge: 10 * 60_000 }
+// A primeira leitura que o browser devolve costuma ser grosseira (antena ou Wi-Fi) e pode estar a
+// vários km do sítio real; o GPS só converge segundos depois. `getCurrentPosition` entregava essa
+// primeira leitura — e, com `maximumAge`, até uma posição em cache (60 s no GPS, 10 min na rede).
+// Por isso observa-se com `watchPosition`, sem cache, e fica-se com a leitura mais precisa dentro
+// de uma janela curta. O fallback «aproximado» foi retirado: dava precisamente os pontos a >1 km.
+const OPCOES_GPS: PositionOptions = { enableHighAccuracy: true, timeout: 15_000, maximumAge: 0 }
+// Precisão (raio, em metros) que dispensa esperar mais: já serve para pesquisar e gravar.
+const PRECISAO_SUFICIENTE_M = 50
+// Janela máxima à espera de melhor precisão.
+const JANELA_MS = 15_000
+// Acima disto a posição não é fiável e não se grava no perfil; cai na selecção manual.
+const PRECISAO_MAXIMA_M = 500
 
 // Traduz os três casos de GeolocationPositionError em mensagens que a UI pode mostrar
 // diretamente — nenhum deles deve chegar ao utilizador como "GeolocationPositionError".
@@ -39,8 +45,14 @@ function describeError(error: GeolocationPositionError): string {
 
 export function useGeolocation() {
   const [state, setState] = useState<GeolocationState>({ status: 'idle' })
+  const pararRef = useRef<(() => void) | null>(null)
+
+  // Sem isto, um watch esquecido continuava a gastar bateria depois de sair do ecrã.
+  useEffect(() => () => pararRef.current?.(), [])
 
   const locate = useCallback(() => {
+    pararRef.current?.()
+
     if (!('geolocation' in navigator)) {
       setState({ status: 'error', message: 'Este dispositivo não suporta geolocalização.', ultimaConhecida: lerUltimaLocalizacao() })
       return
@@ -59,36 +71,65 @@ export function useGeolocation() {
 
     setState({ status: 'locating' })
 
-    const aceitar = (position: GeolocationPosition) => {
-      const coordinates = { latitude: position.coords.latitude, longitude: position.coords.longitude }
-      // O backend recusa coordenadas fora de Moçambique (400); dizê-lo aqui evita um «não foi possível guardar» sem causa.
-      if (!dentroDeMocambique(coordinates)) {
-        setState({
-          status: 'error',
-          message: 'A localização detetada está fora de Moçambique. Usa a seleção manual abaixo.',
-          ultimaConhecida: lerUltimaLocalizacao(),
-        })
+    let melhor: GeolocationCoordinates | null = null
+    let terminado = false
+    let watchId: number | null = null
+    let temporizador: ReturnType<typeof setTimeout> | null = null
+
+    const parar = () => {
+      terminado = true
+      if (watchId !== null) navigator.geolocation.clearWatch(watchId)
+      if (temporizador) clearTimeout(temporizador)
+      pararRef.current = null
+    }
+    pararRef.current = parar
+
+    const falhar = (message: string) => {
+      parar()
+      setState({ status: 'error', message, ultimaConhecida: lerUltimaLocalizacao() })
+    }
+
+    // `accuracy` ausente é tratado como «sem informação»: não bloqueia.
+    const precisao = (c: GeolocationCoordinates) => (Number.isFinite(c.accuracy) ? c.accuracy : 0)
+
+    const concluir = () => {
+      if (terminado) return
+      if (!melhor) {
+        falhar('A localização demorou demasiado a responder. Usa a seleção manual abaixo.')
         return
       }
+      if (precisao(melhor) > PRECISAO_MAXIMA_M) {
+        falhar(
+          `A localização está pouco precisa (cerca de ${Math.round(precisao(melhor))} m). Vai para um sítio aberto e tenta de novo, ou usa a seleção manual abaixo.`,
+        )
+        return
+      }
+      const coordinates = { latitude: melhor.latitude, longitude: melhor.longitude }
+      // O backend recusa coordenadas fora de Moçambique (400); dizê-lo aqui evita um «não foi possível guardar» sem causa.
+      if (!dentroDeMocambique(coordinates)) {
+        falhar('A localização detetada está fora de Moçambique. Usa a seleção manual abaixo.')
+        return
+      }
+      parar()
       guardarUltimaLocalizacao(coordinates)
       setState({ status: 'success', coordinates })
     }
-    const falhar = (error: GeolocationPositionError) => {
-      setState({ status: 'error', message: describeError(error), ultimaConhecida: lerUltimaLocalizacao() })
-    }
 
-    navigator.geolocation.getCurrentPosition(
-      aceitar,
+    watchId = navigator.geolocation.watchPosition(
+      (position) => {
+        if (terminado) return
+        if (!melhor || precisao(position.coords) <= precisao(melhor)) melhor = position.coords
+        if (precisao(melhor) <= PRECISAO_SUFICIENTE_M) concluir()
+      },
       (error) => {
-        // Sem permissão repetir não adianta; nos outros casos tenta-se a localização aproximada.
-        if (error.code === error.PERMISSION_DENIED) {
-          falhar(error)
-          return
-        }
-        navigator.geolocation.getCurrentPosition(aceitar, falhar, OPCOES_APROXIMADAS)
+        // Sem permissão esperar não adianta; os outros erros podem passar quando o GPS apanhar sinal.
+        if (!terminado && error.code === error.PERMISSION_DENIED) falhar(describeError(error))
       },
       OPCOES_GPS,
     )
+    // Um mock (ou o browser) pode responder de forma síncrona: o id só existe depois, não o deixar órfão.
+    if (terminado) navigator.geolocation.clearWatch(watchId)
+    else temporizador = setTimeout(concluir, JANELA_MS)
   }, [])
 
   // Para os ecrãs que só PESQUISAM (não gravam): GPS se respondeu, senão a última posição
