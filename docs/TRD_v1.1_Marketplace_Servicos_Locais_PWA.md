@@ -1778,3 +1778,24 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 - **Botão de voltar.** O `BackButton` vivia no cabeçalho de cada ecrã e saiu com ele; passa a estar no `Cabecalho` do layout, em todos os ecrãs do painel. O `BackButton` ganha `destinoSemHistorico`: sem ecrã anterior nesta app (`history.state.idx === 0` — link directo, redireccionamento com `replace`, email), vai para esse destino em vez de `navigate(-1)`, que saía do site. No painel: de uma subpágina (ficha do utilizador) volta à secção; de uma secção, à Home. Na ficha, a `ColunaDaFoto` aceita `semVoltar` para não haver dois «voltar». Também acrescentado a `/definir-nova-password`, que se abre pelo email de recuperação.
 - **Logótipo oficial.** A barra lateral mostra `public/logo.png` (fornecido pelo utilizador) através de `ui/LogoOficial`, recortado por CSS à caixa do desenho (o ficheiro tem fundo branco opaco e margem larga) — não o `LogoIcon` redesenhado em SVG. Por ser opaco, só serve sobre fundos claros. O ficheiro tem de estar em minúsculas (`logo.png`): no Linux da Vercel `Logo.PNG` daria 404.
 - Sem «voltar», de propósito: Home e Login (pontos de partida), `/auth/callback` (só redirecciona) e o onboarding de telefone/localização (o `OnboardingGate` traria de volta). Os Termos têm «Ir para o início».
+
+## Adendo v1.60
+
+### Localização em zonas com pouca cobertura e logótipo oficial em toda a app (20/10/2026)
+
+**Contexto (localização).** Com o Adendo v1.58, a localização falhava em zonas com pouco Wi-Fi conhecido. O caso reportado foi na Av. das Indústrias: a melhor leitura em 15 s passava dos 500 m e era recusada como erro. No Perfil (`LocationForm` com `allowManual={false}`) isso deixava o utilizador sem forma nenhuma de se localizar. O browser não expõe Wi-Fi nem antenas, e a precisão é a do serviço de localização do telemóvel (no Android, o Fused Location da Google). **Nenhuma biblioteca JS localiza melhor do que isso**, e mudar de biblioteca não resolve. O que se pode mudar é quanto tempo se espera e o que se faz com uma leitura imprecisa. O backend não muda: já grava as coordenadas mesmo quando a geocodificação reversa não conhece o sítio.
+
+**Decisão (`useGeolocation`).**
+- `watchPosition` de alta precisão sem cache, como antes, e em paralelo um `getCurrentPosition` de baixa precisão (`maximumAge` 60 s). Alguns Android/WebView com o GPS sem sinal não entregam nada ao pedido de alta precisão; o segundo pedido garante pelo menos uma leitura. Fica sempre a leitura de menor `accuracy`.
+- Termina logo com ≤ 50 m; aos 10 s, se já tiver ≤ 100 m; senão, ao fim de **30 s** (antes 15 s: um GPS a frio num telemóvel de gama baixa leva 20–40 s).
+- Melhor leitura ≤ 500 m → `success`, gravada sem perguntar (como no v1.58).
+- Entre 500 m e 10 km → novo estado **`aproximada`** (com `precisaoM`). Não é erro. Os ecrãs de pesquisa (`FindProfessionals`, `NearbyServiceRequests`) usam-na com o aviso `AvisoLocalizacaoAproximada` («±1,2 km: as distâncias podem não ser exactas» + «Tentar de novo»). O `LocationForm` **não a grava sozinho**: mostra o nome do lugar e a precisão, com «Usar esta localização» e «Tentar de novo», e sugere ligar a «localização precisa». Assim evitam-se os pontos errados gravados em silêncio (a origem do v1.58) sem deixar o utilizador sem localização. Uma leitura aproximada não vai para a «última localização conhecida».
+- Acima de 10 km (nível de cidade/IP) → erro.
+- Sem leitura nenhuma ao fim da janela, a mensagem segue o último erro do browser: `POSITION_UNAVAILABLE` → «confirma que a localização do telemóvel está ligada».
+- Durante a espera, o estado `locating` traz a precisão actual («A melhorar a precisão (±80 m)…»), para os 30 s não parecerem um bloqueio.
+
+**Possível evolução (não feita):** um mapa com pino arrastável para corrigir uma posição aproximada, como nas apps de transporte. Exige uma biblioteca de mapas (Leaflet ~40 KB gz + mosaicos OSM) e é uma decisão de peso do bundle (CLAUDE.md §0).
+
+**Logótipo.** `public/logo.png` passa a ser o único logótipo da app, através de `LogoOficial`: cabeçalho da Home (no telemóvel, a variante `escudo`, recortada às colunas 28–128 do PNG), barra de topo do login/registo, páginas legais, painel do login (num cartão branco, porque o PNG tem fundo branco opaco) e barra lateral do admin (Adendo v1.59). `Logo.tsx` e `LogoIcon.tsx` (o redesenho em SVG, que não era o oficial) foram removidos. Os ícones da PWA já usavam o escudo oficial.
+
+**Notas de deploy:** só frontend; sem migrations nem variáveis novas.

@@ -25,11 +25,18 @@ function simularWatch() {
     return 7
   })
   const clearWatch = vi.fn()
-  Object.defineProperty(navigator, 'geolocation', { value: { watchPosition, clearWatch }, configurable: true })
+  // O pedido paralelo de baixa precisão (rede).
+  let sucessoRede: Sucesso = () => {}
+  const getCurrentPosition = vi.fn<(s: Sucesso, f: Falha, opcoes?: PositionOptions) => void>((s) => {
+    sucessoRede = s
+  })
+  Object.defineProperty(navigator, 'geolocation', { value: { watchPosition, clearWatch, getCurrentPosition }, configurable: true })
   return {
     watchPosition,
     clearWatch,
+    getCurrentPosition,
     leitura: (p: GeolocationPosition) => act(() => sucesso(p)),
+    leituraDeRede: (p: GeolocationPosition) => act(() => sucessoRede(p)),
     erro: (code: number) => act(() => falha(erro(code))),
   }
 }
@@ -75,21 +82,83 @@ describe('useGeolocation — precisão', () => {
     gps.leitura(leitura(400, { latitude: -25.9 }))
     gps.leitura(leitura(120))
     gps.leitura(leitura(300, { latitude: -25.8 }))
-    act(() => void vi.advanceTimersByTime(15_000))
+    act(() => void vi.advanceTimersByTime(30_000))
 
     expect(result.current.state).toMatchObject({ status: 'success', coordinates: MAPUTO })
   })
 
-  it('se a melhor leitura continua imprecisa (>500 m), não é «success» e explica porquê', () => {
+  it('a meio da janela (10 s), uma leitura já boa (≤100 m) basta', () => {
+    const gps = simularWatch()
+    const { result } = renderHook(() => useGeolocation())
+    act(() => result.current.locate())
+
+    gps.leitura(leitura(90))
+    expect(result.current.state).toMatchObject({ status: 'locating', precisaoM: 90 })
+    act(() => void vi.advanceTimersByTime(10_000))
+
+    expect(result.current.state).toMatchObject({ status: 'success', coordinates: MAPUTO })
+  })
+
+  it('zona com pouco Wi-Fi conhecido (>500 m): devolve a posição como «aproximada», não como erro', () => {
     const gps = simularWatch()
     const { result } = renderHook(() => useGeolocation())
     act(() => result.current.locate())
 
     gps.leitura(leitura(2_500))
-    act(() => void vi.advanceTimersByTime(15_000))
+    act(() => void vi.advanceTimersByTime(30_000))
 
-    expect(result.current.state).toMatchObject({ status: 'error', message: expect.stringMatching(/pouco precisa/i) })
+    expect(result.current.state).toMatchObject({ status: 'aproximada', coordinates: MAPUTO, precisaoM: 2_500 })
+    // Os ecrãs de pesquisa usam-na, com aviso...
+    expect(result.current.coordinates).toEqual(MAPUTO)
+    expect(result.current.precisaoAproximadaM).toBe(2_500)
+    // ...mas não substitui a «última conhecida», que é usada em silêncio noutra visita.
     expect(lerUltimaLocalizacao()).toBeNull()
+  })
+
+  it('acima de 10 km (nível de cidade) já não serve nem para pesquisar: é erro', () => {
+    const gps = simularWatch()
+    const { result } = renderHook(() => useGeolocation())
+    act(() => result.current.locate())
+
+    gps.leitura(leitura(25_000))
+    act(() => void vi.advanceTimersByTime(30_000))
+
+    expect(result.current.state).toMatchObject({ status: 'error', message: expect.stringMatching(/localização precisa/i) })
+  })
+
+  it('o pedido de rede (baixa precisão) conta quando o GPS não entrega nada', () => {
+    const gps = simularWatch()
+    const { result } = renderHook(() => useGeolocation())
+    act(() => result.current.locate())
+
+    expect(gps.getCurrentPosition.mock.calls[0][2]).toMatchObject({ enableHighAccuracy: false })
+    gps.leituraDeRede(leitura(800))
+    act(() => void vi.advanceTimersByTime(30_000))
+
+    expect(result.current.state).toMatchObject({ status: 'aproximada', precisaoM: 800 })
+  })
+
+  it('a leitura de rede não ganha a uma de GPS mais precisa', () => {
+    const gps = simularWatch()
+    const { result } = renderHook(() => useGeolocation())
+    act(() => result.current.locate())
+
+    gps.leitura(leitura(200))
+    gps.leituraDeRede(leitura(1_500, { latitude: -25.8 }))
+    act(() => void vi.advanceTimersByTime(30_000))
+
+    expect(result.current.state).toMatchObject({ status: 'success', coordinates: MAPUTO })
+  })
+
+  it('com a localização do telemóvel desligada (POSITION_UNAVAILABLE e nada mais), diz isso', () => {
+    const gps = simularWatch()
+    const { result } = renderHook(() => useGeolocation())
+    act(() => result.current.locate())
+
+    gps.erro(2)
+    act(() => void vi.advanceTimersByTime(30_000))
+
+    expect(result.current.state).toMatchObject({ status: 'error', message: expect.stringMatching(/localização do telemóvel está ligada/i) })
   })
 
   it('sem nenhuma leitura até ao fim da janela, diz que demorou demasiado', () => {
@@ -97,7 +166,7 @@ describe('useGeolocation — precisão', () => {
     const { result } = renderHook(() => useGeolocation())
     act(() => result.current.locate())
 
-    act(() => void vi.advanceTimersByTime(15_000))
+    act(() => void vi.advanceTimersByTime(30_000))
 
     expect(result.current.state).toMatchObject({ status: 'error', message: expect.stringMatching(/demorou demasiado/i) })
   })
@@ -132,7 +201,7 @@ describe('useGeolocation — última localização conhecida', () => {
     const { result } = renderHook(() => useGeolocation())
     act(() => result.current.locate())
 
-    act(() => void vi.advanceTimersByTime(15_000))
+    act(() => void vi.advanceTimersByTime(30_000))
 
     expect(result.current.coordinates).toEqual(MAPUTO)
     expect(result.current.ultimaConhecidaEmUso).toMatchObject(MAPUTO)
@@ -144,7 +213,7 @@ describe('useGeolocation — última localização conhecida', () => {
     const { result } = renderHook(() => useGeolocation())
     act(() => result.current.locate())
 
-    act(() => void vi.advanceTimersByTime(15_000))
+    act(() => void vi.advanceTimersByTime(30_000))
 
     expect(result.current.state.status).toBe('error')
   })

@@ -4,6 +4,7 @@ import { useGeolocation } from '../hooks/useGeolocation'
 import { useAssignServiceRequest, useNearbyServiceRequests } from '../hooks/useServiceRequests'
 import { BackButton } from '../components/BackButton'
 import { AvisoUltimaLocalizacao } from '../components/AvisoUltimaLocalizacao'
+import { AvisoLocalizacaoAproximada } from '../components/AvisoLocalizacaoAproximada'
 import { EligibilityNotice } from '../components/EligibilityNotice'
 import { useProfessionalEligibility } from '../hooks/useProfessionalEligibility'
 
@@ -17,7 +18,7 @@ export function NearbyServiceRequests() {
   const [radiusKm, setRadiusKm] = useState(15)
   const [assigningId, setAssigningId] = useState<string | null>(null)
 
-  const { coordinates, ultimaConhecidaEmUso } = geolocation
+  const { coordinates, ultimaConhecidaEmUso, precisaoAproximadaM } = geolocation
   const nearby = useNearbyServiceRequests(coordinates, { radiusKm })
   const assignRequest = useAssignServiceRequest()
   const eligibility = useProfessionalEligibility()
@@ -65,6 +66,7 @@ export function NearbyServiceRequests() {
           <p className="text-sm text-red-600">{geolocation.state.message}</p>
         )}
         {ultimaConhecidaEmUso && <AvisoUltimaLocalizacao ultima={ultimaConhecidaEmUso} />}
+        {precisaoAproximadaM !== null && <AvisoLocalizacaoAproximada precisaoM={precisaoAproximadaM} aoTentarDeNovo={geolocation.locate} />}
 
         {coordinates && (
           <label className="flex flex-col gap-1 text-sm text-gray-700">

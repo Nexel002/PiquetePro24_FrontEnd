@@ -24,6 +24,7 @@ vi.mock('../hooks/useGeolocation', () => ({
     locate: vi.fn(),
     coordinates: estado.geolocalizacao.status === 'success' ? estado.geolocalizacao.coordinates : null,
     ultimaConhecidaEmUso: null,
+    precisaoAproximadaM: null,
   }),
 }))
 
