@@ -24,5 +24,13 @@
       "Depois de entrares, a app já vai preparando a tua localização: quando carregas para a captar, fica pronta quase de imediato.",
       "A app mostra agora o logótipo oficial do PiquetePro24."
     ]
+  },
+  {
+    "versao": "0.2.2",
+    "data": "2026-10-20",
+    "novidades": [
+      "A app actualiza-se sozinha: deixa de ser preciso carregar em «Actualizar», e no fim mostramos o que mudou.",
+      "O logótipo tem agora fundo transparente."
+    ]
   }
 ]

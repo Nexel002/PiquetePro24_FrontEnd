@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { compararVersoes, dataValida, montarFicheiro, novidadesDesde, validarHistorico } from './versoes'
+import { compararVersoes, dataValida, novidadesDesde, validarHistorico } from './versoes'
 
 const entrada = (versao: string, data = '2026-10-14', novidades = ['Algo novo.']) => ({ versao, data, novidades })
 
@@ -69,14 +69,6 @@ describe('validarHistorico — falha o build quando o aviso ficaria errado', () 
   it('o ficheiro vazio ou que não é lista falha', () => {
     expect(() => validarHistorico([], '0.1.0')).toThrow()
     expect(() => validarHistorico({}, '0.1.0')).toThrow()
-  })
-})
-
-describe('montarFicheiro', () => {
-  it('repete a versão publicada no formato antigo, para as apps já instaladas, e traz o histórico', () => {
-    const ficheiro = montarFicheiro([entrada('0.1.0', '2026-10-14', ['A']), entrada('0.2.0', '2026-10-20', ['B'])], '0.2.0')
-    expect(ficheiro).toMatchObject({ atualizadoEm: '2026-10-20', novidades: ['B'] })
-    expect(ficheiro.versoes.map((v) => v.versao)).toEqual(['0.2.0', '0.1.0'])
   })
 })
 

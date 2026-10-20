@@ -15,6 +15,7 @@ import { ROTAS_ANTIGAS } from './components/admin/layout/rotas'
 import { AuthProvider } from './store/AuthContext'
 import { IndicadorDeLigacao } from './components/IndicadorDeLigacao'
 import { AquecerLocalizacao } from './components/AquecerLocalizacao'
+import { ActualizarAoMudarDeEcra } from './components/ActualizarAoMudarDeEcra'
 import { AvisoDeNovaVersao } from './components/AvisoDeNovaVersao'
 import { PaginaACarregar } from './components/PaginaACarregar'
 import { ErroDeEcraPorRota } from './components/ErroDeEcra'
@@ -63,6 +64,7 @@ function App() {
         <AquecerLocalizacao />
         <BrowserRouter>
           <ReencaminharParaSegundoFactor />
+          <ActualizarAoMudarDeEcra />
           <ErroDeEcraPorRota>
           <Suspense fallback={<PaginaACarregar />}>
           <Routes>

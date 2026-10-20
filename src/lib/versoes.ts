@@ -1,6 +1,6 @@
-// Versões da app e o que cada uma trouxe, para o aviso «Nova versão disponível» dizer só o que
-// realmente muda. Tem de ser TypeScript puro (sem DOM): o vite.config.ts importa-o para validar
-// o histórico e gerar o novidades.json no build.
+// Versões da app e o que cada uma trouxe, para o aviso «A app foi actualizada» dizer só o que
+// realmente mudou. Tem de ser TypeScript puro (sem DOM): o vite.config.ts importa-o para validar
+// o histórico e o injectar no bundle.
 
 export interface EntradaDeVersao {
   versao: string
@@ -9,16 +9,8 @@ export interface EntradaDeVersao {
   novidades: string[]
 }
 
-// Formato do /novidades.json. `atualizadoEm` e `novidades` repetem a entrada da versão publicada: são o
-// formato antigo, que as versões já instaladas (anteriores a este histórico) ainda lêem.
-export interface FicheiroDeNovidades {
-  atualizadoEm: string
-  novidades: string[]
-  versoes: EntradaDeVersao[]
-}
-
 // O aviso aparece por cima de tudo, e uma lista comprida num ecrã de telemóvel empurra o botão
-// «Actualizar» para fora da vista.
+// «Continuar» para fora da vista.
 export const MAXIMO_DE_ITENS = 4
 export const MAXIMO_DE_CARACTERES = 140
 
@@ -93,10 +85,4 @@ export function validarHistorico(historico: unknown, versaoDoPacote: string): En
     throw new Error(`${ficheiro} tem a versão ${maisRecente.versao}, mais recente do que a do package.json (${versaoDoPacote}). Sobe a versão do package.json.`)
   }
   return entradas
-}
-
-export function montarFicheiro(entradas: EntradaDeVersao[], versaoDoPacote: string): FicheiroDeNovidades {
-  const atual = entradas.find((e) => e.versao === versaoDoPacote)
-  if (!atual) throw new Error(`Sem entrada para a versão ${versaoDoPacote}.`)
-  return { atualizadoEm: atual.data, novidades: atual.novidades, versoes: ordenarDaMaisRecente(entradas) }
 }

@@ -2,40 +2,29 @@ import react from '@vitejs/plugin-react'
 import { readFileSync } from 'node:fs'
 import { defineConfig, type Plugin } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
-import { montarFicheiro, validarHistorico } from './src/lib/versoes.ts'
+import { ordenarDaMaisRecente, validarHistorico, type EntradaDeVersao } from './src/lib/versoes.ts'
 
 const versao = (JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }).version
 
-// Gera o /novidades.json (o texto do aviso «Nova versão disponível») a partir de
-// src/data/novidadesPorVersao.json. No build, uma versão do package.json sem entrada falha o build:
-// antes o ficheiro era editado à mão e esquecia-se, e o aviso mostrava novidades e uma data de uma
+// Injecta no bundle (__NOVIDADES__, lido por lib/novidades.ts) o histórico de src/data/novidadesPorVersao.json,
+// para o aviso «A app foi actualizada» dizer o que mudou. No build, uma versão do package.json sem
+// entrada falha o build: antes o ficheiro era editado à mão e esquecia-se, e o aviso falava de uma
 // versão antiga. Em desenvolvimento só avisa, para não impedir de trabalhar a meio de uma versão.
+// Vai no bundle, e não num ficheiro lido da rede como antes, porque o aviso aparece DEPOIS de
+// actualizar (Fase 37): a versão que corre é a nova e conhece as suas próprias novidades.
 function novidadesDaVersao(): Plugin {
-  const corpo = () => {
-    const historico = JSON.parse(readFileSync('src/data/novidadesPorVersao.json', 'utf8')) as unknown
-    return JSON.stringify(montarFicheiro(validarHistorico(historico, versao), versao), null, 2)
-  }
-  let emBuild = false
   return {
     name: 'novidades-da-versao',
-    configResolved(config) {
-      emBuild = config.command === 'build'
-    },
-    buildStart() {
-      if (!emBuild) return
-      this.emitFile({ type: 'asset', fileName: 'novidades.json', source: corpo() })
-    },
-    configureServer(servidor) {
-      servidor.middlewares.use('/novidades.json', (_pedido, resposta) => {
-        try {
-          resposta.setHeader('Content-Type', 'application/json')
-          resposta.end(corpo())
-        } catch (erro) {
-          console.warn(`[novidades] ${(erro as Error).message}`)
-          resposta.statusCode = 404
-          resposta.end()
-        }
-      })
+    config(_config, { command }) {
+      const historico = JSON.parse(readFileSync('src/data/novidadesPorVersao.json', 'utf8')) as unknown
+      let entradas: EntradaDeVersao[] = []
+      try {
+        entradas = validarHistorico(historico, versao)
+      } catch (erro) {
+        if (command === 'build') throw erro
+        console.warn(`[novidades] ${(erro as Error).message}`)
+      }
+      return { define: { __NOVIDADES__: JSON.stringify(ordenarDaMaisRecente(entradas)) } }
     },
   }
 }
@@ -48,9 +37,10 @@ export default defineConfig({
     react(),
     novidadesDaVersao(),
     VitePWA({
-      // 'prompt' e não 'autoUpdate': a versão nova só é activada quando o utilizador aceita o
-      // aviso (ver src/lib/pwaUpdate.ts). Com 'autoUpdate' e sem recarregar, quem deixava a
-      // app aberta ficava na versão antiga indefinidamente.
+      // 'prompt' e não 'autoUpdate', mas sem aviso (Fase 37): com 'autoUpdate' o cliente do plugin
+      // recarrega a página no instante em que o service worker novo se activa, e apagava um
+      // formulário a meio. Com 'prompt' quem decide quando recarregar é src/lib/novaVersao.ts. O
+      // service worker novo activa-se sozinho na mesma — skipWaiting/clientsClaim abaixo.
       registerType: 'prompt',
       manifest: {
         name: 'PiquetePro24',
@@ -70,6 +60,14 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Sem isto, o service worker novo ficava «à espera» até o utilizador aceitar um aviso, e quem
+        // não aceitava (ou nunca o via, como na PWA instalada no telemóvel) continuava com o
+        // index.html e o JS antigos do precache — foi assim que o logótipo oficial não chegou a vários
+        // telemóveis. Também liberta quem está hoje preso numa versão antiga, na próxima abertura.
+        skipWaiting: true,
+        clientsClaim: true,
+        // Explícito (já é o valor por omissão): apaga o precache das versões anteriores ao activar.
+        cleanupOutdatedCaches: true,
         // woff2 acrescentado ao padrão por omissão (js/css/html): sem isto as fontes
         // de @fontsource não entram no precache e, offline, a UI perde a tipografia.
         globPatterns: ['**/*.{js,css,html,woff2}'],
