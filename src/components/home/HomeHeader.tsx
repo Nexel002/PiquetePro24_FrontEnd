@@ -55,8 +55,10 @@ export function HomeHeader({
       >
         <div className="flex items-center gap-1 min-w-0">
           <Link to="/" aria-label="PiquetePro24 — página inicial" className="mr-3 flex shrink-0 items-center">
+            {/* Logótipo completo também no telemóvel (só o escudo não era reconhecido como o
+                oficial); mais estreito, para caber ao lado do sino e do «Entrar» a partir de 320 px. */}
             <span className="sm:hidden">
-              <LogoOficial largura={48} variante="escudo" />
+              <LogoOficial largura={120} />
             </span>
             <span className="hidden sm:block">
               <LogoOficial largura={140} />

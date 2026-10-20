@@ -1855,3 +1855,13 @@ O `LogoOficial` ganha `fundo: 'claro' | 'escuro'`. Por omissão é `claro`, com 
 - a meio do uso: não recarrega até à mudança de ecrã.
 
 **Notas de deploy:** só frontend; sem migrations nem variáveis novas. Versão 0.2.2. Os utilizadores na versão anterior passam para esta na próxima abertura da app, sem clique.
+
+## Adendo v1.64
+
+### Logótipo completo também no telemóvel (20/10/2026)
+
+**Contexto.** Abaixo de `sm` (640 px), o cabeçalho da Home mostrava só o escudo, recortado do PNG oficial (variante `escudo` do Adendo v1.60). O utilizador não o reconheceu como o logótipo oficial e pediu o logótipo completo em todos os dispositivos.
+
+**Decisão.** O `HomeHeader` mostra sempre o logótipo completo: 120 px de largura abaixo de `sm`, 140 px acima. Verificado no browser a 320, 360 e 390 px, com e sem sessão: cabe ao lado do sino e do «Entrar» ou do avatar, sem scroll horizontal. A variante `escudo` do `LogoOficial` ficou sem uso e foi removida.
+
+**Notas de deploy:** só frontend; sem migrations nem variáveis novas. Versão 0.2.3.
