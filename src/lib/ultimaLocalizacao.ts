@@ -65,3 +65,9 @@ export function descreverIdade(guardadaEm: number, agora = Date.now()): string {
   const dias = Math.round(horas / 24)
   return `há ${dias} ${dias === 1 ? 'dia' : 'dias'}`
 }
+
+// «±80 m», «±1,2 km» — o raio de erro de uma leitura aproximada, para o aviso.
+export function descreverPrecisao(metros: number): string {
+  if (metros < 1000) return `±${Math.round(metros)} m`
+  return `±${(metros / 1000).toLocaleString('pt-PT', { maximumFractionDigits: 1 })} km`
+}

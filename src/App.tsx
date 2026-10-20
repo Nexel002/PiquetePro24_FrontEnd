@@ -14,6 +14,7 @@ import { ParaOSeparador } from './components/admin/layout/ParaOSeparador'
 import { ROTAS_ANTIGAS } from './components/admin/layout/rotas'
 import { AuthProvider } from './store/AuthContext'
 import { IndicadorDeLigacao } from './components/IndicadorDeLigacao'
+import { AquecerLocalizacao } from './components/AquecerLocalizacao'
 import { AvisoDeNovaVersao } from './components/AvisoDeNovaVersao'
 import { PaginaACarregar } from './components/PaginaACarregar'
 import { ErroDeEcraPorRota } from './components/ErroDeEcra'
@@ -59,6 +60,7 @@ function App() {
       <AvisoDeNovaVersao />
       <AuthProvider>
         <ProcessadorDaFila />
+        <AquecerLocalizacao />
         <BrowserRouter>
           <ReencaminharParaSegundoFactor />
           <ErroDeEcraPorRota>

@@ -7,6 +7,7 @@ import { useProfessionalSearch } from '../hooks/useProfessionalSearch'
 import { useSelecaoParaPedido } from '../hooks/useSelecaoParaPedido'
 import { useServiceCategories } from '../hooks/useServiceCategories'
 import { AvisoUltimaLocalizacao } from '../components/AvisoUltimaLocalizacao'
+import { AvisoLocalizacaoAproximada } from '../components/AvisoLocalizacaoAproximada'
 import { BackButton } from '../components/BackButton'
 import { AvisoDeLocalizacao } from '../components/busca/AvisoDeLocalizacao'
 import { BarraDeEnvioDoPedido } from '../components/busca/BarraDeEnvioDoPedido'
@@ -19,7 +20,7 @@ import { ResultadosDaBusca } from '../components/busca/ResultadosDaBusca'
 // escolha de profissionais) e a apresentação em components/busca/.
 export function FindProfessionals() {
   const geolocation = useGeolocation()
-  const { coordinates, ultimaConhecidaEmUso } = geolocation
+  const { coordinates, ultimaConhecidaEmUso, precisaoAproximadaM } = geolocation
   const filtros = useFiltrosDaBusca()
   const categories = useServiceCategories()
   const search = useProfessionalSearch({ q: filtros.q, category: filtros.category, coordinates })
@@ -84,6 +85,7 @@ export function FindProfessionals() {
 
         <div className="flex flex-col gap-3">
           {ultimaConhecidaEmUso && <AvisoUltimaLocalizacao ultima={ultimaConhecidaEmUso} />}
+          {precisaoAproximadaM !== null && <AvisoLocalizacaoAproximada precisaoM={precisaoAproximadaM} aoTentarDeNovo={geolocation.tentarDeNovo} />}
 
           {!hasLocation && (
             <AvisoDeLocalizacao

@@ -1,4 +1,4 @@
-import { Logo } from '../ui/Logo'
+import { LogoOficial } from '../ui/LogoOficial'
 
 interface AuthHeroPanelProps {
   imageUrl?: string
@@ -35,7 +35,14 @@ export function AuthHeroPanel({ imageUrl = '/auth-hero.jpg', className = '' }: A
       <div className="absolute inset-0 bg-gradient-to-t from-piquete-blue-deep via-piquete-blue/70 to-piquete-blue/30" aria-hidden="true" />
 
       <div className="relative z-10">
-        <Logo variant="full" size="md" theme="dark" showSubtitle />
+        {/* O PNG oficial tem fundo branco opaco: sobre o azul vai num cartão branco, em vez de um
+            rectângulo branco solto. */}
+        <div className="inline-flex flex-col items-start gap-2">
+          <div className="rounded-2xl bg-white px-4 py-3 shadow-lg">
+            <LogoOficial largura={200} />
+          </div>
+          <span className="font-sans text-[11px] font-semibold uppercase tracking-widest text-slate-200">Serviços Locais 24/7</span>
+        </div>
       </div>
 
       <div className="relative z-10 max-w-md">

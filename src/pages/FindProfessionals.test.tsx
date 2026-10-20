@@ -22,8 +22,10 @@ vi.mock('../hooks/useGeolocation', () => ({
   useGeolocation: () => ({
     state: estado.geolocalizacao,
     locate: vi.fn(),
+    tentarDeNovo: vi.fn(),
     coordinates: estado.geolocalizacao.status === 'success' ? estado.geolocalizacao.coordinates : null,
     ultimaConhecidaEmUso: null,
+    precisaoAproximadaM: null,
   }),
 }))
 

@@ -3,6 +3,7 @@ import { useUpdateLocation } from '../hooks/useProfile'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useReverseGeocode } from '../hooks/useReverseGeocode'
 import { MOZAMBIQUE_PROVINCES } from '../lib/provinces'
+import { descreverPrecisao } from '../lib/ultimaLocalizacao'
 import type { UserProfile } from '../services/profile'
 import { Button } from './ui/Button'
 import { Input } from './ui/Input'
@@ -30,9 +31,10 @@ export function LocationForm({
   // useId e não um id fixo: o componente é partilhado (perfil e onboarding)
   const provinciaId = useId()
 
-  // Traduz as coordenadas do GPS recém-obtido (antes de confirmar) para um nome de
-  // lugar — só ativa quando o GPS já respondeu com sucesso.
-  const pendingCoordinates = geolocation.state.status === 'success' ? geolocation.state.coordinates : null
+  // Traduz as coordenadas do GPS recém-obtido (antes de gravar) para um nome de lugar — também
+  // quando é aproximada: é pelo nome que o utilizador decide se a posição serve.
+  const pendingCoordinates =
+    geolocation.state.status === 'success' || geolocation.state.status === 'aproximada' ? geolocation.state.coordinates : null
   const pendingPlace = useReverseGeocode(pendingCoordinates)
 
   // Traduz as coordenadas já gravadas no perfil (quando a localização foi definida
@@ -43,7 +45,16 @@ export function LocationForm({
       : null
   const savedPlace = useReverseGeocode(savedCoordinates)
 
+  // A localização é captada em segundo plano desde o login (Fase 36), partilhada com os outros
+  // ecrãs: um `success` pode já existir ao abrir este formulário, ou chegar sem ninguém ter pedido.
+  // Só se grava (e só se mostram progresso, erro e a caixa «aproximada») depois de o utilizador
+  // carregar no botão — captar não é gravar. Depois do clique, `locate` reutiliza a posição recente
+  // ou junta-se à captação em curso, e é por isso que o botão passa a ser quase imediato.
+  const [pediu, setPediu] = useState(false)
+
   function handleUseGps() {
+    autoConfirmedRef.current = null
+    setPediu(true)
     geolocation.locate()
   }
 
@@ -56,13 +67,7 @@ export function LocationForm({
   // corre de novo quando pendingPlace deixa de estar a carregar).
   const autoConfirmedRef = useRef<string | null>(null)
 
-  useEffect(() => {
-    if (geolocation.state.status !== 'success' || pendingPlace.isLoading) return
-    const { latitude, longitude } = geolocation.state.coordinates
-    const key = `${latitude},${longitude}`
-    if (autoConfirmedRef.current === key) return
-    autoConfirmedRef.current = key
-
+  function gravarCoordenadas({ latitude, longitude }: { latitude: number; longitude: number }) {
     updateLocation.mutate(
       {
         latitude,
@@ -71,10 +76,25 @@ export function LocationForm({
         district: pendingPlace.data?.district ?? undefined,
         neighborhood: pendingPlace.data?.neighborhood ?? undefined,
       },
-      { onSuccess: onSaved },
+      {
+        onSuccess: () => {
+          // Pedido cumprido: o aviso «aproximada» some, e uma nova posição em segundo plano não grava.
+          setPediu(false)
+          onSaved?.()
+        },
+      },
     )
+  }
+
+  useEffect(() => {
+    if (!pediu || geolocation.state.status !== 'success' || pendingPlace.isLoading) return
+    const { latitude, longitude } = geolocation.state.coordinates
+    const key = `${latitude},${longitude}`
+    if (autoConfirmedRef.current === key) return
+    autoConfirmedRef.current = key
+    gravarCoordenadas(geolocation.state.coordinates)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geolocation.state, pendingPlace.isLoading])
+  }, [pediu, geolocation.state, pendingPlace.isLoading])
 
   function handleSubmitHierarchy(event: FormEvent) {
     event.preventDefault()
@@ -91,7 +111,12 @@ export function LocationForm({
       ? [profile.province, profile.district, profile.neighborhood].filter(Boolean).join(' — ')
       : 'Ainda não definida'
 
-  const isBusy = geolocation.state.status === 'locating' || (geolocation.state.status === 'success' && (pendingPlace.isLoading || updateLocation.isPending))
+  // Uma captação em segundo plano não ocupa o botão: carregar nele durante essa captação junta-se a ela.
+  const isBusy =
+    updateLocation.isPending ||
+    (pediu && (geolocation.state.status === 'locating' || (geolocation.state.status === 'success' && pendingPlace.isLoading)))
+  const aproximada = pediu && geolocation.state.status === 'aproximada' ? geolocation.state : null
+  const erroDoGps = pediu && geolocation.state.status === 'error' ? geolocation.state.message : null
 
   return (
     <div className="flex flex-col gap-4">
@@ -108,9 +133,11 @@ export function LocationForm({
           <div className="flex flex-col min-w-0">
             <p className="text-[11px] text-gray-500 uppercase tracking-wide font-semibold">Localização Atual</p>
             <p className="text-sm font-bold text-piquete-blue truncate">
-              {geolocation.state.status === 'locating'
-                ? 'A localizar...'
-                : geolocation.state.status === 'success' && pendingPlace.isLoading
+              {pediu && geolocation.state.status === 'locating'
+                ? geolocation.state.precisaoM !== null
+                  ? `A melhorar a precisão (${descreverPrecisao(geolocation.state.precisaoM)})...`
+                  : 'A localizar...'
+                : pediu && geolocation.state.status === 'success' && pendingPlace.isLoading
                   ? 'A identificar o lugar...'
                   : currentLocationLabel}
             </p>
@@ -138,9 +165,39 @@ export function LocationForm({
         </button>
       </div>
 
-      {geolocation.state.status === 'error' && (
-        <p className="text-sm font-medium text-red-600 text-center">{geolocation.state.message}</p>
+      {/* Posição aproximada (zona com pouco Wi-Fi conhecido, GPS sem sinal): não se grava sozinha,
+          mas também não é um erro — o utilizador vê onde ficou e decide. Antes era recusada, e no
+          Perfil, sem selecção manual, deixava a pessoa sem forma nenhuma de se localizar. */}
+      {aproximada && (
+        <div role="status" className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <p>
+            Localização aproximada ({descreverPrecisao(aproximada.precisaoM)})
+            {pendingPlace.data?.placeName ? (
+              <>
+                : <strong>{pendingPlace.data.placeName}</strong>
+              </>
+            ) : null}
+            . Se estiver certa, usa-a; para mais precisão, liga a «localização precisa» do telemóvel e tenta num sítio aberto.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => gravarCoordenadas(aproximada.coordinates)}
+              disabled={pendingPlace.isLoading || updateLocation.isPending}
+              isLoading={updateLocation.isPending}
+            >
+              Usar esta localização
+            </Button>
+            {/* Força: sem isso, a mesma posição aproximada (ainda recente) voltava a ser reutilizada. */}
+            <Button type="button" size="sm" variant="outline" onClick={geolocation.tentarDeNovo} disabled={updateLocation.isPending}>
+              Tentar de novo
+            </Button>
+          </div>
+        </div>
       )}
+
+      {erroDoGps && <p className="text-sm font-medium text-red-600 text-center">{erroDoGps}</p>}
 
       {allowManual && (
         <>

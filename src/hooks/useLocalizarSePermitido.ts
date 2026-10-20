@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { permissaoConcedida } from '../lib/servicoDeLocalizacao'
 
 // Se o utilizador já deu permissão de localização noutra visita, localiza sem esperar que
 // carregue em «Localizar». Sem permissão concedida não faz nada: pedir a permissão sem um
@@ -6,12 +7,9 @@ import { useEffect } from 'react'
 export function useLocalizarSePermitido(locate: () => void) {
   useEffect(() => {
     let cancelled = false
-    navigator.permissions
-      ?.query({ name: 'geolocation' })
-      .then((status) => {
-        if (!cancelled && status.state === 'granted') locate()
-      })
-      .catch(() => undefined)
+    void permissaoConcedida().then((concedida) => {
+      if (!cancelled && concedida) locate()
+    })
     return () => {
       cancelled = true
     }

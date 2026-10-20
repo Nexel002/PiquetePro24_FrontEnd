@@ -15,5 +15,14 @@
     "novidades": [
       "O painel de administração tem agora um menu lateral, e cada secção arruma as suas ferramentas em separadores."
     ]
+  },
+  {
+    "versao": "0.2.1",
+    "data": "2026-10-20",
+    "novidades": [
+      "A localização já funciona em zonas onde o sinal é fraco: em vez de dar erro, mostra a posição aproximada e deixa-te escolher se a usas.",
+      "Depois de entrares, a app já vai preparando a tua localização: quando carregas para a captar, fica pronta quase de imediato.",
+      "A app mostra agora o logótipo oficial do PiquetePro24."
+    ]
   }
 ]

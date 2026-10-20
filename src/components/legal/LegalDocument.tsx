@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { SeccaoLegal } from '../../data/termosDeUtilizacao'
-import { Logo } from '../ui/Logo'
+import { LogoOficial } from '../ui/LogoOficial'
 
 interface LegalDocumentProps {
   titulo: string
@@ -16,7 +16,7 @@ export function LegalDocument({ titulo, actualizadoEm, seccoes }: LegalDocumentP
       <header className="border-b border-slate-200">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <Link to="/" aria-label="PiquetePro24 — página inicial" className="flex shrink-0 items-center">
-            <Logo variant="full" size="sm" theme="light" />
+            <LogoOficial largura={140} />
           </Link>
           <Link
             to="/"
