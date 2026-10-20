@@ -806,6 +806,31 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 36 — Localização captada em segundo plano depois do login
+
+**Estado: implementada em `fix/logotipo-e-localizacao-aproximada` (20/10/2026), só frontend, por validar no telemóvel.** Ver Adendo v1.61 do TRD. Proposta do utilizador, aprovada com as quatro regras abaixo: a captação (até 30 s, Fase 35) começa depois do login, e quando a pessoa carrega no botão a posição já está pronta.
+
+**Regras:**
+1. Só arranca sozinha se a permissão de localização já estiver concedida (`navigator.permissions`). Sem ela, o pedido continua a vir do botão: um pedido de permissão sem gesto do utilizador é recusado por reflexo e penalizado pelo browser.
+2. Captar não é gravar. A posição só se grava no perfil quando o utilizador carrega no botão do `LocationForm`; o perfil de um profissional é a base de trabalho, não onde abriu a app.
+3. Validade de 3 min: dentro dela, uma posição `success`/`aproximada` é reutilizada de imediato. Mais antiga, ou depois de um erro, faz-se uma captação nova (rápida: o GPS já está quente). «Tentar de novo» força sempre uma captação nova.
+4. Só com a app aberta: uma captação no arranque da sessão e outra quando a app volta ao primeiro plano (se a anterior já tiver expirado). Sem seguir o GPS continuamente.
+
+**Tarefas:**
+- [x] `lib/servicoDeLocalizacao.ts`: o algoritmo da Fase 35 passa do hook para um serviço único da app (estado partilhado, `subscrever`/`estadoActual`, `localizar({ forcar })`, `repor()`), com a validade de 3 min e sem reiniciar uma captação em curso.
+- [x] `useGeolocation` passa a ler o serviço (`useSyncExternalStore`), com a mesma interface para os ecrãs. Desvio: em vez de `locate(true)`, uma função `tentarDeNovo()` própria — `locate` é passado directamente a `onClick` e o evento seria lido como «forçar».
+- [x] `components/AquecerLocalizacao.tsx` no `App`, dentro do `AuthProvider`: com sessão e permissão concedida, localiza no arranque e ao voltar ao primeiro plano; ao terminar sessão, `repor()`.
+- [x] `LocationForm`: grava só depois do clique do utilizador (um `success` vindo do segundo plano não grava sozinho); a caixa «aproximada» só aparece depois do clique; «Tentar de novo» força.
+- [x] `AvisoLocalizacaoAproximada` «Tentar de novo» força.
+- [x] Testes (`useGeolocation.test.ts` 27, `AquecerLocalizacao.test.tsx` 6, `LocationForm.test.tsx` 4): serviço partilhado entre ecrãs, reutilização dentro da validade, nova captação depois dela, sem reinício durante a captação, `forcar`, `repor`; `AquecerLocalizacao` (com/sem permissão, sem sessão, primeiro plano); `LocationForm` não grava sem clique.
+- [x] Adendo v1.61 do TRD (as duas cópias) e versão nas novidades.
+
+**Como verificar:**
+- [ ] No telemóvel, com a permissão já concedida: entrar na app, esperar ~30 s e ir ao Perfil — o botão grava quase de imediato.
+- [ ] Primeira vez (sem permissão): nenhum pedido de permissão aparece no login; só ao carregar no botão.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

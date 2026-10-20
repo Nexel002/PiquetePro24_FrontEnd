@@ -66,7 +66,7 @@ export function NearbyServiceRequests() {
           <p className="text-sm text-red-600">{geolocation.state.message}</p>
         )}
         {ultimaConhecidaEmUso && <AvisoUltimaLocalizacao ultima={ultimaConhecidaEmUso} />}
-        {precisaoAproximadaM !== null && <AvisoLocalizacaoAproximada precisaoM={precisaoAproximadaM} aoTentarDeNovo={geolocation.locate} />}
+        {precisaoAproximadaM !== null && <AvisoLocalizacaoAproximada precisaoM={precisaoAproximadaM} aoTentarDeNovo={geolocation.tentarDeNovo} />}
 
         {coordinates && (
           <label className="flex flex-col gap-1 text-sm text-gray-700">

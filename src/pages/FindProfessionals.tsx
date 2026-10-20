@@ -85,7 +85,7 @@ export function FindProfessionals() {
 
         <div className="flex flex-col gap-3">
           {ultimaConhecidaEmUso && <AvisoUltimaLocalizacao ultima={ultimaConhecidaEmUso} />}
-          {precisaoAproximadaM !== null && <AvisoLocalizacaoAproximada precisaoM={precisaoAproximadaM} aoTentarDeNovo={geolocation.locate} />}
+          {precisaoAproximadaM !== null && <AvisoLocalizacaoAproximada precisaoM={precisaoAproximadaM} aoTentarDeNovo={geolocation.tentarDeNovo} />}
 
           {!hasLocation && (
             <AvisoDeLocalizacao

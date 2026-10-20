@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { guardarUltimaLocalizacao, lerUltimaLocalizacao } from '../lib/ultimaLocalizacao'
+import { repor, VALIDADE_MS } from '../lib/servicoDeLocalizacao'
 import { useGeolocation } from './useGeolocation'
 
 const MAPUTO = { latitude: -25.9692, longitude: 32.5732 }
@@ -46,6 +47,8 @@ beforeEach(() => {
   vi.useFakeTimers()
 })
 afterEach(() => {
+  // O serviço é da app (módulo), não do componente: sem isto o estado passava de um teste para o seguinte.
+  if ('geolocation' in navigator) act(() => repor())
   vi.useRealTimers()
   Reflect.deleteProperty(navigator, 'geolocation')
   Reflect.deleteProperty(window, 'isSecureContext')
@@ -171,14 +174,106 @@ describe('useGeolocation — precisão', () => {
     expect(result.current.state).toMatchObject({ status: 'error', message: expect.stringMatching(/demorou demasiado/i) })
   })
 
-  it('pára o watch ao sair do ecrã', () => {
+})
+
+describe('useGeolocation — serviço partilhado (Fase 36)', () => {
+  it('uma captação feita num ecrã chega a outro ecrã', () => {
+    const gps = simularWatch()
+    const perfil = renderHook(() => useGeolocation())
+    const pesquisa = renderHook(() => useGeolocation())
+
+    act(() => perfil.result.current.locate())
+    gps.leitura(leitura(20))
+
+    expect(pesquisa.result.current.coordinates).toEqual(MAPUTO)
+  })
+
+  it('sair do ecrã não pára a captação: ela é da app e termina sozinha', () => {
     const gps = simularWatch()
     const { result, unmount } = renderHook(() => useGeolocation())
     act(() => result.current.locate())
 
     unmount()
+    expect(gps.clearWatch).not.toHaveBeenCalled()
+
+    act(() => void vi.advanceTimersByTime(30_000))
+    expect(gps.clearWatch).toHaveBeenCalledWith(7)
+  })
+
+  it('com uma posição recente, «localizar» reutiliza-a sem nova captação (o botão fica imediato)', () => {
+    const gps = simularWatch()
+    const { result } = renderHook(() => useGeolocation())
+    act(() => result.current.locate())
+    gps.leitura(leitura(20))
+
+    act(() => void vi.advanceTimersByTime(VALIDADE_MS - 1_000))
+    act(() => result.current.locate())
+
+    expect(gps.watchPosition).toHaveBeenCalledTimes(1)
+    expect(result.current.state.status).toBe('success')
+  })
+
+  it('depois da validade, «localizar» capta de novo', () => {
+    const gps = simularWatch()
+    const { result } = renderHook(() => useGeolocation())
+    act(() => result.current.locate())
+    gps.leitura(leitura(20))
+
+    act(() => void vi.advanceTimersByTime(VALIDADE_MS))
+    act(() => result.current.locate())
+
+    expect(gps.watchPosition).toHaveBeenCalledTimes(2)
+    expect(result.current.state.status).toBe('locating')
+  })
+
+  it('durante uma captação, «localizar» junta-se a ela em vez de a reiniciar', () => {
+    const gps = simularWatch()
+    const { result } = renderHook(() => useGeolocation())
+    act(() => result.current.locate())
+    gps.leitura(leitura(300))
+
+    act(() => result.current.locate())
+
+    expect(gps.watchPosition).toHaveBeenCalledTimes(1)
+    expect(result.current.state).toMatchObject({ status: 'locating', precisaoM: 300 })
+  })
+
+  it('«Tentar de novo» força uma captação nova mesmo com uma posição recente', () => {
+    const gps = simularWatch()
+    const { result } = renderHook(() => useGeolocation())
+    act(() => result.current.locate())
+    gps.leitura(leitura(2_000))
+    act(() => void vi.advanceTimersByTime(30_000))
+    expect(result.current.state.status).toBe('aproximada')
+
+    act(() => result.current.tentarDeNovo())
+
+    expect(gps.watchPosition).toHaveBeenCalledTimes(2)
+    expect(result.current.state.status).toBe('locating')
+  })
+
+  it('depois de um erro, «localizar» tenta de novo', () => {
+    const gps = simularWatch()
+    const { result } = renderHook(() => useGeolocation())
+    act(() => result.current.locate())
+    act(() => void vi.advanceTimersByTime(30_000))
+    expect(result.current.state.status).toBe('error')
+
+    act(() => result.current.locate())
+
+    expect(gps.watchPosition).toHaveBeenCalledTimes(2)
+  })
+
+  it('repor pára a captação em curso e esquece a posição (ao terminar sessão)', () => {
+    const gps = simularWatch()
+    const { result } = renderHook(() => useGeolocation())
+    act(() => result.current.locate())
+
+    act(() => repor())
 
     expect(gps.clearWatch).toHaveBeenCalledWith(7)
+    expect(result.current.state.status).toBe('idle')
+    expect(result.current.coordinates).toBeNull()
   })
 })
 

@@ -1799,3 +1799,20 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 **Logótipo.** `public/logo.png` passa a ser o único logótipo da app, através de `LogoOficial`: cabeçalho da Home (no telemóvel, a variante `escudo`, recortada às colunas 28–128 do PNG), barra de topo do login/registo, páginas legais, painel do login (num cartão branco, porque o PNG tem fundo branco opaco) e barra lateral do admin (Adendo v1.59). `Logo.tsx` e `LogoIcon.tsx` (o redesenho em SVG, que não era o oficial) foram removidos. Os ícones da PWA já usavam o escudo oficial.
 
 **Notas de deploy:** só frontend; sem migrations nem variáveis novas.
+
+## Adendo v1.61
+
+### Localização captada em segundo plano depois do login (20/10/2026)
+
+**Contexto.** A captação do Adendo v1.60 pode levar até 30 s. Proposta do utilizador: começar a captar logo depois do login, para que, quando a pessoa carrega no botão, a posição já esteja pronta. Há também um ganho técnico: depois da primeira posição o GPS fica quente, e uma captação seguinte converge em poucos segundos em vez de 20–40 s.
+
+**Decisão.**
+- **Serviço único da app** (`lib/servicoDeLocalizacao.ts`): o algoritmo do v1.60 sai do hook para um estado partilhado (`subscrever`/`estadoActual`/`localizar`/`repor`). `useGeolocation` lê-o com `useSyncExternalStore`, com a mesma interface para os ecrãs, mais `tentarDeNovo`. Antes cada ecrã tinha o seu estado, e uma posição captada noutro sítio não lhe chegava. A captação já não pára ao sair do ecrã (é da app, não do ecrã) e termina sozinha em ≤ 30 s.
+- **Reutilização:** `localizar()` não faz nada se houver uma captação em curso (junta-se a ela) ou uma posição `success`/`aproximada` com menos de **3 min** (`VALIDADE_MS`). Depois disso, ou depois de um erro, capta de novo. `tentarDeNovo()` força sempre.
+- **Arranque** (`components/AquecerLocalizacao.tsx`, no `App`, dentro do `AuthProvider`): com sessão, capta à entrada e ao voltar ao primeiro plano (`visibilitychange`). Não segue o GPS continuamente.
+- **Só com a permissão já concedida** (`permissaoConcedida()`, também usada por `useLocalizarSePermitido`). Sem a Permissions API responde que não. O primeiro pedido de permissão continua a vir sempre de um toque: um pedido sem gesto do utilizador é recusado por reflexo e penalizado pelo browser.
+- **Captar não é gravar:** o `LocationForm` só grava (e só mostra progresso, erro e a caixa «aproximada») depois de o utilizador carregar no botão. Uma posição vinda do segundo plano nunca vai para o perfil sozinha: o perfil de um profissional é a base de trabalho, não onde abriu a app. O botão já não fica ocupado durante uma captação em segundo plano; carregar nele junta-se a essa captação.
+- **Ao terminar sessão** (ou trocar de conta), `repor()`: a posição não passa para o utilizador seguinte. Um visitante sem sessão desde o início não é afectado.
+- **Limite:** uma PWA não localiza com a app fechada ou minimizada, porque o browser suspende-a. «Segundo plano» significa enquanto a app está aberta.
+
+**Notas de deploy:** só frontend; sem migrations nem variáveis novas.
