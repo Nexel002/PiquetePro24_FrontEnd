@@ -1,7 +1,7 @@
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import type { UserRole } from '../../services/profile'
-import { Logo } from '../ui/Logo'
+import { LogoOficial } from '../ui/LogoOficial'
 import { caminhoDoLogin } from '../../lib/postLoginRedirect'
 import { COLUNA } from './layout'
 import { NotificationButton } from './NotificationButton'
@@ -56,10 +56,10 @@ export function HomeHeader({
         <div className="flex items-center gap-1 min-w-0">
           <Link to="/" aria-label="PiquetePro24 — página inicial" className="mr-3 flex shrink-0 items-center">
             <span className="sm:hidden">
-              <Logo variant="icon" size="md" theme="light" />
+              <LogoOficial largura={48} variante="escudo" />
             </span>
             <span className="hidden sm:block">
-              <Logo variant="full" size="sm" theme="light" />
+              <LogoOficial largura={140} />
             </span>
           </Link>
           <Link to="/profissionais" className={`${LIGACAO_TEXTO} lg:inline-flex`}>

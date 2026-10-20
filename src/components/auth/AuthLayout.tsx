@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Logo } from '../ui/Logo'
+import { LogoOficial } from '../ui/LogoOficial'
 import { AuthHeroPanel } from './AuthHeroPanel'
 
 // Estrutura da página de autenticação: painel de imagem + coluna do formulário. Duas colunas
@@ -35,7 +35,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
             Voltar
           </button>
           <div className="lg:hidden">
-            <Logo variant="full" size="sm" theme="light" />
+            <LogoOficial largura={130} />
           </div>
         </div>
 
