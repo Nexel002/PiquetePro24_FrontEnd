@@ -801,7 +801,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 **Critérios de Entrega:**
 - [x] `useGeolocation.test.ts`: aproximada em vez de erro, >10 km é erro, saída aos 10 s, leitura de rede, rede não ganha ao GPS, `POSITION_UNAVAILABLE`; `tsc` sem erros.
 - [ ] **No telemóvel, na Av. das Indústrias (ou noutra zona onde falhou):** a localização chega a `success` ou a «aproximada», nunca a erro. Com a «localização precisa» do Android desligada, confirmar que aparece «aproximada».
-- [ ] Ver o logótipo no browser: Home (telemóvel e desktop), login, registo, termos.
+- [x] Ver o logótipo no browser: Home (telemóvel e desktop), login (telemóvel e desktop, com o cartão branco no painel azul) e termos — Edge, 20/10/2026.
 - [ ] Decisão em aberto: um mapa com pino arrastável para corrigir a posição aproximada (exige biblioteca de mapas; ver Adendo v1.60).
 
 ---
@@ -826,6 +826,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - [x] Adendo v1.61 do TRD (as duas cópias) e versão nas novidades.
 
 **Como verificar:**
+- [x] No browser (Edge com GPS emulado e API simulada, 20/10/2026): com sessão e permissão capta sem clique; sem permissão ou sem sessão não chama o GPS; a pesquisa e o Perfil reutilizam a posição (o clique gravou em ~50 ms, sem nova captação); voltar ao primeiro plano dentro dos 3 min não repete; a ±2 km a pesquisa mostra «aproximada» e o Perfil só mostra a caixa depois do clique, e «Usar esta localização» grava.
 - [ ] No telemóvel, com a permissão já concedida: entrar na app, esperar ~30 s e ir ao Perfil — o botão grava quase de imediato.
 - [ ] Primeira vez (sem permissão): nenhum pedido de permissão aparece no login; só ao carregar no botão.
 
