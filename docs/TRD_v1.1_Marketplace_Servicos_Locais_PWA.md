@@ -1816,3 +1816,17 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 - **Limite:** uma PWA não localiza com a app fechada ou minimizada, porque o browser suspende-a. «Segundo plano» significa enquanto a app está aberta.
 
 **Notas de deploy:** só frontend; sem migrations nem variáveis novas.
+
+## Adendo v1.62
+
+### Logótipo com fundo transparente e versão negativa (20/10/2026)
+
+**Contexto.** O PNG oficial (`public/logo.png`) tem fundo branco opaco. No painel escuro do login o Adendo v1.60 pô-lo num cartão branco, e o utilizador achou o resultado feio. Só tornar o fundo transparente não chegava: o texto «PIQUETE PRO» é azul-escuro e desaparecia sobre o azul da marca.
+
+**Decisão.** `scripts/gerar-logotipos.mjs` gera duas versões a partir do PNG oficial, que não é alterado. As dimensões e a posição do desenho são as mesmas, por isso as caixas de recorte do `LogoOficial` servem às três.
+- `public/logo-transparente.png`: o fundo branco ligado à borda (flood fill) passa a transparente. O branco dentro do desenho (reflexos do escudo, gota) fica opaco. A orla anti-aliased perde o branco por «cor para alfa», para não deixar um halo branco.
+- `public/logo-negativo.png`: igual, e com o texto azul-escuro em branco, a partir da coluna 129. O escudo e o «24» amarelo não mudam.
+
+O `LogoOficial` ganha `fundo: 'claro' | 'escuro'`. Por omissão é `claro`, com a versão transparente, usada nos cabeçalhos, nos termos e na barra lateral do admin. O painel do login usa `escuro`, sem o cartão branco. O script não tem dependências (só suporta RGBA 8 bits sem entrelaçamento, o formato do ficheiro oficial). Se o logótipo oficial mudar, corre-se de novo: `node scripts/gerar-logotipos.mjs`.
+
+**Notas de deploy:** só frontend; sem migrations nem variáveis novas.

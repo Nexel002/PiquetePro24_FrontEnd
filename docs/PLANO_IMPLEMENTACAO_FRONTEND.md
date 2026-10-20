@@ -802,6 +802,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - [x] `useGeolocation.test.ts`: aproximada em vez de erro, >10 km é erro, saída aos 10 s, leitura de rede, rede não ganha ao GPS, `POSITION_UNAVAILABLE`; `tsc` sem erros.
 - [ ] **No telemóvel, na Av. das Indústrias (ou noutra zona onde falhou):** a localização chega a `success` ou a «aproximada», nunca a erro. Com a «localização precisa» do Android desligada, confirmar que aparece «aproximada».
 - [x] Ver o logótipo no browser: Home (telemóvel e desktop), login (telemóvel e desktop, com o cartão branco no painel azul) e termos — Edge, 20/10/2026.
+- [x] Correcção (`fix/logotipo-transparente`, Adendo v1.62): logótipo com fundo transparente em toda a app e versão negativa (texto branco) no painel escuro do login, em vez do cartão branco; gerados por `scripts/gerar-logotipos.mjs` a partir do PNG oficial. Visto no browser.
 - [ ] Decisão em aberto: um mapa com pino arrastável para corrigir a posição aproximada (exige biblioteca de mapas; ver Adendo v1.60).
 
 ---

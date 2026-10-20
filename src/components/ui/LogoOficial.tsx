@@ -7,9 +7,14 @@
 // Caixas medidas nos píxeis do PNG: «completo» é escudo + texto; «escudo» é só o escudo com as
 // linhas de velocidade (o texto começa na coluna 129), para cabeçalhos estreitos no telemóvel.
 //
-// Fundo branco opaco: só serve sobre fundos claros. Sobre o azul da marca aparece como um
-// rectângulo branco — quem o põe num fundo escuro dá-lhe um cartão branco à volta.
+// O PNG oficial tem fundo branco opaco, que sobre o painel escuro do login aparecia como um cartão
+// branco. Por isso a app usa duas versões geradas a partir dele (scripts/gerar-logotipos.mjs), com
+// as mesmas dimensões e o desenho no mesmo sítio — as caixas abaixo servem às três:
+// - «claro» (logo-transparente.png): fundo transparente, para fundos claros;
+// - «escuro» (logo-negativo.png): também com o «PIQUETE PRO» em branco — o azul-escuro original
+//   desaparecia sobre o azul da marca.
 const IMAGEM = { largura: 293, altura: 207 }
+const FICHEIROS = { claro: '/logo-transparente.png', escuro: '/logo-negativo.png' } as const
 const CAIXAS = {
   completo: { x: 28, y: 57, largura: 234, altura: 79 },
   escudo: { x: 28, y: 57, largura: 100, altura: 79 },
@@ -18,10 +23,13 @@ const CAIXAS = {
 export function LogoOficial({
   largura,
   variante = 'completo',
+  fundo = 'claro',
   className = '',
 }: {
   largura: number
   variante?: keyof typeof CAIXAS
+  // O tom do fundo onde o logótipo é posto, não o do logótipo.
+  fundo?: keyof typeof FICHEIROS
   className?: string
 }) {
   const desenho = CAIXAS[variante]
@@ -32,7 +40,7 @@ export function LogoOficial({
       style={{ width: largura, height: Math.round(desenho.altura * escala) }}
     >
       <img
-        src="/logo.png"
+        src={FICHEIROS[fundo]}
         alt="PiquetePro24"
         width={IMAGEM.largura}
         height={IMAGEM.altura}
