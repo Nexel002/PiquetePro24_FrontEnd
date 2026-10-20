@@ -833,6 +833,31 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 37 — Actualização automática da app
+
+**Estado: implementada em `fix/actualizacao-automatica` (20/10/2026), só frontend.** Ver Adendo v1.63 do TRD.
+
+**Problema reportado:** (1) a actualização exigia carregar em «Actualizar agora», e o aviso às vezes demorava a aparecer; (2) utilizadores antigos não viam alterações já publicadas, como o logótipo oficial no telemóvel.
+
+**Causa:** service worker em modo `prompt`: a versão nova ficava à espera de um clique, e quem não o dava continuava com o precache antigo. Os cabeçalhos HTTP do Vercel estão certos (`max-age=0`).
+
+**Feito:**
+- `vite.config.ts`: `skipWaiting`, `clientsClaim` e `cleanupOutdatedCaches`; histórico de novidades injectado no bundle (`__NOVIDADES__`), sem `/novidades.json`.
+- `lib/pwaUpdate.ts` (`iniciarActualizacaoAutomatica`): conta como versão nova um `controllerchange` quando já havia controlador; procura de hora a hora e ao voltar à app (no máximo uma vez por minuto).
+- `lib/novaVersao.ts`: recarrega nos primeiros 15 s, na mudança de ecrã (`ActualizarAoMudarDeEcra`) ou ao voltar à app depois de ≥ 5 min fora.
+- `AvisoDeNovaVersao` informativo («A app foi actualizada», «Continuar»), depois do recarregamento; `lib/novidades.ts` (`novidadesPorMostrar`, `marcarNovidadesVistas`).
+- Versão 0.2.2.
+
+**Critérios de Entrega:**
+- [x] Testes: `pwaUpdate.test.ts` (8), `novaVersao.test.ts` (6), `novidades.test.ts` (9), `AvisoDeNovaVersao.test.tsx` (6), `ActualizarAoMudarDeEcra.test.tsx` (2); 667 testes, `tsc`, lint e build sem erros.
+- [x] Browser real (Edge, servidor que troca de build a meio, como num deploy):
+  - da build de `main` (modo `prompt`) para esta, sem pedido de actualização; versão nova na abertura seguinte, com o aviso;
+  - versão nova nos primeiros segundos: recarrega sozinha;
+  - a meio do uso: só recarrega na mudança de ecrã.
+- [ ] No telemóvel com a PWA instalada, que estava na versão antiga: abrir a app depois do deploy. Deve ficar com o logótipo novo e mostrar «A app foi actualizada», sem carregar em nada. Pode ser preciso fechar e abrir a app duas vezes: na primeira, o browser descarrega a versão nova em segundo plano.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
