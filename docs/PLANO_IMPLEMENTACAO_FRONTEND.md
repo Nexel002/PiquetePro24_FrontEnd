@@ -803,6 +803,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 - [ ] **No telemóvel, na Av. das Indústrias (ou noutra zona onde falhou):** a localização chega a `success` ou a «aproximada», nunca a erro. Com a «localização precisa» do Android desligada, confirmar que aparece «aproximada».
 - [x] Ver o logótipo no browser: Home (telemóvel e desktop), login (telemóvel e desktop, com o cartão branco no painel azul) e termos — Edge, 20/10/2026.
 - [x] Correcção (`fix/logotipo-transparente`, Adendo v1.62): logótipo com fundo transparente em toda a app e versão negativa (texto branco) no painel escuro do login, em vez do cartão branco; gerados por `scripts/gerar-logotipos.mjs` a partir do PNG oficial. Visto no browser.
+- [x] Correcção (`fix/logotipo-completo-no-telemovel`, Adendo v1.64): no telemóvel a Home mostrava só o escudo; passa a mostrar o logótipo completo (120 px abaixo de `sm`). Visto no browser a 320/360/390 px, com e sem sessão, sem scroll horizontal. Variante `escudo` removida.
 - [ ] Decisão em aberto: um mapa com pino arrastável para corrigir a posição aproximada (exige biblioteca de mapas; ver Adendo v1.60).
 
 ---

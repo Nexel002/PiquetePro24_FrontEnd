@@ -65,8 +65,8 @@ function tornarTransparente({ W, H, px }) {
   }
 }
 
-// Só a zona do texto (a partir da coluna 129, medida no PNG; é também onde LogoOficial corta a
-// variante «escudo»). O escudo e o «24» amarelo ficam iguais.
+// Só a zona do texto (a partir da coluna 129, medida no PNG: é onde acaba o escudo).
+// O escudo e o «24» amarelo ficam iguais.
 const TEXTO_X = 129
 function tornarNegativo({ W, H, px }) {
   for (let y = 0; y < H; y++) for (let x = TEXTO_X; x < W; x++) {

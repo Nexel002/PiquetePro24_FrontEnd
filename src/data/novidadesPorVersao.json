@@ -32,5 +32,12 @@
       "A app actualiza-se sozinha: deixa de ser preciso carregar em «Actualizar», e no fim mostramos o que mudou.",
       "O logótipo tem agora fundo transparente."
     ]
+  },
+  {
+    "versao": "0.2.3",
+    "data": "2026-10-20",
+    "novidades": [
+      "O logótipo completo do PiquetePro24 aparece agora também no telemóvel."
+    ]
   }
 ]
