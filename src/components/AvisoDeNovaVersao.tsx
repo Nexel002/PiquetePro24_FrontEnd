@@ -1,37 +1,31 @@
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
-import { carregarNovidades, formatarData, type Novidades } from '../lib/novidades'
-import { dispensarNovaVersao, useNovaVersao } from '../lib/novaVersao'
+import { formatarData, marcarNovidadesVistas, novidadesPorMostrar, type Novidades } from '../lib/novidades'
 import { Button } from './ui/Button'
 
-// Aviso de nova versão ao centro do ecrã, com a data e um resumo do que mudou em linguagem
-// simples (public/novidades.json). Substitui o pequeno aviso no canto: quem deixa a app aberta
-// dias raramente o via, e sem dizer o que mudou ninguém tinha motivo para carregar nele.
-//
-// Não bloqueia: «Mais tarde» fecha-o. Actualizar recarrega a página, e é por isso que nunca
-// acontece sozinho (ver lib/pwaUpdate.ts) — um formulário a meio perder-se-ia.
+// «A app foi actualizada», ao centro do ecrã, com a data e o que mudou em linguagem simples. Aparece
+// DEPOIS de a app se actualizar sozinha (Fase 37, lib/pwaUpdate.ts e lib/novaVersao.ts) — antes era um
+// pedido de autorização, e quem não carregava em «Actualizar» (ou nunca via o aviso, que demorava a
+// aparecer) ficava na versão antiga. Só informa: um botão para continuar.
 export function AvisoDeNovaVersao() {
-  const { aoAceitar } = useNovaVersao()
-  if (!aoAceitar) return null
-  return <Cartao aoAceitar={aoAceitar} />
+  // Lido uma vez ao abrir a app: é ao abrir (depois do recarregamento) que a versão nova começa.
+  const [novidades, setNovidades] = useState<Novidades | null>(() => novidadesPorMostrar())
+  if (!novidades) return null
+  return (
+    <Cartao
+      novidades={novidades}
+      aoFechar={() => {
+        marcarNovidadesVistas()
+        setNovidades(null)
+      }}
+    />
+  )
 }
 
-function Cartao({ aoAceitar }: { aoAceitar: () => void }) {
-  const [novidades, setNovidades] = useState<Novidades | null>(null)
-  const [aActualizar, setAActualizar] = useState(false)
+function Cartao({ novidades, aoFechar }: { novidades: Novidades; aoFechar: () => void }) {
   // O Button do projecto não encaminha refs (React 18, sem forwardRef): os botões são
   // procurados a partir do cartão.
   const cartao = useRef<HTMLDivElement>(null)
   const botoes = () => Array.from(cartao.current?.querySelectorAll<HTMLButtonElement>('button') ?? [])
-
-  useEffect(() => {
-    let cancelado = false
-    void carregarNovidades().then((resultado) => {
-      if (!cancelado) setNovidades(resultado)
-    })
-    return () => {
-      cancelado = true
-    }
-  }, [])
 
   // Foco no botão principal ao abrir, para o teclado e o leitor de ecrã começarem aqui.
   useEffect(() => {
@@ -40,10 +34,10 @@ function Cartao({ aoAceitar }: { aoAceitar: () => void }) {
 
   function aoPremirTecla(evento: KeyboardEvent) {
     if (evento.key === 'Escape') {
-      dispensarNovaVersao()
+      aoFechar()
       return
     }
-    // Prende o Tab entre os dois botões enquanto o aviso está aberto (aria-modal).
+    // Prende o Tab dentro do aviso enquanto está aberto (aria-modal).
     if (evento.key === 'Tab') {
       const [primeiro, ultimo] = [botoes()[0], botoes().at(-1)]
       if (evento.shiftKey && document.activeElement === primeiro) {
@@ -56,18 +50,11 @@ function Cartao({ aoAceitar }: { aoAceitar: () => void }) {
     }
   }
 
-  function actualizar() {
-    setAActualizar(true)
-    aoAceitar()
-  }
-
-  const temNovidades = novidades !== null && novidades.novidades.length > 0
-
   return (
     <div
       className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4 backdrop-blur-sm"
       onClick={(evento) => {
-        if (evento.target === evento.currentTarget) dispensarNovaVersao()
+        if (evento.target === evento.currentTarget) aoFechar()
       }}
       onKeyDown={aoPremirTecla}
     >
@@ -87,43 +74,31 @@ function Cartao({ aoAceitar }: { aoAceitar: () => void }) {
           </span>
           <div>
             <h2 id="titulo-nova-versao" className="font-heading text-xl font-bold text-piquete-blue">
-              Nova versão disponível
+              A app foi actualizada
             </h2>
-            {novidades && (
-              <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-piquete-gray-dark">
-                Actualização de {formatarData(novidades.atualizadoEm)}
-              </p>
-            )}
+            <p className="mt-0.5 text-xs font-medium uppercase tracking-wide text-piquete-gray-dark">
+              Actualização de {formatarData(novidades.atualizadoEm)}
+            </p>
           </div>
         </div>
 
         <div id="descricao-nova-versao" className="mt-4">
-          {temNovidades ? (
-            <>
-              <p className="text-sm font-semibold text-gray-900">O que há de novo</p>
-              <ul className="mt-2 flex flex-col gap-2">
-                {novidades.novidades.map((item) => (
-                  <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
-                    <svg className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <p className="text-center text-sm text-gray-700">Melhorámos a aplicação. Actualiza para teres a versão mais recente.</p>
-          )}
-          <p className="mt-3 text-center text-xs text-piquete-gray-dark">A página vai recarregar. Se estiveres a preencher algo, escolhe «Mais tarde» e termina primeiro.</p>
+          <p className="text-sm font-semibold text-gray-900">O que há de novo</p>
+          <ul className="mt-2 flex flex-col gap-2">
+            {novidades.novidades.map((item) => (
+              <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
+                <svg className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+                </svg>
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
         </div>
 
-        <div className="mt-5 flex flex-col gap-2">
-          <Button type="button" size="lg" onClick={actualizar} disabled={aActualizar} isLoading={aActualizar} className="w-full">
-            {aActualizar ? 'A actualizar…' : 'Actualizar agora'}
-          </Button>
-          <Button type="button" variant="ghost" onClick={dispensarNovaVersao} disabled={aActualizar} className="w-full">
-            Mais tarde
+        <div className="mt-5">
+          <Button type="button" size="lg" onClick={aoFechar} className="w-full">
+            Continuar
           </Button>
         </div>
       </div>

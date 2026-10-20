@@ -1830,3 +1830,28 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 O `LogoOficial` ganha `fundo: 'claro' | 'escuro'`. Por omissão é `claro`, com a versão transparente, usada nos cabeçalhos, nos termos e na barra lateral do admin. O painel do login usa `escuro`, sem o cartão branco. O script não tem dependências (só suporta RGBA 8 bits sem entrelaçamento, o formato do ficheiro oficial). Se o logótipo oficial mudar, corre-se de novo: `node scripts/gerar-logotipos.mjs`.
 
 **Notas de deploy:** só frontend; sem migrations nem variáveis novas.
+
+## Adendo v1.63
+
+### Actualização automática da app (20/10/2026)
+
+**Contexto.** Duas queixas do utilizador com a mesma causa. (1) A actualização dependia de um clique em «Actualizar agora», e o aviso às vezes demorava a aparecer. (2) Utilizadores antigos não viam alterações já publicadas, como o logótipo oficial, sobretudo no telemóvel. Os cabeçalhos HTTP em produção estão certos (`Cache-Control: public, max-age=0, must-revalidate` no `/`, no `sw.js` e nas imagens), por isso o Vercel não é a causa. A causa era o service worker em modo `prompt` (Adendo da Fase de PWA): a versão nova ficava «à espera» até o utilizador aceitar o aviso. Quem o dispensava, ou nunca o via (a PWA instalada quase nunca recarrega), continuava indefinidamente com o `index.html` e o JS antigos do precache. O aviso só aparecia depois de o browser procurar e descarregar a versão nova, o que acontecia ao carregar a página ou de hora a hora.
+
+**Decisão.**
+- **Service worker** (`vite.config.ts`): `skipWaiting`, `clientsClaim` e `cleanupOutdatedCaches`. A versão nova activa-se logo que é descarregada, sem clique. Os utilizadores hoje presos numa versão antiga recebem-na na próxima abertura da app, em qualquer dispositivo: o código antigo não chega a mostrar o pedido, porque o service worker novo nunca fica «à espera». `registerType` continua `prompt` (sem aviso), porque com `autoUpdate` o cliente do plugin recarregava a página no instante da activação e apagava um formulário a meio.
+- **Quando recarregar** (`lib/novaVersao.ts`, a partir de `controllerchange` em `lib/pwaUpdate.ts`; o primeiro service worker de uma primeira visita não conta):
+  - de imediato, nos primeiros 15 s depois de abrir a app;
+  - senão, na mudança de ecrã seguinte (`ActualizarAoMudarDeEcra`, dentro do router);
+  - ou ao voltar à app depois de ≥ 5 min fora.
+  
+  Entretanto a app continua na versão antiga. Um ecrã antigo que falhe a carregar continua a ser tratado por `lib/falhaDeCarregamento.ts`.
+- **Procurar versão nova:** de hora a hora, como antes, e também ao voltar à app (`visibilitychange`, no máximo uma vez por minuto). Era aqui que o aviso «demorava».
+- **Aviso:** passa a informativo e aparece depois do recarregamento. Título «A app foi actualizada», a data, o que mudou e um só botão, «Continuar». Mostra as novidades das versões posteriores à última que o utilizador viu (`localStorage` `piquete:versao-vista`). Na primeira abertura de alguém novo não mostra nada. Quem já usava a app antes desta chave (tem sessão do Supabase guardada) vê as novidades da versão actual.
+- **Novidades no bundle:** o histórico de `src/data/novidadesPorVersao.json` é injectado no build (`__NOVIDADES__`), em vez do `/novidades.json` lido da rede. Agora quem mostra o aviso é a versão nova, que conhece as suas próprias novidades. O build continua a falhar se a versão do `package.json` não tiver entrada. `/novidades.json` deixa de ser gerado, e `montarFicheiro` foi removido.
+
+**Verificado num browser real** (Edge, servidor local que troca de build a meio, como num deploy):
+- da build de `main` (modo `prompt`) para esta: sem pedido de actualização, versão nova na abertura seguinte, com o aviso;
+- versão nova nos primeiros segundos: recarrega sozinha;
+- a meio do uso: não recarrega até à mudança de ecrã.
+
+**Notas de deploy:** só frontend; sem migrations nem variáveis novas. Versão 0.2.2. Os utilizadores na versão anterior passam para esta na próxima abertura da app, sem clique.

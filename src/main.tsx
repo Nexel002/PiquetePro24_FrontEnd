@@ -15,8 +15,7 @@ import '@fontsource/outfit/latin-700.css'
 import '@fontsource/outfit/latin-800.css'
 import './index.css'
 import App from './App.tsx'
-import { iniciarAvisoDeVersao } from './lib/pwaUpdate'
-import { anunciarNovaVersao } from './lib/novaVersao'
+import { iniciarActualizacaoAutomatica } from './lib/pwaUpdate'
 import { iniciarTratamentoDeFalhaDeCarregamento } from './lib/falhaDeCarregamento'
 
 // Antes de renderizar: uma falha ao descarregar um ecrã (deploy novo a meio) recarrega uma vez.
@@ -28,11 +27,6 @@ createRoot(document.getElementById('root')!).render(
   </StrictMode>,
 )
 
-// Sem isto, quem deixa a PWA aberta (ou nem recarrega o separador) fica numa versão antiga
-// para sempre — o service worker novo descarrega em segundo plano mas ninguém o activa.
-iniciarAvisoDeVersao({
-  registerSW,
-  // O aviso é um componente (AvisoDeNovaVersao, montado em App): aqui só se lhe passa o que fazer
-  // se o utilizador aceitar.
-  avisar: anunciarNovaVersao,
-})
+// A versão nova activa-se sozinha e a página recarrega num momento seguro (lib/novaVersao.ts); o que
+// mudou aparece depois, em AvisoDeNovaVersao (montado em App).
+iniciarActualizacaoAutomatica({ registerSW })

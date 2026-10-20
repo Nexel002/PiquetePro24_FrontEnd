@@ -1,80 +1,96 @@
-import { describe, expect, it, vi } from 'vitest'
-import { carregarNovidades, formatarData } from './novidades'
+import { describe, expect, it } from 'vitest'
+import { formatarData, marcarNovidadesVistas, novidadesPorMostrar } from './novidades'
+import type { EntradaDeVersao } from './versoes'
 
-function resposta(corpo: unknown, ok = true): typeof fetch {
-  return vi.fn().mockResolvedValue({ ok, json: async () => corpo }) as unknown as typeof fetch
+const HISTORICO: EntradaDeVersao[] = [
+  { versao: '0.2.2', data: '2026-10-20', novidades: ['A app actualiza-se sozinha.'] },
+  { versao: '0.2.1', data: '2026-10-19', novidades: ['Logótipo oficial.'] },
+  { versao: '0.2.0', data: '2026-10-18', novidades: ['Menu lateral no admin.'] },
+]
+
+// localStorage em memória, com as chaves que o teste quiser.
+function armazenamento(inicial: Record<string, string> = {}) {
+  const dados = new Map(Object.entries(inicial))
+  return {
+    getItem: (k: string) => dados.get(k) ?? null,
+    setItem: (k: string, v: string) => void dados.set(k, v),
+    key: (i: number) => [...dados.keys()][i] ?? null,
+    get length() {
+      return dados.size
+    },
+    dados,
+  }
 }
+const SESSAO = { 'sb-abcdef-auth-token': '{}' }
 
-describe('carregarNovidades', () => {
-  it('lê o ficheiro sem usar a cache (o aviso aparece com a versão antiga a correr)', async () => {
-    const pedir = resposta({ atualizadoEm: '2026-10-13', novidades: ['Mais rápido.'] })
+describe('novidadesPorMostrar — depois de a app se actualizar', () => {
+  it('quem vinha de uma versão anterior vê o que essa versão ainda não tinha', () => {
+    const a = armazenamento({ 'piquete:versao-vista': '0.2.1' })
 
-    const resultado = await carregarNovidades(pedir)
-
-    expect(pedir).toHaveBeenCalledWith('/novidades.json', { cache: 'no-store' })
-    expect(resultado).toEqual({ atualizadoEm: '2026-10-13', novidades: ['Mais rápido.'] })
+    expect(novidadesPorMostrar({ historico: HISTORICO, versaoActual: '0.2.2', armazenamento: a })).toEqual({
+      atualizadoEm: '2026-10-20',
+      novidades: ['A app actualiza-se sozinha.'],
+    })
   })
 
-  it('mostra no máximo 4 novidades e corta as muito compridas', async () => {
-    const comprida = 'x'.repeat(300)
-    const resultado = await carregarNovidades(
-      resposta({ atualizadoEm: '2026-10-13', novidades: ['a', 'b', 'c', 'd', 'e', comprida] }),
-    )
-    expect(resultado?.novidades).toEqual(['a', 'b', 'c', 'd'])
+  it('quem saltou versões vê tudo o que perdeu', () => {
+    const a = armazenamento({ 'piquete:versao-vista': '0.2.0' })
 
-    const cortada = await carregarNovidades(resposta({ atualizadoEm: '2026-10-13', novidades: [comprida] }))
-    expect(cortada?.novidades[0]).toHaveLength(140)
-    expect(cortada?.novidades[0].endsWith('…')).toBe(true)
+    expect(novidadesPorMostrar({ historico: HISTORICO, versaoActual: '0.2.2', armazenamento: a })?.novidades).toEqual([
+      'A app actualiza-se sozinha.',
+      'Logótipo oficial.',
+    ])
   })
 
-  it('ignora entradas vazias e que não são texto', async () => {
-    const resultado = await carregarNovidades(resposta({ atualizadoEm: '2026-10-13', novidades: ['  ', 3, null, 'Boa.'] }))
-    expect(resultado?.novidades).toEqual(['Boa.'])
+  it('já viu as novidades desta versão: nada', () => {
+    const a = armazenamento({ 'piquete:versao-vista': '0.2.2' })
+
+    expect(novidadesPorMostrar({ historico: HISTORICO, versaoActual: '0.2.2', armazenamento: a })).toBeNull()
   })
 
-  it.each([
-    ['resposta HTTP de erro', resposta({}, false)],
-    ['data em formato errado', resposta({ atualizadoEm: '13/10/2026', novidades: ['a'] })],
-    ['novidades que não é lista', resposta({ atualizadoEm: '2026-10-13', novidades: 'a' })],
-    ['JSON que não é objecto', resposta('texto')],
-    ['rede em baixo', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')) as unknown as typeof fetch],
-    ['ficheiro que não é JSON (a Vercel devolve o index.html)', vi.fn().mockResolvedValue({ ok: true, json: async () => { throw new SyntaxError('Unexpected token <') } }) as unknown as typeof fetch],
-  ])('%s: devolve null em vez de rebentar', async (_nome, pedir) => {
-    expect(await carregarNovidades(pedir)).toBeNull()
+  it('alguém novo, na primeira abertura: nada (não houve actualização), e fica marcada a versão', () => {
+    const a = armazenamento()
+
+    expect(novidadesPorMostrar({ historico: HISTORICO, versaoActual: '0.2.2', armazenamento: a })).toBeNull()
+    expect(a.dados.get('piquete:versao-vista')).toBe('0.2.2')
+  })
+
+  it('quem já usava a app antes desta marcação (tem sessão guardada) vê as novidades da versão actual', () => {
+    const a = armazenamento(SESSAO)
+
+    expect(novidadesPorMostrar({ historico: HISTORICO, versaoActual: '0.2.2', armazenamento: a })?.novidades).toEqual(['A app actualiza-se sozinha.'])
+  })
+
+  it('não anuncia entradas posteriores à versão que corre', () => {
+    const a = armazenamento({ 'piquete:versao-vista': '0.2.0' })
+
+    expect(novidadesPorMostrar({ historico: HISTORICO, versaoActual: '0.2.1', armazenamento: a })?.novidades).toEqual(['Logótipo oficial.'])
+  })
+
+  it('depois de fechado, não volta a aparecer nesta versão', () => {
+    const a = armazenamento({ 'piquete:versao-vista': '0.2.1' })
+
+    marcarNovidadesVistas({ versaoActual: '0.2.2', armazenamento: a })
+
+    expect(novidadesPorMostrar({ historico: HISTORICO, versaoActual: '0.2.2', armazenamento: a })).toBeNull()
+  })
+
+  it('sem localStorage não rebenta: só não há aviso', () => {
+    const falha = {
+      getItem: () => {
+        throw new Error('bloqueado')
+      },
+      setItem: () => undefined,
+      key: () => null,
+      length: 0,
+    }
+
+    expect(novidadesPorMostrar({ historico: HISTORICO, versaoActual: '0.2.2', armazenamento: falha })).toBeNull()
   })
 })
 
 describe('formatarData', () => {
   it('escreve a data por extenso em português, sem recuar um dia por causa do fuso', () => {
     expect(formatarData('2026-10-13')).toBe('13 de outubro de 2026')
-    expect(formatarData('2026-01-01')).toBe('1 de janeiro de 2026')
-  })
-})
-
-describe('carregarNovidades — por versão instalada', () => {
-  const ficheiro = {
-    atualizadoEm: '2026-10-20',
-    novidades: ['B'],
-    versoes: [
-      { versao: '0.2.0', data: '2026-10-20', novidades: ['B'] },
-      { versao: '0.1.0', data: '2026-10-14', novidades: ['A'] },
-    ],
-  }
-
-  it('mostra só o que a versão instalada ainda não tem, com a data dessa versão', async () => {
-    expect(await carregarNovidades(resposta(ficheiro), '0.1.0')).toEqual({ atualizadoEm: '2026-10-20', novidades: ['B'] })
-  })
-
-  it('quem saltou uma versão vê as duas', async () => {
-    expect(await carregarNovidades(resposta(ficheiro), '0.0.0')).toEqual({ atualizadoEm: '2026-10-20', novidades: ['B', 'A'] })
-  })
-
-  it('já na última versão: nada a anunciar (não repete novidades antigas)', async () => {
-    expect(await carregarNovidades(resposta(ficheiro), '0.2.0')).toBeNull()
-  })
-
-  it('ignora entradas com versão ou data inválidas', async () => {
-    const mau = { versoes: [{ versao: 'x', data: '2026-10-20', novidades: ['Lixo'] }, { versao: '0.2.0', data: 'ontem', novidades: ['Lixo'] }] }
-    expect(await carregarNovidades(resposta(mau), '0.1.0')).toBeNull()
   })
 })

@@ -1,6 +1,5 @@
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { anunciarNovaVersao, reporNovaVersaoParaTestes } from '../lib/novaVersao'
 import { AvisoDeNovaVersao } from './AvisoDeNovaVersao'
 
 const NOVIDADES = {
@@ -8,104 +7,68 @@ const NOVIDADES = {
   novidades: ['Pedidos guardados sem internet.', 'Aplicação mais rápida.'],
 }
 
-function simularFicheiro(corpo: unknown | Error) {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn(async () => {
-      if (corpo instanceof Error) throw corpo
-      return { ok: true, json: async () => corpo }
-    }),
-  )
-}
+const novidades = vi.hoisted(() => ({ porMostrar: vi.fn(), marcarVistas: vi.fn() }))
+vi.mock('../lib/novidades', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../lib/novidades')>()),
+  novidadesPorMostrar: novidades.porMostrar,
+  marcarNovidadesVistas: novidades.marcarVistas,
+}))
 
 beforeEach(() => {
-  reporNovaVersaoParaTestes()
-  simularFicheiro(NOVIDADES)
+  novidades.porMostrar.mockReset().mockReturnValue(NOVIDADES)
+  novidades.marcarVistas.mockReset()
 })
-afterEach(() => {
-  cleanup()
-  vi.unstubAllGlobals()
-})
+afterEach(cleanup)
 
-describe('AvisoDeNovaVersao', () => {
-  it('não mostra nada enquanto não houver versão nova', () => {
+describe('AvisoDeNovaVersao — depois de a app se actualizar sozinha', () => {
+  it('sem novidades por mostrar não mostra nada', () => {
+    novidades.porMostrar.mockReturnValue(null)
+
     const { container } = render(<AvisoDeNovaVersao />)
+
     expect(container.innerHTML).toBe('')
   })
 
-  it('mostra a data e o resumo do que mudou, em linguagem simples', async () => {
+  it('diz que a app foi actualizada, com a data e o que mudou', () => {
     render(<AvisoDeNovaVersao />)
 
-    act(() => anunciarNovaVersao(vi.fn()))
-
-    expect(screen.getByRole('dialog', { name: 'Nova versão disponível' })).toBeTruthy()
-    expect(await screen.findByText('Pedidos guardados sem internet.')).toBeTruthy()
+    expect(screen.getByRole('dialog', { name: 'A app foi actualizada' })).toBeTruthy()
+    expect(screen.getByText('Pedidos guardados sem internet.')).toBeTruthy()
     expect(screen.getByText('Aplicação mais rápida.')).toBeTruthy()
     expect(screen.getByText(/13 de outubro de 2026/)).toBeTruthy()
   })
 
-  it('«Actualizar agora» chama a actualização', async () => {
-    const aoAceitar = vi.fn()
+  it('só informa: não há botão para autorizar a actualização', () => {
     render(<AvisoDeNovaVersao />)
-    act(() => anunciarNovaVersao(aoAceitar))
 
-    fireEvent.click(screen.getByRole('button', { name: 'Actualizar agora' }))
-
-    expect(aoAceitar).toHaveBeenCalledTimes(1)
-    await waitFor(() => expect(screen.getByRole('button', { name: /A actualizar/ })).toBeTruthy())
+    expect(screen.queryByRole('button', { name: /Actualizar agora|Mais tarde/ })).toBeNull()
+    expect(screen.getAllByRole('button')).toHaveLength(1)
   })
 
-  it('«Mais tarde» fecha o aviso sem actualizar (o que o utilizador escreve não se perde)', () => {
-    const aoAceitar = vi.fn()
+  it('«Continuar» fecha o aviso e marca as novidades como vistas', () => {
     render(<AvisoDeNovaVersao />)
-    act(() => anunciarNovaVersao(aoAceitar))
 
-    fireEvent.click(screen.getByRole('button', { name: 'Mais tarde' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Continuar' }))
 
     expect(screen.queryByRole('dialog')).toBeNull()
-    expect(aoAceitar).not.toHaveBeenCalled()
+    expect(novidades.marcarVistas).toHaveBeenCalledTimes(1)
   })
 
-  it('Escape também fecha sem actualizar', () => {
-    const aoAceitar = vi.fn()
+  it('Escape também fecha e marca como vistas', () => {
     render(<AvisoDeNovaVersao />)
-    act(() => anunciarNovaVersao(aoAceitar))
 
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' })
 
     expect(screen.queryByRole('dialog')).toBeNull()
-    expect(aoAceitar).not.toHaveBeenCalled()
+    expect(novidades.marcarVistas).toHaveBeenCalledTimes(1)
   })
 
-  it('o foco abre no botão principal', () => {
+  it('o foco abre no botão, e o Tab não sai do aviso', () => {
     render(<AvisoDeNovaVersao />)
-    act(() => anunciarNovaVersao(vi.fn()))
+    const continuar = screen.getByRole('button', { name: 'Continuar' })
 
-    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Actualizar agora' }))
-  })
-
-  it('o Tab não sai do aviso: do último botão volta ao primeiro, e Shift+Tab ao contrário', () => {
-    render(<AvisoDeNovaVersao />)
-    act(() => anunciarNovaVersao(vi.fn()))
-    const principal = screen.getByRole('button', { name: 'Actualizar agora' })
-    const maisTarde = screen.getByRole('button', { name: 'Mais tarde' })
-
-    maisTarde.focus()
-    fireEvent.keyDown(maisTarde, { key: 'Tab' })
-    expect(document.activeElement).toBe(principal)
-
-    fireEvent.keyDown(principal, { key: 'Tab', shiftKey: true })
-    expect(document.activeElement).toBe(maisTarde)
-  })
-
-  it('se o ficheiro de novidades falhar, o aviso aparece na mesma, sem data nem lista', async () => {
-    simularFicheiro(new TypeError('Failed to fetch'))
-    render(<AvisoDeNovaVersao />)
-
-    act(() => anunciarNovaVersao(vi.fn()))
-
-    expect(await screen.findByText(/Melhorámos a aplicação/)).toBeTruthy()
-    expect(screen.queryByText(/Actualização de/)).toBeNull()
-    expect(screen.getByRole('button', { name: 'Actualizar agora' })).toBeTruthy()
+    expect(document.activeElement).toBe(continuar)
+    fireEvent.keyDown(continuar, { key: 'Tab' })
+    expect(document.activeElement).toBe(continuar)
   })
 })
