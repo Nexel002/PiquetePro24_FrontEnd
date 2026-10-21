@@ -25,6 +25,7 @@ function catalogo(extra: Partial<Catalogo> = {}): Catalogo {
     contact_available: true,
     phone: '258841111111',
     services: [{ id: 's1', slug: 'canalizacao', name: 'Canalização' }],
+    service_area: { radius_km: null, provinces: [] },
     projects: [],
     rating_avg: null,
     rating_count: 0,

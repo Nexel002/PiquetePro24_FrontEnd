@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { fetchProfessionalCatalog } from '../services/catalog'
+import { fetchProfessionalCatalog, updateServiceArea, type ServiceArea } from '../services/catalog'
 import { workedWithProfessionalsKey } from './useWorkedWithProfessionals'
 import {
   addProjectPhotos,
@@ -29,6 +29,20 @@ function useInvalidateCatalog(professionalId: string | undefined) {
   return () => {
     if (professionalId) void queryClient.invalidateQueries({ queryKey: catalogQueryKey(professionalId) })
   }
+}
+
+// Fase 38 (N1): a zona muda a ordem da pesquisa, por isso a pesquisa em cache também é invalidada.
+export function useUpdateServiceArea(professionalId: string | undefined) {
+  const queryClient = useQueryClient()
+  const invalidarCatalogo = useInvalidateCatalog(professionalId)
+
+  return useMutation({
+    mutationFn: (area: ServiceArea) => updateServiceArea(area),
+    onSuccess: () => {
+      invalidarCatalogo()
+      void queryClient.invalidateQueries({ queryKey: ['professionals', 'search'] })
+    },
+  })
 }
 
 export interface CreateProjectVariables {

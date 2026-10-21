@@ -4,6 +4,7 @@ import { useFiltrosDaBusca } from '../hooks/useFiltrosDaBusca'
 import { useGeolocation } from '../hooks/useGeolocation'
 import { useLocalizarSePermitido } from '../hooks/useLocalizarSePermitido'
 import { useProfessionalSearch } from '../hooks/useProfessionalSearch'
+import { useProfile } from '../hooks/useProfile'
 import { useSelecaoParaPedido } from '../hooks/useSelecaoParaPedido'
 import { useServiceCategories } from '../hooks/useServiceCategories'
 import { AvisoUltimaLocalizacao } from '../components/AvisoUltimaLocalizacao'
@@ -23,7 +24,8 @@ export function FindProfessionals() {
   const { coordinates, ultimaConhecidaEmUso, precisaoAproximadaM } = geolocation
   const filtros = useFiltrosDaBusca()
   const categories = useServiceCategories()
-  const search = useProfessionalSearch({ q: filtros.q, category: filtros.category, coordinates })
+  const { data: profile } = useProfile()
+  const search = useProfessionalSearch({ q: filtros.q, category: filtros.category, coordinates, province: profile?.province ?? null })
 
   useLocalizarSePermitido(geolocation.locate)
 

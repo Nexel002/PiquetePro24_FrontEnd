@@ -17,6 +17,8 @@ const estado = vi.hoisted(() => ({
 
 vi.mock('../hooks/useProfessionalSearch', () => ({ useProfessionalSearch: () => estado.pesquisa }))
 vi.mock('../hooks/useServiceCategories', () => ({ useServiceCategories: () => ({ data: estado.categorias }) }))
+// Fase 38: o ecrã lê a província do perfil para a enviar à pesquisa quando não há GPS.
+vi.mock('../hooks/useProfile', () => ({ useProfile: () => ({ data: { province: 'Cidade de Maputo' } }) }))
 // Espelha o retorno real do hook: coordinates = GPS actual, ou a última conhecida quando o GPS falhou.
 vi.mock('../hooks/useGeolocation', () => ({
   useGeolocation: () => ({
@@ -38,6 +40,7 @@ function profissional(extra: Partial<SearchedProfessional> & { id: string; full_
     rating_count: 0,
     distance_m: null,
     is_nearby: false,
+    serves_area: false,
     ...extra,
   }
 }
@@ -100,6 +103,13 @@ describe('FindProfessionals — resultados', () => {
     expect(screen.getByText('149 km')).toBeTruthy()
     expect(screen.getByText('(2)')).toBeTruthy()
     expect(screen.getByText('Sem avaliações')).toBeTruthy()
+  })
+
+  // Fase 38 (N1): quem atende a zona do cliente diz-o em texto no cartão.
+  it('o selo «Atende a tua zona» só aparece em quem atende', () => {
+    mostrar([[profissional({ id: 'p1', full_name: 'Carlos Macamo', serves_area: true }), profissional({ id: 'p2', full_name: 'Joana Cossa' })]])
+
+    expect(screen.getAllByText('Atende a tua zona')).toHaveLength(1)
   })
 
   it('o cartão abre o catálogo do profissional', () => {

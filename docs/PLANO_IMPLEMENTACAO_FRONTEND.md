@@ -865,6 +865,25 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 38 — Zona de atendimento do profissional (N1)
+
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N1). Consome a Fase 31 do backend (migration primeiro, depois backend, depois frontend).
+
+**Escopo:**
+- `components/catalogo/ZonaDeAtendimento.tsx` em «O meu catálogo» (secção «Onde trabalhas»): raio em botões (5, 10, 25, 50, 100 km ou «Não definido») e as 11 províncias (`lib/provinces.ts`), com aviso quando o perfil não tem localização (o raio ainda não conta). Grava por `useUpdateServiceArea`, que invalida o catálogo e a pesquisa.
+- `components/catalogo/zona.ts` (`descreverZona`): «Atende: até 25 km · Cidade de Maputo, Maputo» na apresentação do catálogo; nada quando não há zona.
+- Pesquisa: sem GPS, `useProfessionalSearch` envia a província do perfil (só se for uma das 11); o cartão mostra o selo «Atende a tua zona» em texto.
+- Tipos: `ServiceArea` e `service_area` em `services/catalog.ts`; `serves_area` e `province` em `services/professionalSearch.ts`.
+
+**Desvio ao plano:** N2 (preço indicativo) foi adiado pelo utilizador; nada de preço nesta fase (nem `lib/dinheiro.ts`).
+
+**Critérios de Entrega:**
+- [x] Editor: sem mudanças não grava, escolher raio e província, tirar província guardada e «Não definido», aviso sem localização, erro do servidor no toast; `descreverZona` — 6 testes (`ZonaDeAtendimento.test.tsx`).
+- [x] Selo «Atende a tua zona» só em quem atende — 1 teste novo em `FindProfessionals.test.tsx` (que passou a simular `useProfile`).
+- [ ] Visto no browser a 390 px e contra o backend real (migration da Fase 31 aplicada).
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -946,6 +965,8 @@ Origem: TRD Adendo v1.65. **Nada aqui está aprovado.** Cada item, quando aprova
 - **Versão:** cada entrega visível sobe a versão do `package.json` e acrescenta uma entrada em `src/data/novidadesPorVersao.json`.
 
 ### N1 + N2 — Zona de atendimento e preço indicativo
+
+> **21/10/2026:** N1 aprovada e implementada como **Fase 38**. N2 **adiada** pelo utilizador: o que abaixo diz respeito ao preço continua por aprovar.
 
 | Ficheiro | Acção | O quê |
 |---|---|---|
