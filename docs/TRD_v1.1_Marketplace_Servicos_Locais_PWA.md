@@ -34,7 +34,7 @@ Com 64 adendos, a regra actual de uma área está muitas vezes no adendo mais re
 | Offline | Fila em IndexedDB para criar pedidos, com `Idempotency-Key` | Adendos v1.26, v1.27 |
 | Actualização da PWA | Automática (`skipWaiting`), com aviso do que mudou depois de recarregar | Adendo v1.63 |
 | Painel de admin | Menu lateral com 5 secções e separadores `?tab=` | Adendo v1.59 |
-| **Por publicar** (branch `feat/novas-funcionalidades`) | Zona de atendimento, procura sem oferta, clientes empresariais e locais guardados, selos de credenciais, serviços recorrentes — implementados, com 5 migrations por aplicar | Adendos v1.66 e v1.67 |
+| **Por publicar** (branch `feat/novas-funcionalidades`) | Zona de atendimento, procura sem oferta, clientes empresariais e locais guardados, selos de credenciais, serviços recorrentes — implementados; migrations aplicadas a 21/10/2026, código por publicar | Adendos v1.66 e v1.67 |
 
 ---
 
@@ -2384,7 +2384,7 @@ Tem um índice `(status, submitted_at)` para a fila do admin.
 
 ### Implementação de N1, N3, N4, N5 e N6 (21/10/2026)
 
-**Estado: implementado em `feat/novas-funcionalidades` nos dois repositórios, só local. Não está em produção: 5 migrations por aplicar, sem merge nem push.** O utilizador aprovou a 21/10/2026 cinco das sete propostas do Adendo v1.66. **N2 (preço indicativo) e N7 (pagamento com comissão) ficam adiadas** e continuam por aprovar.
+**Estado: implementado em `feat/novas-funcionalidades` nos dois repositórios, só local. As 5 migrations foram aplicadas ao Supabase real pelo utilizador a 21/10/2026 (verificação final sem erro); o código ainda não está em produção (sem merge nem push).** O utilizador aprovou a 21/10/2026 cinco das sete propostas do Adendo v1.66. **N2 (preço indicativo) e N7 (pagamento com comissão) ficam adiadas** e continuam por aprovar.
 
 | Ideia | Backend | Frontend | Migration |
 |---|---|---|---|
