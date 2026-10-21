@@ -1,6 +1,12 @@
 # Plano de Implementação — PiquetePro24 Frontend (PWA)
 
-Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo o Adendo v1.2. Este repositório cobre a PWA (React + Vite + Tailwind CSS + Framer Motion), alojada na Vercel, consumindo a API do repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend). O plano está dividido em 7 fases sequenciais, espelhando as fases do backend para permitir avanço paralelo e integração contínua entre os dois repositórios.
+Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo o Adendo v1.2. Este repositório cobre a PWA (React + Vite + Tailwind CSS + Framer Motion), alojada na Vercel, consumindo a API do repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend). O plano começou com 7 fases sequenciais, espelhando as fases do backend para permitir avanço paralelo e integração contínua entre os dois repositórios; tem hoje 37 (da Fase 8 em diante, acrescentadas por adendos do TRD).
+
+> **Estado em 21/10/2026 (TRD Adendo v1.65).** As Fases 0 a 37 estão em `main` e em produção (`https://piquete-pro24-front-end-beta.vercel.app`, versão 0.2.3). O que falta já não é código:
+> 1. **Validar no browser e no telemóvel** os critérios por marcar das Fases 11 a 37 (quase todos são isso). Nesta máquina o Playwright não tem browsers instalados: os E2E só correm no CI.
+> 2. **Fase 7:** depende de um staging que não existe (backend, Fase 7).
+> 3. As **empresas e equipas** (Fases 23 a 26) dependem de 4 migrations do backend sem registo de aplicação (`Doc's/ESQUEMA_BASE_DADOS.md`, no backend).
+> 4. **Backlog** no fim deste plano: correcções e propostas da análise de 21/10/2026, por aprovar.
 
 ---
 
@@ -395,7 +401,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 12 — Dashboard de Entrada do Admin
 
-**Estado: implementada em `feat/dashboard-admin` (13/10/2026), por validar no browser.** Ver Adendo v1.39 do TRD.
+**Estado: em produção — integrada em `main` pelo merge `9d57177` de `feat/dashboard-admin`; por validar no browser.** Ver Adendo v1.39 do TRD.
 
 **Objetivo:** dar ao `ADMIN` uma entrada única (`/admin`) que mostre o que precisa de atenção agora e leve a todos os ecrãs de administração. Hoje o atalho «Painel Admin» da Home abre directamente `/admin/kyc`, as Métricas e o Registo de auditoria só se alcançam escrevendo o URL, e não há contadores de pendentes.
 
@@ -424,7 +430,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 13 — Subscrições e Pagamentos no Painel de Admin
 
-**Estado: implementada em `feat/dashboard-admin` (13/10/2026), só local, por validar no browser.** Ver Adendo v1.41 do TRD. Consome a Fase 15 do backend (backend primeiro).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.41 do TRD. Consome a Fase 15 do backend (backend primeiro).
 
 **Escopo:**
 - `pages/AdminSubscriptions.tsx` (`/admin/subscricoes`): separadores Subscrições (filtro: a expirar por omissão, activas, expiradas, sem pagamento) e Pagamentos (filtro por estado), paginados de 25 em 25; «Suspender» com motivo obrigatório.
@@ -439,7 +445,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 14 — Revisão de KYC mais completa
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.42 do TRD. Consome a Fase 16 do backend (migration primeiro).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.42 do TRD. Consome a Fase 16 do backend (migration primeiro).
 
 **Escopo (`pages/AdminKyc.tsx`):**
 - Cada submissão em análise mostra «Em espera há X» e, a partir de 48 h, «— em atraso» (texto, não só cor). Lógica em `lib/esperaKyc.ts` (`LIMITE_ESPERA_KYC_HORAS`).
@@ -455,7 +461,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 15 — Denúncias e Moderação
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.43 do TRD. Consome a Fase 17 do backend (migration primeiro).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.43 do TRD. Consome a Fase 17 do backend (migration primeiro).
 
 **Escopo:**
 - `components/moderacao/BotaoDenunciar.tsx`: formulário inline (motivo + detalhes) que cria a denúncia; confirma o envio e mostra o erro do servidor (ex. «já denunciaste»). Usado no catálogo de um profissional por quem **não** é o dono: a conta (fim da página), cada trabalho e cada comentário de avaliação.
@@ -471,7 +477,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 16 — Notas Internas e Disputas de Pedidos
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.44 do TRD. Consome a Fase 18 do backend (migration primeiro).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.44 do TRD. Consome a Fase 18 do backend (migration primeiro).
 
 **Escopo:**
 - `components/admin/NotasInternas.tsx` (`services/adminNotes.ts`, `hooks/useAdminNotes.ts`): escrever e ler notas de equipa; na ficha do utilizador (`AdminUserDetail`) e, atrás de um botão «Notas», em cada pedido de `AdminServiceRequests`.
@@ -485,7 +491,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 17 — Gestão de Serviços pelo Admin
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.45 do TRD. Consome a Fase 19 do backend (sem migration).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.45 do TRD. Consome a Fase 19 do backend (sem migration).
 
 **Escopo:**
 - `pages/AdminServices.tsx` (`/admin/servicos`; `services/adminCategories.ts`, `hooks/useAdminCategories.ts`): lista os serviços com o slug, as palavras de pesquisa e quantos profissionais os usam; criar, editar (nome e palavras; o slug não muda) e apagar com confirmação. «Apagar» fica desactivado enquanto há profissionais com o serviço; se um pedido ainda o referir, o 409 do backend aparece como mensagem.
@@ -501,7 +507,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 18 — Comunicados da Equipa
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.46 do TRD. Consome a Fase 20 do backend (migration primeiro).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.46 do TRD. Consome a Fase 20 do backend (migration primeiro).
 
 **Escopo:**
 - `pages/AdminBroadcasts.tsx` (`/admin/comunicados`; `services/adminBroadcasts.ts`, `hooks/useAdminBroadcasts.ts`): grupo (clientes / profissionais / todos) + província opcional, assunto e mensagem; **«Ver destinatários»** calcula o número; só então aparece «Enviar comunicado», com confirmação («Enviar para N pessoas? Não se pode desfazer.»), e esse N segue no pedido. Mudar o grupo depois de contar apaga o número.
@@ -516,7 +522,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 19 — Relatórios e Exportações
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.47 do TRD. Consome a Fase 21 do backend (sem migration).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.47 do TRD. Consome a Fase 21 do backend (sem migration).
 
 **Escopo:**
 - `pages/AdminReports.tsx` (`/admin/relatorios`; `services/adminReports.ts`, `hooks/useAdminReports.ts`): período «De / Até» (na hora de Maputo, UTC+2) que vale para o funil e para as exportações; funil de profissionais em barras com o número e a percentagem dos registados; três botões de exportação CSV (utilizadores, pedidos, pagamentos).
@@ -532,7 +538,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 20 — Verificação em Dois Passos do Admin
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser e contra o Supabase real.** Ver Adendo v1.48 do TRD. Pareada com a Fase 22 do backend (`ADMIN_REQUIRE_MFA`, desligada por omissão).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser e contra o Supabase real.** Ver Adendo v1.48 do TRD. Pareada com a Fase 22 do backend (`ADMIN_REQUIRE_MFA`, desligada por omissão).
 
 **Escopo:**
 - `services/mfa.ts` + `hooks/useMfa.ts`: estado (factor TOTP confirmado? nível da sessão), registo de factor (apaga antes os factores abandonados a meio, que o Supabase não deixa duplicar) e verificação do código — tudo directamente contra `supabase.auth.mfa`.
@@ -550,7 +556,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 21 — Estado do Sistema
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.49 do TRD. Consome a Fase 23 do backend (sem migration).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.49 do TRD. Consome a Fase 23 do backend (sem migration).
 
 **Escopo:**
 - `pages/AdminSystem.tsx` (`/admin/sistema`; `services/adminSystem.ts`, `hooks/useAdminSystem.ts`): base de dados (com a latência), cache e email, cada um com o estado **em texto** («A funcionar» / «Com falha» / «Desligado»), e uma nota quando está desligado a explicar o efeito (sem cache a app só é mais lenta; sem SMTP os emails ficam no log); modo de pagamentos e se o segundo factor é obrigatório; pendentes (KYC, denúncias, comunicados presos) com ligação ao ecrã de cada um. Actualiza de 30 em 30 segundos.
@@ -564,7 +570,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 22 — Gestão de Administradores
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.50 do TRD. Consome a Fase 24 do backend (sem migration).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.50 do TRD. Consome a Fase 24 do backend (sem migration).
 
 **Escopo:**
 - `pages/AdminAdmins.tsx` (`/admin/administradores`; `services/adminAccounts.ts`, `hooks/useAdminAccounts.ts`): lista dos administradores (a própria conta marcada «(tu)»), formulário para adicionar (nome + email) e «Remover» com confirmação.
@@ -580,7 +586,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 23 — Empresas e Equipas: papel do técnico e ecrã «A minha equipa»
 
-**Estado: plano APROVADO pelo utilizador a 14/10/2026; implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.** Ver Adendo v1.51 do TRD e as Fases 25 a 28 do backend (modelo, regras e decisões). Backend primeiro.
+**Estado: plano APROVADO pelo utilizador a 14/10/2026; em produção — integrada em `main` pelo merge `1ee0998` de `feat/empresas-equipas`; por validar no browser.** Ver Adendo v1.51 do TRD e as Fases 25 a 28 do backend (modelo, regras e decisões). Backend primeiro.
 
 **Decisões (resumo):** o técnico tem **login próprio** (papel `TECHNICIAN`), criado pelo administrador da empresa; subscrição única da empresa; **máximo 15 técnicos**; **KYC da empresa e de cada técnico com a lógica que já existe**; técnico atribuído **só depois de a empresa ser escolhida**; **avaliação da empresa e do técnico**; um singular **não** se converte em empresa; Termos a dizer que a empresa responde pelos técnicos.
 
@@ -598,7 +604,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 24 — Empresas e Equipas: atribuir técnico ao pedido
 
-**Estado: implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.** (A página «Os meus trabalhos» do técnico passou para a Fase 23.)
+**Estado: em produção — integrada em `main` pelo merge `1ee0998` de `feat/empresas-equipas`; por validar no browser.** (A página «Os meus trabalhos» do técnico passou para a Fase 23.)
 
 - Em «Trabalhos aceites» da **empresa**: cada pedido ganha **«Atribuir técnico»** (só técnicos activos, com KYC aprovado e que façam o serviço do pedido) e um aviso para os pedidos **ainda sem técnico**.
 - O cliente, em «Os meus pedidos», vê o técnico do pedido: «Vem o João · Canalizador», com a foto ou a inicial. Nunca telefone nem email.
@@ -612,7 +618,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 25 — Empresas e Equipas: equipa no catálogo e avaliação do técnico
 
-**Estado: implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.**
+**Estado: em produção — integrada em `main` pelo merge `1ee0998` de `feat/empresas-equipas`; por validar no browser.**
 
 - `ProfessionalCatalog`: secção **«A equipa»** (foto, nome próprio, título, nota; nunca telefone), só técnicos aprovados.
 - Formulário de avaliação (`MyServiceRequests`): nota da **empresa** e, se o pedido teve técnico, nota **opcional do técnico**; as avaliações do catálogo da empresa mostram o técnico.
@@ -625,7 +631,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 26 — Empresas e Equipas: termos e administração
 
-**Estado: implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.**
+**Estado: em produção — integrada em `main` pelo merge `1ee0998` de `feat/empresas-equipas`; por validar no browser.**
 
 - **Termos de utilização** (`data/termosDeUtilizacao.ts`): **secção nova «5. Se és uma empresa»** (a empresa é o profissional perante o cliente e paga a subscrição única que cobre a equipa; **responde pelos seus técnicos**; máximo de 15 técnicos ativos; cada técnico tem conta e identidade verificada próprias; o contacto do cliente só é revelado à empresa e ao técnico atribuído, com a empresa verificada e subscrita; o cliente vê o primeiro nome, o título e a foto do técnico e avalia a empresa e o técnico; a empresa garante que o técnico aceita o tratamento dos seus dados; um técnico só pode estar numa empresa de cada vez). A secção 2 diz que **um singular não se converte em empresa**. As secções 5 a 12 passam a 6 a 13 e as referências cruzadas foram ajustadas; data de atualização passa a 15 de outubro de 2026. **Rascunho de produto: tem de ser revisto por um jurista antes de ser vinculativo**, em especial a secção 5.
 - **Admin:** `EquipaNaFicha` (ficha de uma empresa: técnicos com KYC, título, email e trabalhos em curso, cada nome a levar à ficha do técnico), `EmpresaNaFicha` (ficha de um técnico: a empresa e o estado dele nela); filtro «Técnicos» na lista de utilizadores; «Técnicos» nas métricas.
@@ -638,7 +644,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 27 — Solicitar Serviço (pedido direto)
 
-**Estado: implementada em `feat/pedido-direto` (16/10/2026), só local, por validar no browser.** Ver Adendo v1.52 do TRD. Consome a Fase 29 do backend (migration primeiro).
+**Estado: em produção — integrada em `main` pelo merge `5ce41e1` de `feat/pedido-direto`; por validar no browser.** Ver Adendo v1.52 do TRD. Consome a Fase 29 do backend (migration primeiro).
 
 **Decisão do utilizador:** o cliente vê o telefone do profissional (singular ou empresa) **só depois de carregar em «Solicitar serviço»**, e o profissional vê o cliente **ao carregar em «Ver pedido de serviço»**. Obriga a seguir o fluxo: sem pedidos registados não há estados, fotos nem avaliações.
 
@@ -659,7 +665,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 28 — Contacto do profissional à vista no catálogo
 
-**Estado: implementada em `feat/pedido-direto` (16/10/2026), só local, por validar no browser.** Ver Adendo v1.53 do TRD. Consome a Fase 30 do backend. Substitui a regra «o catálogo nunca mostra telefone» da Fase 27.
+**Estado: em produção — integrada em `main` pelo merge `5ce41e1` de `feat/pedido-direto`; por validar no browser.** Ver Adendo v1.53 do TRD. Consome a Fase 30 do backend. Substitui a regra «o catálogo nunca mostra telefone» da Fase 27.
 
 **Decisão do utilizador:** nome e telefone do profissional (singular ou empresa) explícitos e sempre visíveis no catálogo, sem clicar. O botão «Solicitar serviço» mantém-se como a via que **regista** o pedido.
 
@@ -677,7 +683,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 29 — Correcção: captar a localização
 
-**Estado: corrigida em `fix/captar-localizacao` (16/10/2026), só local, por validar no telemóvel e no browser.** Ver Adendo v1.54 do TRD. Só frontend; o backend não mudou.
+**Estado: em produção — integrada em `main` pelo merge `3b8c3c1` de `fix/captar-localizacao`; por validar no telemóvel e no browser.** Ver Adendo v1.54 do TRD. Só frontend; o backend não mudou.
 
 **Problema reportado:** «a funcionalidade captar localização não está a funcionar». O sintoma exato não foi indicado; a análise do código encontrou quatro causas prováveis, todas tratadas:
 - **Só GPS, 10 s:** `getCurrentPosition` com `enableHighAccuracy: true` e sem `maximumAge` dava TIMEOUT/POSITION_UNAVAILABLE em portáteis e em telemóveis dentro de casa, embora o browser soubesse a zona por Wi-Fi. Agora tenta o GPS (8 s) e, se falhar sem ser por permissão, a localização aproximada (15 s, aceita posição de há até 10 min).
@@ -694,7 +700,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 30 — Aviso de nova versão: mostra o que realmente muda
 
-**Estado: implementada em `fix/novidades-do-aviso` (14/10/2026), só frontend.** Ver Adendo v1.55 do TRD.
+**Estado: implementada em `fix/novidades-do-aviso` (14/10/2026), em `main` pelo merge `4e92d69` (19/10/2026), só frontend.** Ver Adendo v1.55 do TRD.
 
 **Problema reportado:** o aviso «Nova versão disponível» mostrava novidades que não tinham a ver com a versão e uma data que não era a do dia, e tem de mostrar sempre o que realmente está a ser actualizado. **Causa:** `public/novidades.json` era editado à mão (Adendo v1.29, item C) e não foi actualizado nas entregas seguintes; e, mesmo actualizado, dizia «a última versão» a todos, mesmo a quem tinha saltado versões.
 
@@ -730,7 +736,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 32 — Admin sem segundo factor é levado à Segurança
 
-**Estado: implementada em `fix/mfa-admin-reencaminha-para-seguranca` (19/10/2026), só frontend, por validar no browser.** Ver Adendo v1.57 do TRD. Completa a Fase 20.
+**Estado: implementada em `fix/mfa-admin-reencaminha-para-seguranca` (19/10/2026), em `main` pelo merge `ce36aa4`, só frontend, por validar no browser.** Ver Adendo v1.57 do TRD. Completa a Fase 20.
 
 **Problema reportado:** com `ADMIN_REQUIRE_MFA=true` e uma conta ADMIN sem factor registado, o painel abria e todas as listas davam 403 (`GET /admin/users` → 403), sem indicação do que fazer.
 
@@ -749,7 +755,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 33 — Localização captada a mais de 1 km do sítio real
 
-**Estado: implementada (19/10/2026), só frontend, por validar no telemóvel.** Ver Adendo v1.58 do TRD.
+**Estado: implementada (19/10/2026), em `main` pelo merge `8141584` de `fix/localizacao-precisao`, só frontend, por validar no telemóvel.** Ver Adendo v1.58 do TRD.
 
 **Problema reportado:** o serviço de localização grava, em alguns casos, um ponto a mais de 1 km de onde o utilizador está.
 
@@ -766,7 +772,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 34 — Painel de admin: menu lateral e secções com separadores
 
-**Estado: implementada em `feat/redesign-tela-usuarios-admin` (19/10/2026), só frontend, por commitar e validar no browser.** Ver Adendo v1.59 do TRD. Pedido do utilizador: adoptar a lógica do menu lateral e dos separadores do ControlCore.
+**Estado: implementada em `feat/redesign-tela-usuarios-admin` (19/10/2026), em `main` pelo merge `5d43b97` (versão 0.2.0) e corrigida em `f7bcab7`, só frontend, por validar no browser.** Ver Adendo v1.59 do TRD. Pedido do utilizador: adoptar a lógica do menu lateral e dos separadores do ControlCore.
 
 **Feito:**
 - `components/admin/layout/`: `LayoutDeAdmin` (barra fixa em `lg+`, recolhível; gaveta abaixo de `lg`), `BarraLateral` (grupos, secção acesa, selo de KYC, perfil e terminar sessão), `Cabecalho` (☰ e nome da secção), `caminhoActivo`, `seccoes`, `rotas` (secções, separadores e rotas antigas), `ParaOSeparador`.
@@ -788,7 +794,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 35 — Localização em zonas com pouca cobertura e logótipo oficial
 
-**Estado: implementada em `fix/logotipo-e-localizacao-aproximada` (20/10/2026), só frontend, por validar no telemóvel.** Ver Adendo v1.60 do TRD. Revê a decisão em aberto da Fase 33 (o limiar de 500 m).
+**Estado: implementada em `fix/logotipo-e-localizacao-aproximada` (20/10/2026), em `main` pelo merge `f68eea3`, só frontend, por validar no telemóvel.** Ver Adendo v1.60 do TRD. Revê a decisão em aberto da Fase 33 (o limiar de 500 m).
 
 **Problema reportado:** (1) o logótipo mostrado na app não é o oficial (`public/logo.png`); (2) na Av. das Indústrias a localização deu erro: a melhor leitura em 15 s passava dos 500 m e era recusada. No Perfil, sem selecção manual, ficava-se sem forma de se localizar.
 
@@ -810,7 +816,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 36 — Localização captada em segundo plano depois do login
 
-**Estado: implementada em `fix/logotipo-e-localizacao-aproximada` (20/10/2026), só frontend, por validar no telemóvel.** Ver Adendo v1.61 do TRD. Proposta do utilizador, aprovada com as quatro regras abaixo: a captação (até 30 s, Fase 35) começa depois do login, e quando a pessoa carrega no botão a posição já está pronta.
+**Estado: implementada em `fix/logotipo-e-localizacao-aproximada` (20/10/2026), em `main` pelo merge `f68eea3`, só frontend, por validar no telemóvel.** Ver Adendo v1.61 do TRD. Proposta do utilizador, aprovada com as quatro regras abaixo: a captação (até 30 s, Fase 35) começa depois do login, e quando a pessoa carrega no botão a posição já está pronta.
 
 **Regras:**
 1. Só arranca sozinha se a permissão de localização já estiver concedida (`navigator.permissions`). Sem ela, o pedido continua a vir do botão: um pedido de permissão sem gesto do utilizador é recusado por reflexo e penalizado pelo browser.
@@ -836,7 +842,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 37 — Actualização automática da app
 
-**Estado: implementada em `fix/actualizacao-automatica` (20/10/2026), só frontend.** Ver Adendo v1.63 do TRD.
+**Estado: implementada em `fix/actualizacao-automatica` (20/10/2026), em `main` pelo merge `2012864` (versão 0.2.2), só frontend.** Ver Adendo v1.63 do TRD.
 
 **Problema reportado:** (1) a actualização exigia carregar em «Actualizar agora», e o aviso às vezes demorava a aparecer; (2) utilizadores antigos não viam alterações já publicadas, como o logótipo oficial no telemóvel.
 
@@ -873,6 +879,46 @@ Fase 0 (Fundação PWA)
                                ├─> Fase 8 (Painel de Administração Avançado — depende da Fase 9 do backend)
                                └─> Fase 9 (Catálogo do Profissional — depende da Fase 10 do backend)
                                       └─> Fase 10 (Pesquisa por Serviço, Pedido a Vários & Propostas — depende da Fase 11 do backend)
+                                             ├─> Fase 11 (Portfólio por trabalho — backend 12)
+                                             ├─> Fases 12–22 (Painel de admin completo — backend 9 e 15–24) ─> Fases 31, 32 e 34 (refinamento, dois passos, menu lateral)
+                                             ├─> Fases 23–26 (Empresas e equipas — backend 25–28)
+                                             └─> Fase 27 (Pedido directo — backend 29) ─> Fase 28 (Contacto no catálogo — backend 30)
+
+Só frontend, sem dependência do backend: Fases 29, 33, 35 e 36 (localização), 30 e 37 (aviso e actualização da app).
 ```
 
 **Alinhamento com o Backend:** cada fase deste plano depende do endpoint correspondente já estar disponível (ainda que em staging) no repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend) — Fase 1 ↔ Backend Fase 2, Fase 2/3 ↔ Backend Fase 3, Fase 4 ↔ Backend Fases 4-5, Fase 7 ↔ Backend Fase 7. A documentação OpenAPI publicada desde cedo pelo backend (ver Adendo v1.2 no plano do backend) é o contrato de referência para desbloquear o desenvolvimento do frontend antes de cada endpoint estar 100% pronto (mock local contra o schema documentado).
+
+A correspondência completa, fase a fase, entre os dois planos está no fim de `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` («Correspondência com as fases do frontend»).
+
+---
+
+## Backlog — propostas da análise de 21/10/2026 (por aprovar)
+
+Origem: TRD Adendo v1.65. **Nada aqui está aprovado.** Cada item, quando aprovado, passa a fase própria com adendo do TRD e critérios de entrega, depois da fase correspondente do backend (backend primeiro). A ordem dentro de cada grupo é a ordem recomendada.
+
+**Verificação (sem código):**
+- [ ] Sessão de validação no telemóvel e no browser com os critérios por marcar das Fases 11 a 37, por esta ordem: pedido directo e contacto (27, 28), empresas (23 a 26, depois de confirmadas as migrations do backend), localização (29, 33, 35, 36), actualização da app (37), painel de admin (12 a 22, 31, 32, 34).
+- [ ] Lighthouse com sessão e em produção (Fases 5 e 6).
+
+**Correcções (Adendo v1.65, parte C):**
+- [ ] **Problema 2** — na pesquisa, o selo «Responde a pedidos» e os elegíveis primeiro; na escolha dos 3, explicar porque um profissional não conta.
+- [ ] **Problema 3** — o cartão de KYC mostra a imagem do documento (URL assinado do backend), com zoom.
+- [ ] **Problema 5** — enquanto não há notificações (D2): no ecrã «Os meus pedidos», um indicador de propostas novas por pedido, para quem se registou por telefone e não recebe email.
+- [ ] **Problema 6** — «Trabalho terminado» do lado do profissional; confirmar ou contestar do lado do cliente; pedido de avaliação logo a seguir.
+- [ ] **Problema 7** — prazo de resposta visível nos convites e nos pedidos directos; «Recusar» no pedido directo, com motivo.
+- [ ] **Problema 9** — estado real na lista de utilizadores do admin (`banned_until`); reconhecer o 403 dos dois passos pelo `code` (depois do backend); favoritos guardados no servidor; contraste do «24» do logótipo.
+
+**Funcionalidades (Adendo v1.65, parte D):**
+- [ ] D2 — central de notificações no sino (lista, marcar como lido) e Web Push no service worker, com o pedido de permissão só depois de uma acção do utilizador (como na localização, Fase 36).
+- [ ] D2 — botão «Abrir no WhatsApp» (`wa.me`) onde hoje aparece o telefone do profissional e do cliente.
+- [ ] D1 — ecrã de subscrição com pagamento real, período experimental e escolha de plano.
+- [ ] D2 — pedido urgente; «Disponível agora» e horário no perfil do profissional; fotos e data preferida no formulário do pedido.
+- [ ] D3 — motivo ao cancelar; avaliar o cliente (profissional); responder a uma avaliação.
+- [ ] D4 — painel de desempenho do profissional (convites, propostas, taxa de escolha, visualizações do catálogo).
+- [ ] D5 — selfie com o BI no ecrã de KYC.
+
+**Técnico (Adendo v1.65, parte E):**
+- [ ] Testes de componente de `MyServiceRequests` e `AssignedServiceRequests` (Fase 16).
+- [ ] `framer-motion`: remover das dependências ou usá-lo (hoje nenhum ficheiro de `src/` o importa).
+- [ ] `README.md` do repositório.

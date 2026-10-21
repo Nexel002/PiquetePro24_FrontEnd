@@ -3,11 +3,37 @@
 | Campo | Detalhe |
 |---|---|
 | Projeto | Marketplace de Serviços Locais PWA (Moçambique) |
-| Versão | 1.1 (+ [Adendo v1.2](#adendo-v12), + [Adendo v1.3](#adendo-v13), + [Adendo v1.4](#adendo-v14)) |
+| Versão | 1.1 + Adendos v1.2 a [v1.65](#adendo-v165) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
 | Autor | Engenheiro de Software Lead |
-| Estado | Aprovado para Desenvolvimento (Sprint 0) — Adendo v1.2 em revisão de engenharia |
+| Estado | **Em produção** (backend no Fly.io, frontend na Vercel) desde 12/10/2026; ~~Aprovado para Desenvolvimento (Sprint 0)~~ — revisto a 21/10/2026 (Adendo v1.65) |
 
 > **Documento único, sincronizado nos dois repositórios** (`PiquePro24_Backend/Doc's/` e `PiquetePro24_FrontEnd/docs/`): as duas cópias são idênticas e qualquer alteração faz-se nas duas. Caminhos de ficheiro dentro de um bloco **«Perspetiva do frontend»** referem-se ao repositório `PiquetePro24_FrontEnd`; os restantes, ao `PiquePro24_Backend`, salvo indicação em contrário.
+
+## 0. Leitura rápida — regras em vigor (21/10/2026)
+
+Com 64 adendos, a regra actual de uma área está muitas vezes no adendo mais recente que a tocou e não no corpo. Esta tabela aponta para lá. É um índice, não substitui os adendos; actualizar a linha da área sempre que um adendo novo mudar uma regra.
+
+| Área | Regra em vigor | Onde |
+|---|---|---|
+| Infraestrutura | Backend Fly.io `fra` (Frankfurt), Supabase Frankfurt, Redis Upstash `fra`, frontend Vercel (`piquete-pro24-front-end-beta.vercel.app`) | Adendo v1.3 |
+| Esquema da base de dados | 17 tabelas, 8 enums, 21 funções SQL (18 RPC + 3 triggers); mapa e registo de migrations aplicadas em `Doc's/ESQUEMA_BASE_DADOS.md` (backend) | Secção 3, Adendo v1.65 |
+| Papéis | `CLIENT`, `PROFESSIONAL` (`SINGULAR`/`COMPANY`), `TECHNICIAN` (conta de um técnico de empresa), `ADMIN` (só criado por outro admin ou pelo script `npm run admins`) | Adendos v1.4-E/F, v1.50, v1.51 |
+| Autenticação | Supabase Auth (email, telefone, Google); JWT ES256 validado contra o JWKS; 2.º factor TOTP nas rotas `/admin/*` quando `ADMIN_REQUIRE_MFA=true` | Adendos v1.4, v1.48, v1.57 |
+| Pedido a 3 profissionais | Cliente escolhe exactamente 3 (ou todos, se houver menos); cada um propõe preço + mensagem; o cliente escolhe uma; sem chat | Adendo v1.18 |
+| Pedido directo | «Solicitar serviço» cria o pedido já atribuído e revela o contacto do profissional; um pedido directo em curso por cliente e profissional | Adendo v1.52 |
+| Pedido aberto | Continua a existir (`/pedidos-proximos`), mas o ecrã de pesquisa já não o cria | Adendo v1.18-A |
+| Contacto do profissional | Visível no catálogo enquanto o profissional tem KYC aprovado e subscrição activa; nunca na pesquisa | Adendo v1.53 |
+| Contacto do cliente | Só para o profissional (ou técnico) atribuído, com KYC aprovado e subscrição activa, enquanto o pedido está `ASSIGNED` | Secção 5, Adendos v1.12-B, v1.51 |
+| Ciclo de vida do pedido | `OPEN` → `ASSIGNED` → `COMPLETED`/`CANCELLED`; só o cliente conclui ou cancela | Adendo v1.2-B, Fase 3 do backend |
+| Subscrição | 800 MZN / 30 dias (`SUBSCRIPTION_PRICE_MZN`); KYC aprovado antes de pagar; em produção só há activação manual pelo admin (sem gateway) | Adendos v1.2-F, v1.12, v1.41 |
+| Elegibilidade para trabalhar | KYC `APPROVED` + subscrição em vigor (calculada por datas); técnico = empresa elegível + KYC do técnico | Adendos v1.12-C, v1.51 |
+| Empresas | Máx. 15 técnicos activos; subscrição única da empresa; o técnico é atribuído depois de a empresa ser escolhida | Adendo v1.51 |
+| Avaliações | Uma por pedido concluído, do cliente para o profissional (e para o técnico, em separado); comentário pode ser ocultado pelo admin | Adendos v1.17, v1.43, v1.51 |
+| Notificações | Só email (SMTP); sem notificações na app, push nem SMS | Adendos v1.7, v1.18-F, v1.46 |
+| Localização | GPS com estado «aproximada» (500 m–10 km), captação em 2.º plano só com permissão já dada; fallback manual Província → Distrito → Bairro; nunca se expõem coordenadas de terceiros | Adendos v1.15-C, v1.60, v1.61 |
+| Offline | Fila em IndexedDB para criar pedidos, com `Idempotency-Key` | Adendos v1.26, v1.27 |
+| Actualização da PWA | Automática (`skipWaiting`), com aviso do que mudou depois de recarregar | Adendo v1.63 |
+| Painel de admin | Menu lateral com 5 secções e separadores `?tab=` | Adendo v1.59 |
 
 ---
 
@@ -18,7 +44,7 @@
 | Frontend / PWA | React + Vite + Tailwind CSS + Framer Motion | Alta performance, suporte offline nativo (Service Workers), suporte a HTML5 Geolocation. |
 | Backend & API | Node.js | Deployed no Fly.io (Região ~~jnb - Joanesburgo~~ **fra - Frankfurt**, ver [Adendo v1.3](#adendo-v13)), responsável pela lógica de negócio e queries espaciais. |
 | Backend & DB | Supabase (PostgreSQL + PostgREST + Auth + PostGIS) | Autenticação pronta, Row Level Security (RLS) e extensão espacial nativa PostGIS. |
-| Alojamento & CDN | Vercel (Frontend) + Supabase Cloud (Cape Town af-south-1) | Latência de banco < 15ms para o backend no Fly.io e CDN com PoPs na África Austral. |
+| Alojamento & CDN | Vercel (Frontend) + Supabase Cloud (~~Cape Town af-south-1~~ **Frankfurt**, ver [Adendo v1.3](#adendo-v13)) | Latência de banco < 15ms para o backend no Fly.io e CDN com PoPs na África Austral. |
 | Armazenamento | Supabase Storage (Buckets Privados/Públicos) | Gestão segura para documentos KYC (BI/NUIT) e galeria pública de portfólios. |
 | Cache | Upstash Redis via Fly.io (`fra`, mesma região do backend), ver [Adendo v1.3, item C](#adendo-v13) | Cache de resultados de queries geoespaciais frequentes (`GET /professionals/nearby`, Fase 3), reduzindo carga repetida no Supabase. |
 
@@ -42,6 +68,7 @@ Para lidar com a realidade de mapeamento em Moçambique (onde existem coordenada
 
 ## 3. Esquema do Banco de Dados (PostgreSQL / Supabase)
 
+> **Esta secção é o esquema original (4 tabelas).** O esquema actual tem 17 tabelas: o mapa completo, os enums, as funções SQL e o registo de que migrations estão aplicadas ao Supabase real estão em `Doc's/ESQUEMA_BASE_DADOS.md` (repositório do backend), actualizado a 21/10/2026 (Adendo v1.65). As migrations em `supabase/migrations/` são a fonte de verdade.
 
 ### Extensões e Enums
 
@@ -155,6 +182,20 @@ LIMIT $page_size OFFSET $page_offset;
 ---
 
 ## 7. Perfil ADMIN
+
+> **Estado em 21/10/2026 (Adendo v1.65) — prevalece sobre o resto desta secção, que descreve o papel até à Fase 9.** O painel avançado deixou de ser «planeado»: está em produção (backend Fases 9 e 15–24, frontend Fases 8 e 12–22 e 34). Organização: menu lateral com 5 secções (Adendo v1.59).
+>
+> | Secção | O que o admin faz | Adendos |
+> |---|---|---|
+> | KYC | Fila por antiguidade com indicador de atraso (> 48 h), aprovar, rejeitar com motivo, reabrir uma rejeição | v1.6, v1.42 |
+> | Utilizadores | Directório, ficha individual com histórico de auditoria, notas internas, banir/levantar banimento, mudar `CLIENT` ↔ `PROFESSIONAL`, activar ou suspender a subscrição, ver a equipa de uma empresa | v1.9, v1.12-D, v1.41, v1.44, v1.51 |
+> | Pedidos | Lista global, timeline por pedido, notas internas, disputas (denúncias com alvo `SERVICE_REQUEST`) | v1.9-C, v1.44 |
+> | Visão Geral | Painel, métricas, relatórios (CSV sem contactos e funil de profissionais), registo de auditoria com alertas de segurança, estado do sistema | v1.39, v1.47, v1.8, v1.49 |
+> | Mais | Subscrições e pagamentos, moderação de conteúdo, catálogo de serviços, comunicados por email, administradores, segurança (TOTP) | v1.41, v1.43, v1.45, v1.46, v1.50, v1.48 |
+>
+> **Mudou desde o texto abaixo:** um ADMIN já se cria dentro da aplicação (`POST /admin/admins`, Adendo v1.50), e não só por `UPDATE` directo; uma rejeição de KYC já se reabre (Adendo v1.42); a activação manual da subscrição já tem UI.
+>
+> **Continua por fazer:** (1) o **documento de identidade não é mostrado ao admin** — o backend só gera URLs de *upload* para o bucket `kyc-documents`, nunca um URL de leitura, por isso a aprovação do KYC é feita sem ver o BI, a não ser que o admin o abra à mão no painel do Supabase (TRD Adendo v1.65, problema 3); (2) papéis dentro de ADMIN (revisor de KYC, financeiro…); (3) estado dos jobs, erros recentes e fila de emails; (4) a lista de utilizadores mostra sempre «Activo» porque `GET /admin/users` não devolve `banned_until` (plano do frontend, Fase 34).
 
 O `user_role` `ADMIN` (Secção 3) existe desde o schema inicial, mas nunca teve uma secção própria — ficava disperso entre a definição do enum, a regra de acesso a documentos (Secção 5) e o Adendo que introduziu o painel (Adendo v1.6). Esta secção consolida o que o papel cobre, hoje e no que está previsto.
 
@@ -1621,7 +1662,7 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 
 ### Empresas e equipas de técnicos (14/10/2026)
 
-**Estado: plano aprovado pelo utilizador; implementado em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser e contra o Supabase real.**
+**Estado: em produção** — integrado em `main` nos dois repositórios (backend `1d1fda8`, frontend `1ee0998`) e publicado (as rotas `/technician/*` constam do `/openapi.json` de produção, verificado a 21/10/2026). **As 4 migrations não têm registo de aplicação:** confirmar no Supabase antes de tudo (ver `Doc's/ESQUEMA_BASE_DADOS.md`, «Registo de migrations»). Por validar no browser. ~~implementado em `feat/empresas-equipas` (15/10/2026), só local~~
 
 **Contexto.** O Adendo v1.4, item F, introduziu `professional_type` (`SINGULAR` / `COMPANY`) deixando o desenho para depois («o onboarding de empresa deve ser mais complexo»). A 14/10/2026 a verificação no código mostrou que `COMPANY` era só uma etiqueta: a empresa passava pelo mesmo KYC, pagava a mesma subscrição e era convidada, escolhida e atribuída como uma pessoa. Não havia forma de registar os profissionais da empresa nem de dizer ao cliente quem ia a casa dele.
 
@@ -1648,7 +1689,7 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 
 ### Pedido direto: o contacto do profissional aparece ao «Solicitar serviço» (16/10/2026)
 
-**Estado: implementado em `feat/pedido-direto`; por validar no browser e contra o Supabase real.**
+**Estado: em produção** — integrado em `main` (backend `2ce12f5`, frontend `5ce41e1`); migration `20261016090000_pedido_direto.sql` aplicada a 16/10/2026. Por validar no browser. ~~implementado em `feat/pedido-direto`~~
 
 **Contexto.** A Secção 5 do TRD e o Adendo v1.18 (item D) só revelavam o telefone do profissional **depois de o cliente escolher** uma proposta entre as de 3 profissionais. O utilizador quer que o cliente possa ver o contacto de um profissional (singular ou empresa) e ligar-lhe, mas **só ao carregar em «Solicitar serviço»**, e que o profissional só veja os dados do cliente ao carregar em **«Ver pedido»**. A razão é de produto: se os contactos estiverem à vista, ninguém regista pedidos, estados, fotos nem avaliações, e **sem dados a plataforma não é nada**. Obriga-se o fluxo pelo próprio mecanismo: **o número só se obtém criando um pedido.**
 
@@ -1672,7 +1713,7 @@ A segurança destas contas reforça-se com a verificação em dois passos (Adend
 
 ### Contacto do profissional à vista no catálogo (16/10/2026)
 
-**Estado: implementado em `feat/pedido-direto`; por validar no browser e contra o Supabase real.**
+**Estado: em produção** — integrado em `main` (backend `2ce12f5`, frontend `5ce41e1`); migration `20261016090000_pedido_direto.sql` aplicada a 16/10/2026. Por validar no browser. ~~implementado em `feat/pedido-direto`~~
 
 **Decisão.** Por decisão expressa do utilizador, o nome e o telefone do profissional (singular ou empresa) ficam **sempre visíveis no catálogo**, sem clicar. **Substitui** o que o Adendo v1.52 dizia sobre o catálogo («continuam a não mostrar telefones») e a «alternativa rejeitada» desse adendo: o catálogo passa a mostrar o contacto. A Secção 5 continua a valer para o contacto do **cliente**.
 
@@ -1865,3 +1906,107 @@ O `LogoOficial` ganha `fundo: 'claro' | 'escuro'`. Por omissão é `claro`, com 
 **Decisão.** O `HomeHeader` mostra sempre o logótipo completo: 120 px de largura abaixo de `sm`, 140 px acima. Verificado no browser a 320, 360 e 390 px, com e sem sessão: cabe ao lado do sino e do «Entrar» ou do avatar, sem scroll horizontal. A variante `escudo` do `LogoOficial` ficou sem uso e foi removida.
 
 **Notas de deploy:** só frontend; sem migrations nem variáveis novas. Versão 0.2.3.
+
+## Adendo v1.65
+
+### Revisão da documentação e análise do produto (21/10/2026)
+
+**Estado: a parte A (documentação) está feita. As partes C a F são uma PROPOSTA, por aprovar.** Nenhuma proposta entra em código sem decisão do utilizador. Quando uma for aprovada, ganha o seu próprio adendo e as suas fases nos dois planos, como aconteceu com o Adendo v1.18.
+
+**Contexto.** O utilizador pediu para actualizar toda a documentação e analisar o projecto do ponto de vista da lógica de negócio: o que melhorar, o que acrescentar e o que actualizar. A análise partiu do grafo de conhecimento, dos dois planos, deste TRD e do código dos dois repositórios, e confirmou em produção (`/health` e `/openapi.json`, só leitura) o que está publicado. A base de dados de produção **não** foi consultada.
+
+#### A. O que a revisão corrigiu nos documentos
+
+- **TRD:** cabeçalho (versão e estado, que ainda dizia «Sprint 0»); nova Secção 0 com as regras em vigor por área; Secção 1 (Supabase em Frankfurt, não Cape Town); Secção 3 remete para o esquema actual; Secção 7 (perfil ADMIN) com o estado real, porque descrevia o painel avançado como «planeado»; os estados dos Adendos v1.51 a v1.53 diziam «só local», mas estão em produção.
+- **`Doc's/ESQUEMA_BASE_DADOS.md` (backend):** parava na Fase 5. Passa a ter as 17 tabelas, os 8 enums, as funções SQL, os buckets, os índices únicos com regra de negócio e um **registo de migrations aplicadas**, que não existia em lado nenhum.
+- **Planos (backend e frontend):** um resumo do estado no topo; as linhas «Estado» das fases 15 a 30 (backend) e 12 a 34 (frontend) diziam «só local» ou «por commitar», mas tudo está em `main` e publicado; critérios fechados quando havia prova (ver os planos); mapas de dependências e correspondência backend ↔ frontend até à última fase; nova secção de backlog com as propostas desta análise.
+- **`CLAUDE.md` dos dois repositórios:** resumos de estado, comandos e gates de CI desactualizados.
+
+#### B. Estado do produto em 21/10/2026
+
+Backend (fases 0 a 30) e frontend (fases 0 a 37) estão em `main` e em produção. Cerca de 75 critérios dos dois planos continuam por marcar. Quase todos são **validação** (no browser, no telemóvel ou contra o Supabase real), não código em falta. Há três bloqueios estruturais: **não existe staging** (a Fase 7 dos dois lados depende dele), **não há gateway de pagamento** (a única forma de um profissional ficar elegível é a activação manual pelo admin) e as migrations aplicam-se **à mão, sem histórico na base**.
+
+#### C. Problemas encontrados — corrigir antes de acrescentar
+
+Ordenados por gravidade. Cada um foi confirmado no código.
+
+1. **Gravidade alta — o banimento não tira o profissional da plataforma.** `banUser` (`adminModerationService.ts`) só mexe em `auth.users.banned_until`, o que bloqueia o login. A RPC `search_professionals` só filtra `role = 'PROFESSIONAL'`; o catálogo e o pedido directo verificam KYC e subscrição, mas não o banimento, e os convites não verificam nenhum dos três. Um profissional banido por fraude **continua na pesquisa**, pode ser convidado e, se a subscrição estiver activa, **o telefone continua à vista no catálogo** (Adendo v1.53). *Proposta:* coluna `users_profile.suspended_at`, gravada na mesma operação que o ban/unban, filtrada em `search_professionals`, na criação de convites e de pedidos directos, no catálogo e na montra de trabalhos em destaque. Testes: um banido não aparece em nenhum destes caminhos.
+2. **Gravidade alta — a pesquisa e os convites ignoram a elegibilidade, e o cliente pode ficar sem nenhuma proposta.** A pesquisa ordena só por distância e nome e devolve todos os profissionais. O cliente escolhe 3, mas só quem tem KYC aprovado e subscrição activa consegue responder (Adendo v1.18-E). Como em produção não há gateway, a maioria dos profissionais não é elegível: o pedido mais importante do produto pode acabar com zero propostas, sem o cliente perceber porquê. *Proposta:* (a) os elegíveis aparecem primeiro, com um selo «Responde a pedidos»; (b) só conta como convite quem é elegível; (c) o não-elegível que foi procurado recebe um email «um cliente procurou-te: activa a subscrição para responder». Isto converte procura em subscrições sem pôr a espera em cima do cliente.
+3. **Gravidade alta — o admin aprova o KYC sem ver o documento.** O backend só cria URLs de *upload* para o bucket `kyc-documents` (`createSignedUploadUrl`) e nunca um URL de leitura; o ecrã de KYC não mostra imagem nenhuma. Na prática, a verificação de identidade é uma declaração, e o selo «Identidade verificada» (Adendo v1.40) promete mais do que se verifica. *Proposta:* `GET /admin/kyc/:id/document` devolve um `createSignedUrl` de 60 s (só ADMIN, com registo no audit log), e o cartão de KYC mostra a imagem com zoom.
+4. **Gravidade alta, verificação de 5 minutos — as migrations das empresas não têm registo de aplicação.** O código que lê `assigned_member_id`, `company_members` e `member_rating` está em produção. Se alguma das quatro migrations `20261015*` faltar, as listagens de pedidos respondem 500. As consultas de verificação estão em `Doc's/ESQUEMA_BASE_DADOS.md`, «Registo de migrations».
+5. **Gravidade alta — quem se regista por telefone não recebe nenhum aviso.** Todas as notificações são email (Adendo v1.18-F). Um registo por telefone não tem email: `sendWelcomeNotification` já o trata como «desligado», e o mesmo acontece com os convites, as propostas e a escolha. Em Moçambique o telefone é provavelmente o canal principal: um profissional registado por telefone nunca sabe que foi convidado, e um cliente nunca sabe que recebeu uma proposta. O único sinal é o ponto no sino da Home, que só conta os convites do profissional. Falta também confirmar se o registo por telefone funciona em produção, porque exige um fornecedor de SMS configurado no Supabase Auth. *Proposta:* ver D2.
+6. **Gravidade média — um pedido fica `ASSIGNED` para sempre se o cliente não o concluir.** Só o cliente conclui (`completeServiceRequest`). Sem conclusão não há avaliação, o histórico «Os meus profissionais» fica vazio, a reputação do profissional não cresce e, nos pedidos directos, o índice `uq_direct_open_request` impede o cliente de voltar a pedir ao mesmo profissional. *Proposta:* o profissional marca «trabalho terminado», o cliente confirma ou contesta, e um job conclui sozinho ao fim de N dias sem resposta, pedindo a avaliação.
+7. **Gravidade média — nada expira.** Os convites sem resposta não expiram (decisão em aberto desde o Adendo v1.18), e o profissional não pode recusar um pedido directo (fora de âmbito no Adendo v1.52). O cliente fica à espera sem prazo. *Proposta:* prazo de resposta (ex.: 48 h) para convites e pedidos directos; ao expirar, o cliente é avisado e pode convidar outro profissional; recusar um pedido directo, com motivo.
+8. **Gravidade média, processo — migrations à mão e sem staging.** A base não guarda que migrations correram, e foi isso que deixou o problema 4 sem resposta. *Proposta:* adoptar o histórico de migrations da Supabase CLI (`supabase db push`, tabela `supabase_migrations.schema_migrations`) e criar o staging (segundo projecto Supabase gratuito + app Fly `piquetepro24-backend-staging` + preview da Vercel apontado para ele). Desbloqueia a Fase 7 dos dois planos.
+9. **Gravidade baixa.** Favoritos só no `localStorage` (perdem-se ao trocar de telemóvel ou limpar o browser); a lista de admin mostra sempre «Activo» (falta `banned_until` em `GET /admin/users`); o frontend reconhece o 403 de dois passos pelo texto da mensagem e não por um `code`; um serviço novo criado pelo admin fica sem ícone até alguém editar o código; contraste do «24» amarelo do logótipo (única falha de acessibilidade no Lighthouse).
+
+#### D. Funcionalidades propostas — pela lógica de negócio
+
+O negócio vive de **subscrições de profissionais**, que só se pagam se os profissionais receberem trabalho. O trabalho só chega se os clientes encontrarem alguém que responda depressa. As propostas estão agrupadas pelo elo desta cadeia que reforçam.
+
+**D1. Receita.**
+- **Pagamento real M-Pesa e e-Mola.** A interface `PaymentProvider` já existe e o mock segue o mesmo caminho do webhook. Falta o fornecedor real (API C2B da Vodacom M-Pesa; API de comerciante da Movitel e-Mola), a verificação de assinatura no `handleWebhook` e um job de reconciliação que chame `checkStatus`, já previsto na interface e nunca chamado. Exige conta de comerciante: é decisão e contrato do utilizador, não só código. Enquanto não existir, cada subscrição depende de um admin.
+- **Período experimental** (ex.: o primeiro mês, ou as primeiras N respostas a convites) para o profissional sentir a procura antes de pagar. Resolve o arranque em frio: hoje um profissional novo paga sem nunca ter recebido um convite.
+- **Planos.** Mensal, trimestral e anual com desconto. **A empresa paga o mesmo que um singular** (800 MZN, decisão do utilizador de 14/10/2026, Adendo v1.51) com até 15 técnicos: vale reavaliar um plano Empresa por escalão de técnicos.
+- **Destaque pago** na pesquisa e na montra da Home, sempre assinalado como tal. Só faz sentido depois de D2 (ranking).
+
+**D2. Liquidez: o cliente recebe resposta e o profissional sabe que há trabalho.**
+- **Notificações dentro da app.** Tabela `notifications`, sino com a lista (hoje só conta convites do profissional), marcar como lido. É a base dos canais seguintes e resolve o problema 5 para quem abre a app.
+- **Web Push da PWA** para convites, propostas, escolha e mensagens do admin. Funciona no Android; no iOS só com a app instalada (iOS 16.4 ou mais recente).
+- **SMS ou WhatsApp para os eventos críticos** (novo convite, proposta recebida), para quem não tem email nem push. Tem custo por mensagem: limitar aos eventos que mudam o negócio.
+- **Ligar pelo WhatsApp.** Onde hoje se mostra o telefone (contacto do profissional e do cliente), um botão `wa.me` com uma mensagem pré-preenchida que cita o pedido. Sem API e sem custo, e é como muitas pessoas falam em Moçambique.
+- **Pedido urgente / «Piquete 24h».** O nome do produto promete urgência e o sistema não a modela: não há urgência no pedido nem disponibilidade no profissional. Proposta: campo `urgent` no pedido; estado «Disponível agora» e horário de atendimento no perfil do profissional; os urgentes vão primeiro a quem está disponível.
+- **Fotos e data preferida no pedido.** O cliente fotografa o problema (bucket privado, visível só aos convidados) e indica quando quer o serviço. As propostas ficam mais precisas e evitam deslocações perdidas.
+- **Ranking da pesquisa:** elegível › disponível agora (para os urgentes) › distância › nota › taxa de resposta. Hoje é só distância e depois nome.
+- **Taxa e tempo médio de resposta** no catálogo e no ranking: premeia quem responde, e é o dado que o cliente mais quer saber.
+
+**D3. Fecho do ciclo e reputação.**
+- Conclusão pelo profissional com confirmação do cliente e auto-conclusão (problema 6), seguida de um lembrete para avaliar.
+- **Motivo de cancelamento** (o cliente cancela hoje sem dizer porquê), para medir onde o fluxo falha.
+- **Avaliação do cliente pelo profissional** (privada, usada só na decisão de aceitar), e **resposta pública do profissional** a uma avaliação.
+
+**D4. Retenção do profissional (quem paga).**
+- **Painel de desempenho:** convites recebidos, propostas enviadas, taxa de escolha, visualizações do catálogo, pedidos directos, nota. É o argumento para renovar a subscrição: hoje o profissional paga sem ver o que recebe em troca.
+- **Indicação:** um profissional que traz outro (com KYC aprovado e primeira subscrição paga) ganha dias de subscrição.
+
+**D5. Confiança.**
+- Visualização do documento de KYC pelo admin (problema 3), **selfie com o BI** e validade do documento.
+- Documentos da empresa (alvará, representante legal) e o selo «Equipa verificada», já listados como sugestão no Adendo v1.51.
+
+**D6. Operação e administração.**
+- Papéis dentro de ADMIN (revisor de KYC, financeiro, moderador), adiado desde os Adendos v1.48 e v1.50.
+- Recibo por pagamento, com o NUIT do profissional: uma empresa precisa dele para a contabilidade.
+- Estado dos jobs, erros recentes e fila de emails no ecrã «Sistema» (fora de âmbito no Adendo v1.49).
+- Ícone escolhido pelo admin para um serviço novo, em vez de depender de código (problema 9).
+
+#### E. Melhorias técnicas
+
+- Histórico de migrations e staging (problema 8).
+- `npm run verificar:rls` contra o Supabase real: está por correr desde as Fases 11 e 12.
+- O funil de profissionais conta em memória até 10 000 linhas (Fase 21 do backend): passar para uma contagem em SQL antes de o volume crescer.
+- Testes de componente em falta: `MyServiceRequests` e `AssignedServiceRequests` (Fase 16 do frontend).
+- `framer-motion` está nas dependências e nenhum ficheiro de `src/` o importa: remover, ou usá-lo como os `CLAUDE.md` descrevem. Não pesa no bundle (não é importado), mas confunde quem lê a stack.
+- A versão do backend continua `0.1.0` desde a Fase 0: não diz que versão está em produção. Propor subir com cada merge e expô-la no `/health`.
+- **Não há `README.md` em nenhum dos dois repositórios.** Quem chega não sabe como correr o projecto sem ler os `CLAUDE.md`.
+- Medir a latência desde Maputo (`Doc's/RUNBOOK_DEPLOY.md`, secção 6): a decisão de manter Frankfurt continua sem dados.
+- Os logs ficam só no `flyctl logs`, por decisão do utilizador (sem serviço externo nem alertas, Fase 6). Reavaliar antes de abrir ao público: hoje uma falha só se descobre quando alguém se queixa.
+- Este TRD tem 64 adendos e ~260 KB. A Secção 0 resolve a consulta; uma consolidação periódica (reescrever o corpo com as regras em vigor e deixar os adendos como histórico) evitaria que volte a crescer assim.
+
+#### F. Ordem recomendada
+
+1. **Verificação, sem código (dias):** consultas das migrations das empresas (problema 4); confirmar que o registo por telefone funciona em produção; sessão de validação no telemóvel com os critérios por marcar dos dois planos; `verificar:rls` contra a base real.
+2. **Correcções:** problemas 1, 2 e 3 (pequenas, backend e frontend), depois 6 e 7.
+3. **Notificações:** central na app e Web Push (D2). Destrava o problema 5 para a maioria dos utilizadores.
+4. **Receita:** pagamento real M-Pesa, período experimental e planos (D1), com o staging criado antes de ligar dinheiro real.
+5. **Diferenciação:** urgência e disponibilidade, fotos e data no pedido, ranking, WhatsApp (D2).
+6. **Retenção:** painel de desempenho do profissional e reputação bilateral (D3, D4).
+
+#### G. Decisões que precisam do utilizador
+
+- Se e quando contratar M-Pesa e e-Mola (conta de comerciante), e com que preço e planos (incluindo o da empresa).
+- Se há período experimental e de que forma.
+- Prazo de resposta a convites e pedidos directos, e prazo da auto-conclusão.
+- Canal pago para os avisos críticos (SMS, WhatsApp ou nenhum) e o orçamento por mensagem.
+- Se o contacto do profissional continua à vista no catálogo (Adendo v1.53, risco aceite pelo utilizador). Proposta: não reverter agora, mas medir a relação entre visualizações do catálogo e pedidos criados, e decidir com dados.
+
+**Notas de deploy:** só documentação; sem código, migrations nem variáveis. **Critérios de entrega correspondentes:** secção «Backlog — propostas da análise de 21/10/2026» nos dois planos.
