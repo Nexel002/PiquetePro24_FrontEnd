@@ -11,6 +11,8 @@ import { BotaoDenunciar } from '../components/moderacao/BotaoDenunciar'
 import { ContactoDoProfissional } from '../components/pedidos/ContactoDoProfissional'
 import { useChosenProfessional } from '../hooks/useInvitations'
 import { usePedidosPendentes } from '../hooks/usePedidosPendentes'
+import { ExportarOsMeusPedidos } from '../components/pedidos/ExportarOsMeusPedidos'
+import { RepetirRegularmente } from '../components/pedidos/RepetirRegularmente'
 
 // Formulário de avaliação (Fase 9, TRD Adendo v1.17): só para pedidos COMPLETED sem
 // avaliação ainda (has_review, calculado pelo backend). Sem edição posterior — uma
@@ -166,6 +168,15 @@ export function MyServiceRequests() {
       )}
 
       {requests && requests.length > 0 && (
+        <div className="flex items-center justify-between gap-2">
+          <Link to="/servicos-recorrentes" className="text-xs font-semibold text-piquete-blue underline">
+            Serviços recorrentes
+          </Link>
+          <ExportarOsMeusPedidos />
+        </div>
+      )}
+
+      {requests && requests.length > 0 && (
         <ul className="flex flex-col gap-3">
           {requests.map((serviceRequest) => (
             <li key={serviceRequest.id} className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
@@ -235,6 +246,11 @@ export function MyServiceRequests() {
 
               {serviceRequest.status === 'COMPLETED' && serviceRequest.professional_id && serviceRequest.has_review === false && (
                 <ReviewForm requestId={serviceRequest.id} professionalId={serviceRequest.professional_id} technicianName={serviceRequest.technician?.first_name} />
+              )}
+
+              {/* Fase 42 (N3): o mesmo serviço, com o mesmo profissional, regularmente. */}
+              {serviceRequest.status === 'COMPLETED' && serviceRequest.professional_id && serviceRequest.category_id && (
+                <RepetirRegularmente requestId={serviceRequest.id} />
               )}
 
               {serviceRequest.professional_id && serviceRequest.status !== 'OPEN' && (

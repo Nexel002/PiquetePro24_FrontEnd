@@ -9,6 +9,7 @@ import { ContactoCliente } from '../components/ContactoCliente'
 import { Button } from '../components/ui/Button'
 import { Badge } from '../components/ui/Badge'
 import { BotaoDenunciar } from '../components/moderacao/BotaoDenunciar'
+import { RecorrenciasDoProfissional } from '../components/pedidos/RecorrenciasDoProfissional'
 import type { TeamMember } from '../services/companyTeam'
 import type { RequestStatus, ServiceRequest } from '../services/serviceRequests'
 
@@ -86,6 +87,8 @@ export function AssignedServiceRequests() {
         </div>
       )}
 
+      {perfil?.role === 'PROFESSIONAL' && <RecorrenciasDoProfissional />}
+
       {requests && requests.length > 0 && (
         <ul className="flex flex-col gap-3">
           {requests.map((request) => (
@@ -111,6 +114,8 @@ function TrabalhoAceite({ request, equipa }: { request: ServiceRequest; equipa: 
           <Badge variant={STATUS_BADGE_VARIANT[request.status]}>{STATUS_LABELS[request.status]}</Badge>
           {/* Pedido direto que ainda ninguém abriu: é o que o profissional deve ver primeiro. */}
           {request.is_direct && !request.client_contact_viewed_at && request.status === 'ASSIGNED' && <Badge variant="warning">Novo pedido</Badge>}
+          {/* Fase 42 (N3): uma das vezes de um serviço recorrente do cliente. */}
+          {request.recurring_request_id && <Badge variant="info">Recorrente</Badge>}
         </div>
       </div>
       {request.description && <p className="text-xs text-gray-600 leading-relaxed">{request.description}</p>}

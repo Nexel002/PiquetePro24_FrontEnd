@@ -7,6 +7,7 @@ import { useReplaceMyServices, useServiceCategories } from '../hooks/useServiceC
 import { MAX_SERVICES_PER_PROFESSIONAL } from '../services/serviceCategories'
 import { NewProjectForm } from '../components/portfolio/NewProjectForm'
 import { ProjectEditor } from '../components/portfolio/ProjectEditor'
+import { ZonaDeAtendimento } from '../components/catalogo/ZonaDeAtendimento'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
 import { Card, CardContent } from '../components/ui/Card'
@@ -178,6 +179,24 @@ export function MyCatalog() {
               Guardar serviços
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card variant="solid">
+        <CardContent className="flex flex-col gap-3">
+          <p className="text-sm font-bold text-piquete-blue">Onde trabalhas</p>
+          <p className="text-xs text-gray-500">
+            Os clientes da tua zona veem-te primeiro na pesquisa, com a indicação «Atende a tua zona».
+          </p>
+          {catalog.isLoading && <div className="h-24 animate-pulse rounded-2xl bg-gray-200" />}
+          {catalog.isError && <p className="text-sm text-gray-600">Não foi possível carregar a tua zona. Tenta novamente.</p>}
+          {catalog.data && (
+            <ZonaDeAtendimento
+              professionalId={profile.id}
+              guardada={catalog.data.service_area ?? { radius_km: null, provinces: [] }}
+              temLocalizacao={profile.latitude != null}
+            />
+          )}
         </CardContent>
       </Card>
 

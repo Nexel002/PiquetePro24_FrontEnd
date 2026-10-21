@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useProfile, useUploadAvatar } from '../hooks/useProfile'
 import { LocationForm } from '../components/LocationForm'
 import { LayoutDividido } from '../components/layout/LayoutDividido'
@@ -10,6 +11,9 @@ import { EstatisticasDaConta } from '../components/profile/EstatisticasDaConta'
 import { FotoDoPerfil } from '../components/profile/FotoDoPerfil'
 import { HistoricoDePedidos } from '../components/profile/HistoricoDePedidos'
 import { TelefoneRegistado } from '../components/profile/TelefoneRegistado'
+import { OsMeusAvisos } from '../components/profile/OsMeusAvisos'
+import { OsMeusLocais } from '../components/profile/OsMeusLocais'
+import { DadosDaEmpresa } from '../components/profile/DadosDaEmpresa'
 import { AvatarUploadError } from '../services/avatar'
 
 // Compõe o ecrã; cada bloco tem o seu estado e os seus hooks no próprio componente
@@ -83,8 +87,22 @@ export function Profile() {
 
           {profile.role === 'PROFESSIONAL' && <AtalhoDoCatalogo />}
           {profile.role === 'PROFESSIONAL' && profile.professional_type === 'COMPANY' && <AtalhoDaEquipa />}
+          {/* Fase 41 (N5): credenciais opcionais, para o profissional e para o técnico. */}
+          {(profile.role === 'PROFESSIONAL' || profile.role === 'TECHNICIAN') && (
+            <Link
+              to="/credenciais"
+              className="flex min-h-[44px] items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 text-sm font-semibold text-piquete-blue hover:border-piquete-blue/30"
+            >
+              As minhas credenciais
+              <span aria-hidden>›</span>
+            </Link>
+          )}
 
           <EstatisticasDaConta profile={profile} />
+
+          {profile.role === 'CLIENT' && <OsMeusAvisos />}
+          {profile.role === 'CLIENT' && <OsMeusLocais profile={profile} />}
+          {profile.role === 'CLIENT' && <DadosDaEmpresa profile={profile} />}
 
           {isSettingsOpen ? <DefinicoesDaConta profile={profile} /> : <TelefoneRegistado telefone={profile.phone} />}
 

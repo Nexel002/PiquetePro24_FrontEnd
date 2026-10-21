@@ -9,7 +9,9 @@ import { Input } from '../components/ui/Input'
 import { useProfessionalCatalog } from '../hooks/useCatalog'
 import { useCreateDirectRequest } from '../hooks/useDirectRequest'
 import { useProfile } from '../hooks/useProfile'
-import { localDoPedido, textoDoLocal } from '../lib/localDoPedido'
+import { LOCAL_DO_PERFIL, localDoPedido, moradaEscolhida, textoDoLocal } from '../lib/localDoPedido'
+import { useClientLocations } from '../hooks/useClientLocations'
+import { EscolhaDoLocal } from '../components/pedidos/EscolhaDoLocal'
 import type { DirectRequestResult } from '../services/directRequest'
 
 // Fase 27: «Solicitar serviço» a um profissional (ou empresa). Carregar em enviar regista o pedido e
@@ -25,9 +27,13 @@ export function SolicitarServico() {
   const [descricao, setDescricao] = useState('')
   const [servicoEscolhido, setServicoEscolhido] = useState('')
   const [resultado, setResultado] = useState<DirectRequestResult | null>(null)
+  // Fase 40 (N6): a morada é a do perfil ou um local guardado do cliente.
+  const [escolhaDoLocal, setEscolhaDoLocal] = useState(LOCAL_DO_PERFIL)
+  const locais = useClientLocations(perfil?.role === 'CLIENT')
 
-  const local = perfil ? localDoPedido(perfil) : null
+  const local = moradaEscolhida(perfil, escolhaDoLocal, locais.data)
   const textoLocal = textoDoLocal(local)
+  const textoDoPerfil = textoDoLocal(perfil ? localDoPedido(perfil) : null)
   // Um só serviço: nem se pergunta. Vários: o cliente escolhe qual precisa.
   const servicoId = catalogo?.services.length === 1 ? catalogo.services[0].id : servicoEscolhido
 
@@ -163,6 +169,8 @@ export function SolicitarServico() {
                 className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-900 focus:border-piquete-blue focus:outline-none focus:ring-2 focus:ring-piquete-blue/20"
               />
             </label>
+
+            <EscolhaDoLocal locais={locais.data ?? []} textoDoPerfil={textoDoPerfil} valor={escolhaDoLocal} aoMudar={setEscolhaDoLocal} />
 
             {aCarregarPerfil && <div className="h-10 animate-pulse rounded-xl bg-gray-200" />}
 

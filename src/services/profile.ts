@@ -28,6 +28,11 @@ export interface UserProfile {
   // Nota de apresentação no catálogo do profissional (Fase 9) — disponível a
   // qualquer role, mesma decisão de avatar_url.
   bio: string | null
+  // Fase 40 (TRD Adendo v1.66, N6): só relevante num CLIENT. Opcionais: um backend anterior à
+  // Fase 33 não os envia.
+  client_type?: 'INDIVIDUAL' | 'BUSINESS'
+  business_name?: string | null
+  business_nuit?: string | null
   created_at: string
 }
 
@@ -62,6 +67,10 @@ export interface ProfileDetailsUpdatePayload {
   avatar_url?: string | null
   // Mesma convenção de null/undefined do avatar_url, aplicada a bio.
   bio?: string | null
+  // Fase 40: só um cliente os pode enviar; voltar a INDIVIDUAL apaga nome e NUIT no backend.
+  client_type?: 'INDIVIDUAL' | 'BUSINESS'
+  business_name?: string | null
+  business_nuit?: string | null
 }
 
 export async function fetchProfile(): Promise<UserProfile> {

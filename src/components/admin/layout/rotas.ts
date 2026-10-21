@@ -8,7 +8,7 @@ export const SECCAO_PEDIDOS = '/admin/pedidos-servico'
 export const SECCAO_VISAO_GERAL = '/admin/visao-geral'
 export const SECCAO_MAIS = '/admin/mais'
 
-export const SEPARADORES_DA_VISAO_GERAL = ['painel', 'metricas', 'relatorios', 'auditoria', 'sistema'] as const
+export const SEPARADORES_DA_VISAO_GERAL = ['painel', 'metricas', 'relatorios', 'procura', 'auditoria', 'sistema'] as const
 export const SEPARADORES_DE_MAIS = ['subscricoes', 'moderacao', 'servicos', 'comunicados', 'administradores', 'seguranca'] as const
 
 export type SeparadorDaVisaoGeral = (typeof SEPARADORES_DA_VISAO_GERAL)[number]

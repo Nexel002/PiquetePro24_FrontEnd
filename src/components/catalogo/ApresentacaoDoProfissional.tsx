@@ -3,6 +3,8 @@ import type { ProfessionalCatalog } from '../../services/catalog'
 import { INVITATIONS_PER_REQUEST } from '../../services/invitations'
 import { ContactoDoProfissional } from '../pedidos/ContactoDoProfissional'
 import { Mosaico } from '../ui/Mosaico'
+import { descreverZona } from './zona'
+import { SelosDeCredenciais } from './SelosDeCredenciais'
 
 interface ApresentacaoDoProfissionalProps {
   catalog: ProfessionalCatalog
@@ -42,6 +44,7 @@ function ContactoNoCatalogo({ catalog }: { catalog: ProfessionalCatalog }) {
 // ficam na coluna da foto (IdentidadeDoProfissional).
 export function ApresentacaoDoProfissional({ catalog, ehDono }: ApresentacaoDoProfissionalProps) {
   const nomeDoServico = catalog.services.length === 1 ? catalog.services[0].name : null
+  const zona = descreverZona(catalog.service_area)
 
   return (
     <section className="flex flex-col gap-5 rounded-[2.5rem] border border-gray-100 bg-white p-6 shadow-card sm:p-7">
@@ -49,6 +52,18 @@ export function ApresentacaoDoProfissional({ catalog, ehDono }: ApresentacaoDoPr
         <p className="whitespace-pre-wrap text-sm leading-relaxed text-piquete-gray-dark">{catalog.bio}</p>
       ) : (
         ehDono && <p className="text-sm italic text-piquete-gray">Ainda não escreveste uma descrição. Acrescenta uma no teu catálogo.</p>
+      )}
+
+      <SelosDeCredenciais credenciais={catalog.credentials} />
+
+      {zona && (
+        <p className="flex items-center gap-2 rounded-2xl bg-piquete-blue/5 px-3 py-2 text-xs font-semibold text-piquete-blue">
+          <svg className="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 21c-4.418-4.03-7-7.86-7-11a7 7 0 1114 0c0 3.14-2.582 6.97-7 11z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 11.5a2 2 0 100-4 2 2 0 000 4z" />
+          </svg>
+          {zona}
+        </p>
       )}
 
       <div className="flex gap-2.5">

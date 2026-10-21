@@ -15,6 +15,9 @@ export interface SearchedProfessional {
   // perto, km inteiro longe — Adendo v1.15, item C): nunca é a distância exata.
   distance_m: number | null
   is_nearby: boolean
+  // Fase 38 (TRD Adendo v1.66, N1): o profissional atende a zona do cliente (raio ou província).
+  // Os que atendem vêm primeiro na lista.
+  serves_area: boolean
 }
 
 export interface SearchProfessionalsParams {
@@ -22,6 +25,8 @@ export interface SearchProfessionalsParams {
   category?: string
   latitude?: number
   longitude?: number
+  // Província do cliente, enviada quando não há GPS, para o backend calcular serves_area.
+  province?: string
   limit: number
   offset: number
 }
@@ -39,6 +44,7 @@ export async function searchProfessionals(params: SearchProfessionalsParams): Pr
       category: params.category || undefined,
       latitude: params.latitude,
       longitude: params.longitude,
+      province: params.province || undefined,
       limit: params.limit,
       offset: params.offset,
     },

@@ -33,6 +33,8 @@ export interface ServiceRequest {
   is_direct?: boolean
   // Quando o profissional abriu o pedido e viu o contacto do cliente; null/ausente até lá.
   client_contact_viewed_at?: string | null
+  // Fase 42 (TRD Adendo v1.66, N3): o serviço recorrente que gerou este pedido; null/ausente nos outros.
+  recurring_request_id?: string | null
   // Só nas listas do cliente e da empresa, num pedido com técnico: o que o cliente pode ver (primeiro
   // nome, título e foto). Nunca telefone nem email.
   technician?: AssignedTechnician
@@ -192,6 +194,9 @@ export interface ServiceRequestContact {
   // null quando o pedido foi criado com a hierarquia manual (sem GPS).
   latitude: number | null
   longitude: number | null
+  // Fase 40 (TRD Adendo v1.66, N6): o cliente é uma empresa ou instituição — nome e NUIT para a
+  // factura. null num cliente particular (e opcional para versões do backend anteriores à Fase 33).
+  business?: { name: string | null; nuit: string | null } | null
 }
 
 // GET /service_requests/:id/contact (Backend TRD Adendo v1.12, item B) — só para o

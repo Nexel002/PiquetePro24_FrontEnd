@@ -1,6 +1,12 @@
 # Plano de Implementação — PiquetePro24 Frontend (PWA)
 
-Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo o Adendo v1.2. Este repositório cobre a PWA (React + Vite + Tailwind CSS + Framer Motion), alojada na Vercel, consumindo a API do repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend). O plano está dividido em 7 fases sequenciais, espelhando as fases do backend para permitir avanço paralelo e integração contínua entre os dois repositórios.
+Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo o Adendo v1.2. Este repositório cobre a PWA (React + Vite + Tailwind CSS + Framer Motion), alojada na Vercel, consumindo a API do repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend). O plano começou com 7 fases sequenciais, espelhando as fases do backend para permitir avanço paralelo e integração contínua entre os dois repositórios; tem hoje 37 (da Fase 8 em diante, acrescentadas por adendos do TRD).
+
+> **Estado em 21/10/2026 (TRD Adendo v1.65).** As Fases 0 a 37 estão em `main` e em produção (`https://piquete-pro24-front-end-beta.vercel.app`, versão 0.2.3). **As Fases 38 a 42** (ideias N1, N4, N6, N5 e N3 do Adendo v1.66, aprovadas pelo utilizador a 21/10/2026) estão implementadas em `feat/novas-funcionalidades`, só local, versão 0.3.0. O que falta nas Fases 0 a 37 já não é código:
+> 1. **Validar no browser e no telemóvel** os critérios por marcar das Fases 11 a 37 (quase todos são isso). Nesta máquina o Playwright não tem browsers instalados: os E2E só correm no CI.
+> 2. **Fase 7:** depende de um staging que não existe (backend, Fase 7).
+> 3. As **empresas e equipas** (Fases 23 a 26) dependem de 4 migrations do backend sem registo de aplicação (`Doc's/ESQUEMA_BASE_DADOS.md`, no backend).
+> 4. **Backlog** no fim deste plano: correcções e propostas da análise de 21/10/2026, por aprovar. As ideias N1 a N7 têm plano detalhado na secção «Propostas N1 a N7», a seguir ao backlog (TRD Adendo v1.66).
 
 ---
 
@@ -395,7 +401,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 12 — Dashboard de Entrada do Admin
 
-**Estado: implementada em `feat/dashboard-admin` (13/10/2026), por validar no browser.** Ver Adendo v1.39 do TRD.
+**Estado: em produção — integrada em `main` pelo merge `9d57177` de `feat/dashboard-admin`; por validar no browser.** Ver Adendo v1.39 do TRD.
 
 **Objetivo:** dar ao `ADMIN` uma entrada única (`/admin`) que mostre o que precisa de atenção agora e leve a todos os ecrãs de administração. Hoje o atalho «Painel Admin» da Home abre directamente `/admin/kyc`, as Métricas e o Registo de auditoria só se alcançam escrevendo o URL, e não há contadores de pendentes.
 
@@ -424,7 +430,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 13 — Subscrições e Pagamentos no Painel de Admin
 
-**Estado: implementada em `feat/dashboard-admin` (13/10/2026), só local, por validar no browser.** Ver Adendo v1.41 do TRD. Consome a Fase 15 do backend (backend primeiro).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.41 do TRD. Consome a Fase 15 do backend (backend primeiro).
 
 **Escopo:**
 - `pages/AdminSubscriptions.tsx` (`/admin/subscricoes`): separadores Subscrições (filtro: a expirar por omissão, activas, expiradas, sem pagamento) e Pagamentos (filtro por estado), paginados de 25 em 25; «Suspender» com motivo obrigatório.
@@ -439,7 +445,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 14 — Revisão de KYC mais completa
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.42 do TRD. Consome a Fase 16 do backend (migration primeiro).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.42 do TRD. Consome a Fase 16 do backend (migration primeiro).
 
 **Escopo (`pages/AdminKyc.tsx`):**
 - Cada submissão em análise mostra «Em espera há X» e, a partir de 48 h, «— em atraso» (texto, não só cor). Lógica em `lib/esperaKyc.ts` (`LIMITE_ESPERA_KYC_HORAS`).
@@ -455,7 +461,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 15 — Denúncias e Moderação
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.43 do TRD. Consome a Fase 17 do backend (migration primeiro).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.43 do TRD. Consome a Fase 17 do backend (migration primeiro).
 
 **Escopo:**
 - `components/moderacao/BotaoDenunciar.tsx`: formulário inline (motivo + detalhes) que cria a denúncia; confirma o envio e mostra o erro do servidor (ex. «já denunciaste»). Usado no catálogo de um profissional por quem **não** é o dono: a conta (fim da página), cada trabalho e cada comentário de avaliação.
@@ -471,7 +477,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 16 — Notas Internas e Disputas de Pedidos
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.44 do TRD. Consome a Fase 18 do backend (migration primeiro).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.44 do TRD. Consome a Fase 18 do backend (migration primeiro).
 
 **Escopo:**
 - `components/admin/NotasInternas.tsx` (`services/adminNotes.ts`, `hooks/useAdminNotes.ts`): escrever e ler notas de equipa; na ficha do utilizador (`AdminUserDetail`) e, atrás de um botão «Notas», em cada pedido de `AdminServiceRequests`.
@@ -485,7 +491,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 17 — Gestão de Serviços pelo Admin
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.45 do TRD. Consome a Fase 19 do backend (sem migration).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.45 do TRD. Consome a Fase 19 do backend (sem migration).
 
 **Escopo:**
 - `pages/AdminServices.tsx` (`/admin/servicos`; `services/adminCategories.ts`, `hooks/useAdminCategories.ts`): lista os serviços com o slug, as palavras de pesquisa e quantos profissionais os usam; criar, editar (nome e palavras; o slug não muda) e apagar com confirmação. «Apagar» fica desactivado enquanto há profissionais com o serviço; se um pedido ainda o referir, o 409 do backend aparece como mensagem.
@@ -501,7 +507,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 18 — Comunicados da Equipa
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.46 do TRD. Consome a Fase 20 do backend (migration primeiro).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.46 do TRD. Consome a Fase 20 do backend (migration primeiro).
 
 **Escopo:**
 - `pages/AdminBroadcasts.tsx` (`/admin/comunicados`; `services/adminBroadcasts.ts`, `hooks/useAdminBroadcasts.ts`): grupo (clientes / profissionais / todos) + província opcional, assunto e mensagem; **«Ver destinatários»** calcula o número; só então aparece «Enviar comunicado», com confirmação («Enviar para N pessoas? Não se pode desfazer.»), e esse N segue no pedido. Mudar o grupo depois de contar apaga o número.
@@ -516,7 +522,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 19 — Relatórios e Exportações
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.47 do TRD. Consome a Fase 21 do backend (sem migration).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.47 do TRD. Consome a Fase 21 do backend (sem migration).
 
 **Escopo:**
 - `pages/AdminReports.tsx` (`/admin/relatorios`; `services/adminReports.ts`, `hooks/useAdminReports.ts`): período «De / Até» (na hora de Maputo, UTC+2) que vale para o funil e para as exportações; funil de profissionais em barras com o número e a percentagem dos registados; três botões de exportação CSV (utilizadores, pedidos, pagamentos).
@@ -532,7 +538,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 20 — Verificação em Dois Passos do Admin
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser e contra o Supabase real.** Ver Adendo v1.48 do TRD. Pareada com a Fase 22 do backend (`ADMIN_REQUIRE_MFA`, desligada por omissão).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser e contra o Supabase real.** Ver Adendo v1.48 do TRD. Pareada com a Fase 22 do backend (`ADMIN_REQUIRE_MFA`, desligada por omissão).
 
 **Escopo:**
 - `services/mfa.ts` + `hooks/useMfa.ts`: estado (factor TOTP confirmado? nível da sessão), registo de factor (apaga antes os factores abandonados a meio, que o Supabase não deixa duplicar) e verificação do código — tudo directamente contra `supabase.auth.mfa`.
@@ -550,7 +556,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 21 — Estado do Sistema
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.49 do TRD. Consome a Fase 23 do backend (sem migration).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.49 do TRD. Consome a Fase 23 do backend (sem migration).
 
 **Escopo:**
 - `pages/AdminSystem.tsx` (`/admin/sistema`; `services/adminSystem.ts`, `hooks/useAdminSystem.ts`): base de dados (com a latência), cache e email, cada um com o estado **em texto** («A funcionar» / «Com falha» / «Desligado»), e uma nota quando está desligado a explicar o efeito (sem cache a app só é mais lenta; sem SMTP os emails ficam no log); modo de pagamentos e se o segundo factor é obrigatório; pendentes (KYC, denúncias, comunicados presos) com ligação ao ecrã de cada um. Actualiza de 30 em 30 segundos.
@@ -564,7 +570,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 22 — Gestão de Administradores
 
-**Estado: implementada em `feat/dashboard-admin` (14/10/2026), só local, por validar no browser.** Ver Adendo v1.50 do TRD. Consome a Fase 24 do backend (sem migration).
+**Estado: em produção — integrada em `main` pelo merge `9d57177`; por validar no browser.** Ver Adendo v1.50 do TRD. Consome a Fase 24 do backend (sem migration).
 
 **Escopo:**
 - `pages/AdminAdmins.tsx` (`/admin/administradores`; `services/adminAccounts.ts`, `hooks/useAdminAccounts.ts`): lista dos administradores (a própria conta marcada «(tu)»), formulário para adicionar (nome + email) e «Remover» com confirmação.
@@ -580,7 +586,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 23 — Empresas e Equipas: papel do técnico e ecrã «A minha equipa»
 
-**Estado: plano APROVADO pelo utilizador a 14/10/2026; implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.** Ver Adendo v1.51 do TRD e as Fases 25 a 28 do backend (modelo, regras e decisões). Backend primeiro.
+**Estado: plano APROVADO pelo utilizador a 14/10/2026; em produção — integrada em `main` pelo merge `1ee0998` de `feat/empresas-equipas`; por validar no browser.** Ver Adendo v1.51 do TRD e as Fases 25 a 28 do backend (modelo, regras e decisões). Backend primeiro.
 
 **Decisões (resumo):** o técnico tem **login próprio** (papel `TECHNICIAN`), criado pelo administrador da empresa; subscrição única da empresa; **máximo 15 técnicos**; **KYC da empresa e de cada técnico com a lógica que já existe**; técnico atribuído **só depois de a empresa ser escolhida**; **avaliação da empresa e do técnico**; um singular **não** se converte em empresa; Termos a dizer que a empresa responde pelos técnicos.
 
@@ -598,7 +604,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 24 — Empresas e Equipas: atribuir técnico ao pedido
 
-**Estado: implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.** (A página «Os meus trabalhos» do técnico passou para a Fase 23.)
+**Estado: em produção — integrada em `main` pelo merge `1ee0998` de `feat/empresas-equipas`; por validar no browser.** (A página «Os meus trabalhos» do técnico passou para a Fase 23.)
 
 - Em «Trabalhos aceites» da **empresa**: cada pedido ganha **«Atribuir técnico»** (só técnicos activos, com KYC aprovado e que façam o serviço do pedido) e um aviso para os pedidos **ainda sem técnico**.
 - O cliente, em «Os meus pedidos», vê o técnico do pedido: «Vem o João · Canalizador», com a foto ou a inicial. Nunca telefone nem email.
@@ -612,7 +618,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 25 — Empresas e Equipas: equipa no catálogo e avaliação do técnico
 
-**Estado: implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.**
+**Estado: em produção — integrada em `main` pelo merge `1ee0998` de `feat/empresas-equipas`; por validar no browser.**
 
 - `ProfessionalCatalog`: secção **«A equipa»** (foto, nome próprio, título, nota; nunca telefone), só técnicos aprovados.
 - Formulário de avaliação (`MyServiceRequests`): nota da **empresa** e, se o pedido teve técnico, nota **opcional do técnico**; as avaliações do catálogo da empresa mostram o técnico.
@@ -625,7 +631,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 26 — Empresas e Equipas: termos e administração
 
-**Estado: implementada em `feat/empresas-equipas` (15/10/2026), só local, por validar no browser.**
+**Estado: em produção — integrada em `main` pelo merge `1ee0998` de `feat/empresas-equipas`; por validar no browser.**
 
 - **Termos de utilização** (`data/termosDeUtilizacao.ts`): **secção nova «5. Se és uma empresa»** (a empresa é o profissional perante o cliente e paga a subscrição única que cobre a equipa; **responde pelos seus técnicos**; máximo de 15 técnicos ativos; cada técnico tem conta e identidade verificada próprias; o contacto do cliente só é revelado à empresa e ao técnico atribuído, com a empresa verificada e subscrita; o cliente vê o primeiro nome, o título e a foto do técnico e avalia a empresa e o técnico; a empresa garante que o técnico aceita o tratamento dos seus dados; um técnico só pode estar numa empresa de cada vez). A secção 2 diz que **um singular não se converte em empresa**. As secções 5 a 12 passam a 6 a 13 e as referências cruzadas foram ajustadas; data de atualização passa a 15 de outubro de 2026. **Rascunho de produto: tem de ser revisto por um jurista antes de ser vinculativo**, em especial a secção 5.
 - **Admin:** `EquipaNaFicha` (ficha de uma empresa: técnicos com KYC, título, email e trabalhos em curso, cada nome a levar à ficha do técnico), `EmpresaNaFicha` (ficha de um técnico: a empresa e o estado dele nela); filtro «Técnicos» na lista de utilizadores; «Técnicos» nas métricas.
@@ -638,7 +644,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 27 — Solicitar Serviço (pedido direto)
 
-**Estado: implementada em `feat/pedido-direto` (16/10/2026), só local, por validar no browser.** Ver Adendo v1.52 do TRD. Consome a Fase 29 do backend (migration primeiro).
+**Estado: em produção — integrada em `main` pelo merge `5ce41e1` de `feat/pedido-direto`; por validar no browser.** Ver Adendo v1.52 do TRD. Consome a Fase 29 do backend (migration primeiro).
 
 **Decisão do utilizador:** o cliente vê o telefone do profissional (singular ou empresa) **só depois de carregar em «Solicitar serviço»**, e o profissional vê o cliente **ao carregar em «Ver pedido de serviço»**. Obriga a seguir o fluxo: sem pedidos registados não há estados, fotos nem avaliações.
 
@@ -659,7 +665,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 28 — Contacto do profissional à vista no catálogo
 
-**Estado: implementada em `feat/pedido-direto` (16/10/2026), só local, por validar no browser.** Ver Adendo v1.53 do TRD. Consome a Fase 30 do backend. Substitui a regra «o catálogo nunca mostra telefone» da Fase 27.
+**Estado: em produção — integrada em `main` pelo merge `5ce41e1` de `feat/pedido-direto`; por validar no browser.** Ver Adendo v1.53 do TRD. Consome a Fase 30 do backend. Substitui a regra «o catálogo nunca mostra telefone» da Fase 27.
 
 **Decisão do utilizador:** nome e telefone do profissional (singular ou empresa) explícitos e sempre visíveis no catálogo, sem clicar. O botão «Solicitar serviço» mantém-se como a via que **regista** o pedido.
 
@@ -677,7 +683,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 29 — Correcção: captar a localização
 
-**Estado: corrigida em `fix/captar-localizacao` (16/10/2026), só local, por validar no telemóvel e no browser.** Ver Adendo v1.54 do TRD. Só frontend; o backend não mudou.
+**Estado: em produção — integrada em `main` pelo merge `3b8c3c1` de `fix/captar-localizacao`; por validar no telemóvel e no browser.** Ver Adendo v1.54 do TRD. Só frontend; o backend não mudou.
 
 **Problema reportado:** «a funcionalidade captar localização não está a funcionar». O sintoma exato não foi indicado; a análise do código encontrou quatro causas prováveis, todas tratadas:
 - **Só GPS, 10 s:** `getCurrentPosition` com `enableHighAccuracy: true` e sem `maximumAge` dava TIMEOUT/POSITION_UNAVAILABLE em portáteis e em telemóveis dentro de casa, embora o browser soubesse a zona por Wi-Fi. Agora tenta o GPS (8 s) e, se falhar sem ser por permissão, a localização aproximada (15 s, aceita posição de há até 10 min).
@@ -694,7 +700,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 30 — Aviso de nova versão: mostra o que realmente muda
 
-**Estado: implementada em `fix/novidades-do-aviso` (14/10/2026), só frontend.** Ver Adendo v1.55 do TRD.
+**Estado: implementada em `fix/novidades-do-aviso` (14/10/2026), em `main` pelo merge `4e92d69` (19/10/2026), só frontend.** Ver Adendo v1.55 do TRD.
 
 **Problema reportado:** o aviso «Nova versão disponível» mostrava novidades que não tinham a ver com a versão e uma data que não era a do dia, e tem de mostrar sempre o que realmente está a ser actualizado. **Causa:** `public/novidades.json` era editado à mão (Adendo v1.29, item C) e não foi actualizado nas entregas seguintes; e, mesmo actualizado, dizia «a última versão» a todos, mesmo a quem tinha saltado versões.
 
@@ -730,7 +736,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 32 — Admin sem segundo factor é levado à Segurança
 
-**Estado: implementada em `fix/mfa-admin-reencaminha-para-seguranca` (19/10/2026), só frontend, por validar no browser.** Ver Adendo v1.57 do TRD. Completa a Fase 20.
+**Estado: implementada em `fix/mfa-admin-reencaminha-para-seguranca` (19/10/2026), em `main` pelo merge `ce36aa4`, só frontend, por validar no browser.** Ver Adendo v1.57 do TRD. Completa a Fase 20.
 
 **Problema reportado:** com `ADMIN_REQUIRE_MFA=true` e uma conta ADMIN sem factor registado, o painel abria e todas as listas davam 403 (`GET /admin/users` → 403), sem indicação do que fazer.
 
@@ -749,7 +755,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 33 — Localização captada a mais de 1 km do sítio real
 
-**Estado: implementada (19/10/2026), só frontend, por validar no telemóvel.** Ver Adendo v1.58 do TRD.
+**Estado: implementada (19/10/2026), em `main` pelo merge `8141584` de `fix/localizacao-precisao`, só frontend, por validar no telemóvel.** Ver Adendo v1.58 do TRD.
 
 **Problema reportado:** o serviço de localização grava, em alguns casos, um ponto a mais de 1 km de onde o utilizador está.
 
@@ -766,7 +772,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 34 — Painel de admin: menu lateral e secções com separadores
 
-**Estado: implementada em `feat/redesign-tela-usuarios-admin` (19/10/2026), só frontend, por commitar e validar no browser.** Ver Adendo v1.59 do TRD. Pedido do utilizador: adoptar a lógica do menu lateral e dos separadores do ControlCore.
+**Estado: implementada em `feat/redesign-tela-usuarios-admin` (19/10/2026), em `main` pelo merge `5d43b97` (versão 0.2.0) e corrigida em `f7bcab7`, só frontend, por validar no browser.** Ver Adendo v1.59 do TRD. Pedido do utilizador: adoptar a lógica do menu lateral e dos separadores do ControlCore.
 
 **Feito:**
 - `components/admin/layout/`: `LayoutDeAdmin` (barra fixa em `lg+`, recolhível; gaveta abaixo de `lg`), `BarraLateral` (grupos, secção acesa, selo de KYC, perfil e terminar sessão), `Cabecalho` (☰ e nome da secção), `caminhoActivo`, `seccoes`, `rotas` (secções, separadores e rotas antigas), `ParaOSeparador`.
@@ -788,7 +794,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 35 — Localização em zonas com pouca cobertura e logótipo oficial
 
-**Estado: implementada em `fix/logotipo-e-localizacao-aproximada` (20/10/2026), só frontend, por validar no telemóvel.** Ver Adendo v1.60 do TRD. Revê a decisão em aberto da Fase 33 (o limiar de 500 m).
+**Estado: implementada em `fix/logotipo-e-localizacao-aproximada` (20/10/2026), em `main` pelo merge `f68eea3`, só frontend, por validar no telemóvel.** Ver Adendo v1.60 do TRD. Revê a decisão em aberto da Fase 33 (o limiar de 500 m).
 
 **Problema reportado:** (1) o logótipo mostrado na app não é o oficial (`public/logo.png`); (2) na Av. das Indústrias a localização deu erro: a melhor leitura em 15 s passava dos 500 m e era recusada. No Perfil, sem selecção manual, ficava-se sem forma de se localizar.
 
@@ -810,7 +816,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 36 — Localização captada em segundo plano depois do login
 
-**Estado: implementada em `fix/logotipo-e-localizacao-aproximada` (20/10/2026), só frontend, por validar no telemóvel.** Ver Adendo v1.61 do TRD. Proposta do utilizador, aprovada com as quatro regras abaixo: a captação (até 30 s, Fase 35) começa depois do login, e quando a pessoa carrega no botão a posição já está pronta.
+**Estado: implementada em `fix/logotipo-e-localizacao-aproximada` (20/10/2026), em `main` pelo merge `f68eea3`, só frontend, por validar no telemóvel.** Ver Adendo v1.61 do TRD. Proposta do utilizador, aprovada com as quatro regras abaixo: a captação (até 30 s, Fase 35) começa depois do login, e quando a pessoa carrega no botão a posição já está pronta.
 
 **Regras:**
 1. Só arranca sozinha se a permissão de localização já estiver concedida (`navigator.permissions`). Sem ela, o pedido continua a vir do botão: um pedido de permissão sem gesto do utilizador é recusado por reflexo e penalizado pelo browser.
@@ -836,7 +842,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 37 — Actualização automática da app
 
-**Estado: implementada em `fix/actualizacao-automatica` (20/10/2026), só frontend.** Ver Adendo v1.63 do TRD.
+**Estado: implementada em `fix/actualizacao-automatica` (20/10/2026), em `main` pelo merge `2012864` (versão 0.2.2), só frontend.** Ver Adendo v1.63 do TRD.
 
 **Problema reportado:** (1) a actualização exigia carregar em «Actualizar agora», e o aviso às vezes demorava a aparecer; (2) utilizadores antigos não viam alterações já publicadas, como o logótipo oficial no telemóvel.
 
@@ -859,6 +865,102 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 38 — Zona de atendimento do profissional (N1)
+
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N1). Consome a Fase 31 do backend (migration primeiro, depois backend, depois frontend).
+
+**Escopo:**
+- `components/catalogo/ZonaDeAtendimento.tsx` em «O meu catálogo» (secção «Onde trabalhas»): raio em botões (5, 10, 25, 50, 100 km ou «Não definido») e as 11 províncias (`lib/provinces.ts`), com aviso quando o perfil não tem localização (o raio ainda não conta). Grava por `useUpdateServiceArea`, que invalida o catálogo e a pesquisa.
+- `components/catalogo/zona.ts` (`descreverZona`): «Atende: até 25 km · Cidade de Maputo, Maputo» na apresentação do catálogo; nada quando não há zona.
+- Pesquisa: sem GPS, `useProfessionalSearch` envia a província do perfil (só se for uma das 11); o cartão mostra o selo «Atende a tua zona» em texto.
+- Tipos: `ServiceArea` e `service_area` em `services/catalog.ts`; `serves_area` e `province` em `services/professionalSearch.ts`.
+
+**Desvio ao plano:** N2 (preço indicativo) foi adiado pelo utilizador; nada de preço nesta fase (nem `lib/dinheiro.ts`).
+
+**Critérios de Entrega:**
+- [x] Editor: sem mudanças não grava, escolher raio e província, tirar província guardada e «Não definido», aviso sem localização, erro do servidor no toast; `descreverZona` — 6 testes (`ZonaDeAtendimento.test.tsx`).
+- [x] Selo «Atende a tua zona» só em quem atende — 1 teste novo em `FindProfessionals.test.tsx` (que passou a simular `useProfile`).
+- [ ] Visto no browser a 390 px e contra o backend real (migration da Fase 31 aplicada).
+
+---
+
+## Fase 39 — Procura sem oferta (N4)
+
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N4). Consome a Fase 32 do backend.
+
+**Escopo:**
+- `components/busca/AvisaMe.tsx`: «Ainda não há [serviço] perto de ti. Queres que te avisemos quando houver?», com a província do perfil pré-escolhida (pode mudar) e confirmação no ecrã. Aparece em `ResultadosDaBusca` só para **clientes** com um **serviço escolhido**, quando não há ninguém, ou quando há localização e ninguém está perto nem atende a zona (a mesma regra do backend).
+- `components/profile/OsMeusAvisos.tsx` no Perfil (só `CLIENT`; não aparece sem avisos), com «Apagar».
+- Admin: separador **«Procura»** na Visão Geral (`pages/AdminProcura.tsx` + `components/admin/procura/TabelaDaProcura.tsx`): serviço × província, procuras, clientes, avisos pendentes, profissionais elegíveis e o selo «Falta oferta» em texto; filtro de datas e «Exportar CSV» (o mecanismo de `ExportacoesCsv`).
+- `services/searchAlerts.ts`, `hooks/useSearchAlerts.ts`; `fetchProcura`/`useProcura` e o tipo de exportação `demand` em `services/adminReports.ts`.
+- Termos de utilização, secção 9: o registo das pesquisas sem resultado (grelha de ~1 km, 12 meses) e dos avisos. Data dos termos: 21/10/2026.
+
+**Critérios de Entrega:**
+- [x] `AvisaMe`: pedido com a província do perfil, mudar a província, província inválida no perfil, 409 do servidor; quando aparece e quando não aparece (com alguém perto, a atender a zona, sem localização com resultados, não cliente) — 5 testes.
+- [x] `OsMeusAvisos`: lista com estado, apagar, escondido sem avisos, erro — 3 testes. `AdminProcura`: dados com «Falta oferta», vazio e erro — 3 testes.
+- [ ] Visto no browser a 390 px e contra o backend real (migration da Fase 32 aplicada).
+
+---
+
+## Fase 40 — Clientes empresariais e locais guardados (N6)
+
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N6). Consome a Fase 33 do backend.
+
+**Escopo:**
+- Perfil do cliente: `components/profile/DadosDaEmpresa.tsx` («Sou uma empresa ou instituição», nome, NUIT de 9 dígitos validado antes de enviar) e `components/profile/OsMeusLocais.tsx` (lista, acrescentar com província/distrito/bairro e, opcionalmente, as coordenadas GPS do perfil; apagar; limite de 20).
+- Pedidos: `components/pedidos/EscolhaDoLocal.tsx` em «Novo pedido» e «Solicitar serviço» — a localização do perfil ou um local guardado (só aparece a quem tem locais).
+- «Os meus pedidos»: «Exportar (CSV)» (`components/pedidos/ExportarOsMeusPedidos.tsx`, reutiliza `guardarFicheiro`).
+- Contacto do cliente (`ContactoCliente`): «Facturar a: nome · NUIT» quando o cliente é empresa.
+- `services/clientLocations.ts`, `hooks/useClientLocations.ts`; tipos novos em `services/profile.ts` e `services/serviceRequests.ts` (opcionais, para não partir contra um backend antigo).
+- Termos de utilização, secção 9: nome e NUIT mostrados ao profissional do pedido.
+
+**Desvio ao plano:** o frontend **copia** o local guardado para `location` (`lib/localDoPedido.ts`, `moradaEscolhida`) em vez de enviar `saved_location_id`. Assim o pedido continua a poder ir para a fila offline (Fase 5) e sai igual sem rede; `saved_location_id` fica disponível na API.
+
+**Critérios de Entrega:**
+- [x] Dados da empresa (enviar, NUIT incompleto e nome em falta bloqueiam, voltar a particular), locais (acrescentar com coordenadas do perfil, listar e apagar), `moradaEscolhida` (perfil, local copiado, local apagado) — 6 testes (`ClienteEmpresarial.test.tsx`). Os testes de Perfil, Novo pedido, Solicitar serviço e Os meus pedidos passaram a simular `useClientLocations`.
+- [ ] Visto no browser a 390 px e contra o backend real (migration da Fase 33 aplicada); confirmar o CSV no Excel.
+
+---
+
+## Fase 41 — Selos de credenciais (N5)
+
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N5). Consome a Fase 34 do backend.
+
+**Escopo:**
+- `pages/Credentials.tsx` em `/credenciais` (profissional e técnico; sem `OnboardingGate`, como os trabalhos do técnico): enviar, ver o estado e o motivo de uma rejeição, apagar. Atalho «As minhas credenciais» no Perfil.
+- `components/credenciais/FormularioDeCredencial.tsx`: tipo, título, emissor, datas e fotografia (upload por URL assinado, como o KYC). O registo criminal exige a data de emissão; validade anterior à emissão bloqueia.
+- `components/catalogo/SelosDeCredenciais.tsx`: «Registo criminal verificado, válido até 03/2027», na apresentação do profissional e em cada técnico da equipa.
+- Admin: separador **«Credenciais»** na secção KYC (`components/admin/kyc/FilaDeCredenciais.tsx`): titular e KYC dele, «Ver documento» (URL de 60 s pedido só ao carregar, mostrado como imagem), aprovar, rejeitar com motivo obrigatório.
+- `services/credentials.ts`, `services/adminCredentials.ts`, `hooks/useCredentials.ts`, `hooks/useAdminCredentials.ts`; `credentials` (opcional) em `services/catalog.ts`.
+- Termos de utilização, secção 9: os documentos das credenciais.
+
+**Desvio ao plano:** o visualizador ficou dentro de `FilaDeCredenciais` (imagem com ligação para o tamanho real) em vez de um `VisualizadorDeDocumento` partilhado — o KYC (problema 3 do Adendo v1.65) não foi aprovado, por isso ainda não há segundo uso.
+
+**Critérios de Entrega:**
+- [x] Formulário (registo criminal sem emissão bloqueado, envio com ficheiro, datas trocadas), selos (texto com validade, nada sem credenciais), fila do admin (documento só a pedido, imagem com o URL, rejeitar exige motivo, fila vazia) — 6 testes (`Credenciais.test.tsx`).
+- [ ] Visto no browser e num telemóvel, contra o backend real (migration da Fase 34 aplicada): upload, URL de 60 s e selo no catálogo.
+
+---
+
+## Fase 42 — Serviços recorrentes (N3)
+
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser. Versão 0.3.0 (entrada em `novidadesPorVersao.json` cobre as Fases 38 a 42).** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N3). Consome a Fase 35 do backend.
+
+**Escopo:**
+- «Os meus pedidos»: «Repetir regularmente» nos pedidos concluídos com profissional e serviço (`components/pedidos/RepetirRegularmente.tsx`: frequência, próxima data a partir de amanhã em Maputo e as três datas seguintes, com a mesma regra do backend); ligação a «Serviços recorrentes».
+- `pages/RecurringRequests.tsx` em `/servicos-recorrentes` (o endereço dos emails do backend): estado, próxima data, pausar, retomar, cancelar; explica a pausa por falhas e o motivo de quem deixou de aceitar.
+- «Trabalhos aceites»: etiqueta «Recorrente» nos pedidos que vêm de uma recorrência e a secção `components/pedidos/RecorrenciasDoProfissional.tsx` com «Deixar de aceitar» (motivo obrigatório).
+- `services/recurringRequests.ts`, `hooks/useRecurringRequests.ts`; `recurring_request_id` (opcional) no tipo do pedido.
+- Termos de utilização, secção 3: os serviços recorrentes.
+
+**Desvio ao plano:** a lista do cliente é um ecrã próprio (`/servicos-recorrentes`) e não uma secção de «Os meus pedidos»: é para lá que os emails do backend apontam.
+
+**Critérios de Entrega:**
+- [x] Datas (mensal com fim de mês, mudança de ano), marcar com as próximas datas e confirmação, data antes de amanhã bloqueada, lista do cliente (pausar, cancelar, retomar, pausa por falhas, motivo do profissional, vazio), «Deixar de aceitar» com motivo obrigatório, secção escondida sem recorrências — 9 testes (`Recorrentes.test.tsx`).
+- [ ] Visto no browser e contra o backend real (migration da Fase 35 aplicada), incluindo uma vez criada pelo job.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -873,6 +975,185 @@ Fase 0 (Fundação PWA)
                                ├─> Fase 8 (Painel de Administração Avançado — depende da Fase 9 do backend)
                                └─> Fase 9 (Catálogo do Profissional — depende da Fase 10 do backend)
                                       └─> Fase 10 (Pesquisa por Serviço, Pedido a Vários & Propostas — depende da Fase 11 do backend)
+                                             ├─> Fase 11 (Portfólio por trabalho — backend 12)
+                                             ├─> Fases 12–22 (Painel de admin completo — backend 9 e 15–24) ─> Fases 31, 32 e 34 (refinamento, dois passos, menu lateral)
+                                             ├─> Fases 23–26 (Empresas e equipas — backend 25–28)
+                                             └─> Fase 27 (Pedido directo — backend 29) ─> Fase 28 (Contacto no catálogo — backend 30)
+
+Só frontend, sem dependência do backend: Fases 29, 33, 35 e 36 (localização), 30 e 37 (aviso e actualização da app).
 ```
 
 **Alinhamento com o Backend:** cada fase deste plano depende do endpoint correspondente já estar disponível (ainda que em staging) no repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend) — Fase 1 ↔ Backend Fase 2, Fase 2/3 ↔ Backend Fase 3, Fase 4 ↔ Backend Fases 4-5, Fase 7 ↔ Backend Fase 7. A documentação OpenAPI publicada desde cedo pelo backend (ver Adendo v1.2 no plano do backend) é o contrato de referência para desbloquear o desenvolvimento do frontend antes de cada endpoint estar 100% pronto (mock local contra o schema documentado).
+
+A correspondência completa, fase a fase, entre os dois planos está no fim de `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` («Correspondência com as fases do frontend»).
+
+---
+
+## Backlog — propostas da análise de 21/10/2026 (por aprovar)
+
+Origem: TRD Adendo v1.65. **Nada aqui está aprovado.** Cada item, quando aprovado, passa a fase própria com adendo do TRD e critérios de entrega, depois da fase correspondente do backend (backend primeiro). A ordem dentro de cada grupo é a ordem recomendada.
+
+**Verificação (sem código):**
+- [ ] Sessão de validação no telemóvel e no browser com os critérios por marcar das Fases 11 a 37, por esta ordem: pedido directo e contacto (27, 28), empresas (23 a 26, depois de confirmadas as migrations do backend), localização (29, 33, 35, 36), actualização da app (37), painel de admin (12 a 22, 31, 32, 34).
+- [ ] Lighthouse com sessão e em produção (Fases 5 e 6).
+
+**Correcções (Adendo v1.65, parte C):**
+- [ ] **Problema 2** — na pesquisa, o selo «Responde a pedidos» e os elegíveis primeiro; na escolha dos 3, explicar porque um profissional não conta.
+- [ ] **Problema 3** — o cartão de KYC mostra a imagem do documento (URL assinado do backend), com zoom.
+- [ ] **Problema 5** — enquanto não há notificações (D2): no ecrã «Os meus pedidos», um indicador de propostas novas por pedido, para quem se registou por telefone e não recebe email.
+- [ ] **Problema 6** — «Trabalho terminado» do lado do profissional; confirmar ou contestar do lado do cliente; pedido de avaliação logo a seguir.
+- [ ] **Problema 7** — prazo de resposta visível nos convites e nos pedidos directos; «Recusar» no pedido directo, com motivo.
+- [ ] **Problema 9** — estado real na lista de utilizadores do admin (`banned_until`); reconhecer o 403 dos dois passos pelo `code` (depois do backend); favoritos guardados no servidor; contraste do «24» do logótipo.
+
+**Funcionalidades (Adendo v1.65, parte D):**
+- [ ] D2 — central de notificações no sino (lista, marcar como lido) e Web Push no service worker, com o pedido de permissão só depois de uma acção do utilizador (como na localização, Fase 36).
+- [ ] D2 — botão «Abrir no WhatsApp» (`wa.me`) onde hoje aparece o telefone do profissional e do cliente.
+- [ ] D1 — ecrã de subscrição com pagamento real, período experimental e escolha de plano.
+- [ ] D2 — pedido urgente; «Disponível agora» e horário no perfil do profissional; fotos e data preferida no formulário do pedido.
+- [ ] D3 — motivo ao cancelar; avaliar o cliente (profissional); responder a uma avaliação.
+- [ ] D4 — painel de desempenho do profissional (convites, propostas, taxa de escolha, visualizações do catálogo).
+- [ ] D5 — selfie com o BI no ecrã de KYC.
+
+**Ideias novas (Adendo v1.65, D7 — plano detalhado no TRD Adendo v1.66 e na secção «Propostas N1 a N7» abaixo):**
+- [ ] N1 — zona de atendimento do profissional.
+- [ ] N2 — preço indicativo por serviço.
+- [ ] N3 — serviços recorrentes (depois dos problemas 6 e 7).
+- [ ] N4 — procura sem oferta e avisos ao cliente.
+- [ ] N5 — selos de credenciais.
+- [ ] N6 — clientes empresariais e locais guardados.
+- [ ] N7 — pagamento do serviço pela app, com comissão (bloqueada pelo parecer jurídico e pelo M-Pesa real).
+
+**Técnico (Adendo v1.65, parte E):**
+- [ ] Testes de componente de `MyServiceRequests` e `AssignedServiceRequests` (Fase 16).
+- [ ] `framer-motion`: remover das dependências ou usá-lo (hoje nenhum ficheiro de `src/` o importa).
+- [ ] `README.md` do repositório.
+
+---
+
+## Propostas N1 a N7 — implementação no frontend (por aprovar)
+
+**Estado: PLANO, por aprovar (TRD Adendo v1.66, 21/10/2026).** O objectivo, as regras, as decisões e as perguntas de cada proposta estão no TRD, Adendo v1.66. Os endpoints e a migration de cada uma estão no plano do backend, na secção com o mesmo nome. Aqui fica só o que se faz neste repositório. Ao ser aprovada, uma proposta passa a «Fase 38», «Fase 39»… pela ordem de aprovação, **sempre depois** da fase do backend correspondente estar em produção.
+
+**Regras para todas.** São as mesmas de qualquer fase deste plano:
+- **Camadas:** chamadas em `src/services/`, estado de servidor em hooks do TanStack Query em `src/hooks/`, tipos iguais ao que a API devolve.
+- **Estados:** quatro em cada ecrã — a carregar (esqueleto), erro (mensagem compreensível), vazio e com dados.
+- **Desenho:** mobile-first (390 px primeiro) e componentes de `src/components/ui/`.
+- **Testes:** um teste de componente por ecrã novo (Vitest + Testing Library), ao nível dos que já existem.
+- **Versão:** cada entrega visível sobe a versão do `package.json` e acrescenta uma entrada em `src/data/novidadesPorVersao.json`.
+
+### N1 + N2 — Zona de atendimento e preço indicativo
+
+> **21/10/2026:** N1 aprovada e implementada como **Fase 38**. N2 **adiada** pelo utilizador: o que abaixo diz respeito ao preço continua por aprovar.
+
+| Ficheiro | Acção | O quê |
+|---|---|---|
+| `src/lib/dinheiro.ts` (+ `.test.ts`) | criar | `formatarMzn(valor)` e `rotuloDaUnidade(unidade)`. Hoje o formato dos preços em MZN repete-se em `RequestProposals.tsx` e `ReceivedInvitations.tsx`: os dois passam a usar este |
+| `src/services/catalog.ts`, `src/services/professionalSearch.ts`, `src/services/serviceCategories.ts` | alterar | Tipos: `service_area` e o preço em cada serviço do catálogo; `serves_area`, `price_from`, `price_unit` na pesquisa; `updateServiceArea()` e `updateServicePrice()` |
+| `src/hooks/useCatalog.ts`, `src/hooks/useServiceCategories.ts` | alterar | `useUpdateServiceArea` e `useUpdateServicePrice`; invalidam a chave do catálogo do próprio |
+| `src/components/catalogo/ZonaDeAtendimento.tsx` | criar | Editor: raio em botões (5, 10, 25, 50, 100 km, «Não definido») e províncias em caixas de selecção (`MOZAMBIQUE_PROVINCES`). Aviso quando o perfil não tem localização: o raio não conta |
+| `src/components/catalogo/PrecoDoServico.tsx` | criar | Por serviço escolhido: valor e unidade, «Retirar preço» e o rótulo «indicativo» |
+| `src/pages/MyCatalog.tsx` | alterar | Secções «Onde trabalho» e preços junto da lista de serviços |
+| `src/components/catalogo/ApresentacaoDoProfissional.tsx` | alterar | «Atende: até 25 km · Maputo, Matola» e os preços («a partir de 500 MZN por visita — indicativo») |
+| `src/hooks/useProfessionalSearch.ts`, `src/pages/FindProfessionals.tsx` | alterar | Sem GPS, enviar a província do perfil (`province`) |
+| `src/components/busca/CartaoDeProfissional.tsx` | alterar | Selo «Atende a tua zona» (com texto, não só cor) e «a partir de …» quando há filtro de serviço |
+
+**Critérios de entrega**
+- [ ] Editar zona e preço, com erro do servidor e gravação optimista desfeita — testes de `ZonaDeAtendimento` e `PrecoDoServico`.
+- [ ] Cartão da pesquisa com e sem selo, com e sem preço — teste.
+- [ ] Catálogo de um profissional sem zona nem preços igual ao de hoje — teste.
+- [ ] Visto num telemóvel a 390 px: botões do raio com alvo de toque adequado.
+
+### N3 — Serviços recorrentes
+
+> **21/10/2026:** aprovada e implementada como **Fase 42**.
+
+**Pré-requisito:** os ecrãs da conclusão pelo profissional e da recusa (Adendo v1.65, problemas 6 e 7).
+
+| Ficheiro | Acção | O quê |
+|---|---|---|
+| `src/services/recurringRequests.ts`, `src/hooks/useRecurringRequests.ts` | criar | Chamadas e hooks; ao criar, mudar ou recusar, invalidam as listas de recorrências e de pedidos |
+| `src/components/pedidos/RepetirRegularmente.tsx` | criar | Frequência (semanal, de 15 em 15 dias, mensal) e data da próxima vez; mostra as três datas seguintes antes de confirmar |
+| `src/components/pedidos/ListaDeRecorrencias.tsx` | criar | Estado (activa, pausada, cancelada, falhas), próxima data, pausar, retomar, mudar e cancelar |
+| `src/pages/MyServiceRequests.tsx` | alterar | Botão «Repetir regularmente» nos pedidos concluídos com profissional; secção «Recorrentes» |
+| `src/pages/AssignedServiceRequests.tsx` | alterar | Etiqueta «Recorrente» nos pedidos que vêm de uma recorrência; «Deixar de aceitar» com motivo |
+
+**Critérios de entrega**
+- [ ] Criar, pausar, retomar e cancelar; ver as próximas datas; recusar do lado do profissional — testes.
+- [ ] Estado vazio («Ainda não tens serviços recorrentes») e recorrência pausada por falhas, com o motivo — teste.
+
+### N4 — Procura sem oferta
+
+> **21/10/2026:** aprovada e implementada como **Fase 39**.
+
+| Ficheiro | Acção | O quê |
+|---|---|---|
+| `src/services/searchAlerts.ts`, `src/hooks/useSearchAlerts.ts` | criar | Avisos do cliente |
+| `src/components/busca/AvisaMe.tsx` | criar | «Ainda não há [serviço] perto de ti. Avisa-me quando houver», com a província do perfil pré-escolhida; confirma por toast |
+| `src/components/busca/ResultadosDaBusca.tsx` | alterar | Mostrar `AvisaMe` quando não há ninguém perto (lista vazia ou só «Outros profissionais») e há um serviço escolhido |
+| `src/components/profile/OsMeusAvisos.tsx`, `src/pages/Profile.tsx` | criar / alterar | Lista dos avisos com «Apagar» (só `CLIENT`) |
+| `src/services/adminReports.ts`, `src/hooks/useAdminReports.ts` | alterar | Procura e exportação |
+| `src/components/admin/procura/TabelaDaProcura.tsx` | criar | Serviço × província: procuras, clientes, avisos pendentes e profissionais elegíveis, ordenada pela falta de oferta. Filtro de datas e «Exportar CSV» (o mesmo mecanismo de `ExportacoesCsv.tsx`) |
+| `src/pages/AdminVisaoGeral.tsx` | alterar | Separador novo «Procura» |
+| `src/data/termosDeUtilizacao.ts` | alterar | Frase sobre o registo das pesquisas sem resultado (grelha de ~1 km, 12 meses) |
+
+**Critérios de entrega**
+- [ ] `AvisaMe` aparece só no caso certo; criar, duplicado (mensagem do 409) e apagar — testes.
+- [ ] Separador «Procura» com dados, vazio e erro — teste.
+
+### N5 — Selos de credenciais
+
+> **21/10/2026:** aprovada e implementada como **Fase 41**.
+
+| Ficheiro | Acção | O quê |
+|---|---|---|
+| `src/services/credentials.ts`, `src/hooks/useCredentials.ts` | criar | Upload (URL assinado, como o KYC em `services/kyc.ts`), submeter, listar e apagar |
+| `src/pages/Credentials.tsx`, `src/App.tsx` | criar / alterar | Ecrã `/credenciais` (`PROFESSIONAL` e `TECHNICIAN`), com a lista, o estado e o motivo de rejeição de cada credencial |
+| `src/components/credenciais/FormularioDeCredencial.tsx` | criar | Tipo, título, emissor, datas e fotografia (reutiliza a conversão de imagem de `lib/imageConversion.ts`) |
+| `src/components/profile/AtalhoDoCatalogo.tsx` (ou um atalho novo) | alterar | Entrada «As minhas credenciais» no perfil do profissional e do técnico |
+| `src/components/catalogo/SelosDeCredenciais.tsx` | criar | Selos com texto («Registo criminal verificado, válido até 03/2027») |
+| `src/components/catalogo/IdentidadeDoProfissional.tsx`, `src/components/catalogo/EquipaDaEmpresa.tsx` | alterar | Selos do profissional e de cada técnico |
+| `src/components/admin/VisualizadorDeDocumento.tsx` | criar | Imagem a partir de um URL temporário, com zoom e aviso de expiração. **Partilhado** com o documento do KYC (Adendo v1.65, problema 3) |
+| `src/services/adminCredentials.ts`, `src/hooks/useAdminCredentials.ts`, `src/components/admin/kyc/CartaoDeCredencial.tsx`, `src/pages/AdminKyc.tsx` | criar / alterar | Separador «Credenciais» na secção KYC: fila por antiguidade, ver o documento, aprovar ou rejeitar com motivo |
+| `src/data/termosDeUtilizacao.ts` | alterar | Tratamento dos documentos de credenciais (só a equipa os vê; apagados com a conta) |
+
+**Critérios de entrega**
+- [ ] Submeter (com upload a falhar a meio), lista com os três estados, apagar — testes.
+- [ ] Selos só com dados aprovados vindos da API; o documento nunca aparece fora do admin — teste.
+- [ ] Revisão no admin: ver o documento, aprovar, rejeitar sem motivo (bloqueado) — teste.
+
+### N6 — Clientes empresariais
+
+> **21/10/2026:** aprovada e implementada como **Fase 40**.
+
+| Ficheiro | Acção | O quê |
+|---|---|---|
+| `src/services/profile.ts`, `src/hooks/useProfile.ts` | alterar | Tipos `client_type`, `business_name` e `business_nuit` |
+| `src/components/profile/DadosDaEmpresa.tsx` | criar | «Sou uma empresa ou instituição», nome e NUIT (9 dígitos, validado antes de enviar); só `CLIENT` |
+| `src/services/clientLocations.ts`, `src/hooks/useClientLocations.ts`, `src/components/profile/OsMeusLocais.tsx` | criar | Locais guardados: lista, criar (com o `LocationForm` existente), editar e apagar; máximo de 20 com mensagem própria |
+| `src/components/LocationForm.tsx` | alterar | Opção «Usar um local guardado» antes do GPS e da escolha manual, quando o cliente tem locais |
+| `src/pages/NewServiceRequest.tsx`, `src/pages/SolicitarServico.tsx` | alterar | Enviar `saved_location_id` quando se escolhe um local guardado |
+| `src/pages/MyServiceRequests.tsx`, `src/services/serviceRequests.ts` | alterar | «Exportar (CSV)» com filtro de datas (descarga como em `ExportacoesCsv.tsx`) |
+| `src/components/ContactoCliente.tsx` | alterar | Nome da entidade e NUIT quando o cliente é empresa |
+
+**Critérios de entrega**
+- [ ] Dados da empresa (NUIT inválido bloqueado), locais (limite, apagar), escolher um local no pedido — testes.
+- [ ] Contacto do cliente com e sem dados de empresa — teste.
+
+### N7 — Pagamento do serviço pela app, com comissão e retenção
+
+**Bloqueada** pelas mesmas condições da proposta N7 do backend (parecer jurídico, M-Pesa real, conclusão automática).
+
+| Ficheiro | Acção | O quê |
+|---|---|---|
+| `src/services/servicePayments.ts`, `src/hooks/useServicePayments.ts` | criar | Iniciar o pagamento, ler o estado (polling a cada 3 s só enquanto está pendente, como em `Subscription.tsx`) e propor o preço (profissional) |
+| `src/components/pedidos/PagamentoDoServico.tsx` | criar | Valor, telefone pagador (M-Pesa 84/85, e-Mola 86/87: a regra que hoje vive em `Subscription.tsx` passa para `lib/phone.ts` e serve os dois), «Confirma no teu telemóvel» e o estado em texto («Pago — o valor fica guardado até concluíres o serviço») |
+| `src/pages/RequestProposals.tsx`, `src/pages/SolicitarServico.tsx`, `src/pages/MyServiceRequests.tsx` | alterar | Pagar depois de escolher a proposta, ou de aceitar o preço do pedido directo; estado do pagamento em cada pedido |
+| `src/pages/AssignedServiceRequests.tsx` | alterar | Propor o preço num pedido directo; «Valor a receber» (já sem a comissão) e a data prevista |
+| `src/pages/AdminMais.tsx`, `src/components/admin/pagamentosDeServicos/` | alterar / criar | Separador «Pagamentos de serviços»: lista por estado, libertar, reembolsar ou dividir com nota obrigatória |
+| `src/data/termosDeUtilizacao.ts` | alterar | Retenção, comissão, prazos de libertação e reembolso (texto a rever por jurista) |
+
+**Critérios de entrega**
+- [ ] Pagar (pendente → retido), falha e repetição, e o polling pára fora de `PENDING` — testes.
+- [ ] O profissional vê o valor líquido; o cliente nunca vê a comissão como «taxa escondida» (texto claro) — teste.
+- [ ] Acções do admin com nota obrigatória — teste.
+- [ ] Jornada E2E (Playwright, API simulada) do pagamento até à libertação.

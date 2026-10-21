@@ -2,6 +2,7 @@ import { api } from '../lib/api'
 import type { PortfolioProject } from './portfolio'
 import type { ProfessionalType } from './profile'
 import type { ServiceCategory } from './serviceCategories'
+import type { PublicCredential } from './credentials'
 
 export interface Review {
   id: string
@@ -29,6 +30,18 @@ export interface PublicTeamMember {
   services: ServiceCategory[]
   rating_avg: number | null
   rating_count: number
+  // Fase 41 (N5): selos das credenciais verificadas do técnico (opcional: backend anterior à Fase 34).
+  credentials?: PublicCredential[]
+}
+
+// Fase 38 (TRD Adendo v1.66, N1): até onde o profissional se desloca e que províncias cobre.
+// `radius_km` null e `provinces` vazio = não definiu zona (aparece só pela distância, como antes).
+export const RAIOS_DE_ATENDIMENTO_KM = [5, 10, 25, 50, 100] as const
+export type RaioDeAtendimentoKm = (typeof RAIOS_DE_ATENDIMENTO_KM)[number]
+
+export interface ServiceArea {
+  radius_km: RaioDeAtendimentoKm | null
+  provinces: string[]
 }
 
 export interface ProfessionalCatalog {
@@ -45,6 +58,10 @@ export interface ProfessionalCatalog {
   contact_available: boolean
   phone: string | null
   services: ServiceCategory[]
+  // Fase 38 (N1). Nunca traz coordenadas: o raio diz-se em km, sem o centro.
+  service_area: ServiceArea
+  // Fase 41 (N5): selos das credenciais verificadas e válidas. Nunca o documento.
+  credentials?: PublicCredential[]
   // O backend ainda envia `portfolio` (fotos soltas) por compatibilidade com versões antigas
   // do frontend (TRD Adendo v1.23, item D); esta versão só lê `projects`.
   projects: PortfolioProject[]
@@ -61,5 +78,11 @@ export interface ProfessionalCatalog {
 // editou (MyCatalog.tsx chama isto com o próprio id).
 export async function fetchProfessionalCatalog(professionalId: string): Promise<ProfessionalCatalog> {
   const response = await api.get<ProfessionalCatalog>(`/professionals/${professionalId}/catalog`)
+  return response.data
+}
+
+// PATCH /professionals/me/service-area (Backend Fase 31) — só o profissional; devolve a zona gravada.
+export async function updateServiceArea(area: ServiceArea): Promise<ServiceArea> {
+  const response = await api.patch<ServiceArea>('/professionals/me/service-area', area)
   return response.data
 }

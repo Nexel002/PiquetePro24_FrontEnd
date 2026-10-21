@@ -10,6 +10,13 @@ const estado = vi.hoisted(() => ({
   criar: vi.fn(),
   erro: vi.fn(),
 }))
+// Fase 40 (N6): locais guardados e exportação do cliente têm testes próprios; aqui não há locais.
+vi.mock('../hooks/useClientLocations', () => ({
+  useClientLocations: () => ({ data: [] }),
+  useCreateClientLocation: () => ({ mutate: vi.fn(), isPending: false }),
+  useDeleteClientLocation: () => ({ mutate: vi.fn(), isPending: false }),
+  useExportMyRequests: () => ({ mutate: vi.fn(), isPending: false }),
+}))
 vi.mock('../hooks/useCatalog', () => ({ useProfessionalCatalog: () => estado.catalogo }))
 vi.mock('../hooks/useProfile', () => ({ useProfile: () => estado.perfil }))
 vi.mock('../hooks/useDirectRequest', () => ({ useCreateDirectRequest: () => ({ mutate: estado.criar, isPending: false }) }))

@@ -74,6 +74,12 @@ export function CartaoDeProfissional({ professional, selectable, selected, block
                   {PROFESSIONAL_TYPE_LABELS[professional.professional_type]}
                 </span>
               )}
+              {/* Fase 38 (N1): texto, não só cor — o estado tem de se ler sem distinguir verdes. */}
+              {professional.serves_area && (
+                <span className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  Atende a tua zona
+                </span>
+              )}
             </div>
 
             {professional.services.length > 0 && (

@@ -10,6 +10,13 @@ const estado = vi.hoisted(() => ({
   contactoPedido: [] as unknown[],
   contacto: { data: undefined as unknown, isLoading: false, isError: false },
 }))
+// Fase 40 (N6): locais guardados e exportação do cliente têm testes próprios; aqui não há locais.
+vi.mock('../hooks/useClientLocations', () => ({
+  useClientLocations: () => ({ data: [] }),
+  useCreateClientLocation: () => ({ mutate: vi.fn(), isPending: false }),
+  useDeleteClientLocation: () => ({ mutate: vi.fn(), isPending: false }),
+  useExportMyRequests: () => ({ mutate: vi.fn(), isPending: false }),
+}))
 vi.mock('../hooks/useServiceRequests', () => ({
   useMyServiceRequests: () => estado.pedidos,
   useCancelServiceRequest: () => ({ mutate: vi.fn(), isPending: false }),

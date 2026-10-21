@@ -9,6 +9,11 @@ const estado = vi.hoisted(() => ({
   perfil: { data: undefined as { role: string; professional_type: string | null } | undefined },
   equipaPedida: [] as unknown[],
 }))
+// Fase 42 (N3): as recorrências do profissional têm teste próprio; aqui não há nenhuma.
+vi.mock('../hooks/useRecurringRequests', () => ({
+  useAssignedRecurringRequests: () => ({ data: [] }),
+  useDeclineRecurringRequest: () => ({ mutate: vi.fn(), isPending: false }),
+}))
 vi.mock('../hooks/useServiceRequests', () => ({ useAssignedServiceRequests: () => estado.pedidos }))
 vi.mock('../hooks/useProfile', () => ({ useProfile: () => estado.perfil }))
 vi.mock('../hooks/useCompanyTeam', () => ({

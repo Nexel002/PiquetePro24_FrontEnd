@@ -18,6 +18,13 @@ const mocks = vi.hoisted(() => ({
   updateUser: vi.fn(),
 }))
 
+// Fase 40 (N6): locais guardados e exportação do cliente têm testes próprios; aqui não há locais.
+vi.mock('../hooks/useClientLocations', () => ({
+  useClientLocations: () => ({ data: [] }),
+  useCreateClientLocation: () => ({ mutate: vi.fn(), isPending: false }),
+  useDeleteClientLocation: () => ({ mutate: vi.fn(), isPending: false }),
+  useExportMyRequests: () => ({ mutate: vi.fn(), isPending: false }),
+}))
 vi.mock('../hooks/useProfile', () => ({
   useProfile: () => mocks.perfil,
   useUpdateProfileDetails: () => ({ mutate: mocks.atualizarDados, ...mocks.estadoDosDados }),
@@ -36,6 +43,11 @@ vi.mock('../hooks/useServiceCategories', () => ({
   useServiceCategories: () => ({ data: [] }),
 }))
 vi.mock('../lib/supabase', () => ({ supabase: { auth: { updateUser: mocks.updateUser } } }))
+// Fase 39: os avisos de procura do cliente têm teste próprio (OsMeusAvisos); aqui não há nenhum.
+vi.mock('../hooks/useSearchAlerts', () => ({
+  useSearchAlerts: () => ({ data: [] }),
+  useDeleteSearchAlert: () => ({ mutate: vi.fn(), isPending: false }),
+}))
 
 function perfil(extra: Partial<UserProfile> = {}): UserProfile {
   return {

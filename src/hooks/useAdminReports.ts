@@ -1,8 +1,13 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { exportar, fetchFunil, type FiltroDeDatas, type TipoDeExportacao } from '../services/adminReports'
+import { exportar, fetchFunil, fetchProcura, type FiltroDeDatas, type TipoDeExportacao } from '../services/adminReports'
 
 export function useFunil(filtros: FiltroDeDatas) {
   return useQuery({ queryKey: ['admin-funnel', filtros], queryFn: () => fetchFunil(filtros) })
+}
+
+// Fase 39 (N4).
+export function useProcura(filtros: FiltroDeDatas) {
+  return useQuery({ queryKey: ['admin-demand', filtros], queryFn: () => fetchProcura(filtros) })
 }
 
 export function useExportar() {

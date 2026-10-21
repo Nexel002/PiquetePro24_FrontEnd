@@ -5,15 +5,15 @@
 Marketplace de Serviços Locais PWA para Moçambique.
 
 - **Frontend / PWA:** React + Vite + TypeScript + Tailwind CSS + Framer Motion (Vercel) — **este repositório**
-- **Backend API:** Node.js + Express + TypeScript (Fly.io — região `fra`, Frankfurt; ver Adendo v1.3 do TRD do backend) — repositório separado (`PiquetePro24_Backend`)
+- **Backend API:** Node.js + Express + TypeScript (Fly.io — região `fra`, Frankfurt; ver Adendo v1.3 do TRD do backend) — repositório separado, na pasta irmã `../PiquePro24_Backend` (sem «te»; remote `Nexel002/PiquePro24_Backend`)
 - **Database:** Supabase PostgreSQL + PostGIS (via backend; o frontend só fala com Supabase para Auth)
 
 Documentos de referência, nesta ordem de precedência:
 
-1. [`docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md`](./docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md) — requisitos técnicos, **incluindo Adendos v1.2 e v1.3, que têm precedência sobre o corpo original do TRD**
-2. [`docs/PLANO_IMPLEMENTACAO_FRONTEND.md`](./docs/PLANO_IMPLEMENTACAO_FRONTEND.md) — fases, escopo e critérios de entrega
+1. [`docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md`](./docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md) — requisitos técnicos, **incluindo todos os Adendos (v1.2 a v1.67), que têm precedência sobre o corpo original do TRD**. A Secção 0 do TRD («Leitura rápida — regras em vigor») aponta, por área, para o adendo que manda hoje.
+2. [`docs/PLANO_IMPLEMENTACAO_FRONTEND.md`](./docs/PLANO_IMPLEMENTACAO_FRONTEND.md) — fases, escopo e critérios de entrega; no fim, o backlog por aprovar
 
-> **Estado atual:** Fases 0–4 e 8–11 implementadas no essencial (inclui painel de administração, catálogo do profissional, propostas e portfólio por trabalho); redesign com a identidade da marca aplicado (Adendo v1.13 do TRD, componentes em `src/components/ui/`). Fases 5 (offline), 6 (acessibilidade/performance) e 7 (staging/deploy de produção) por fazer. Domínio oficial em produção: `https://piquete-pro24-front-end-beta.vercel.app`. O estado fino — critérios por marcar, como o Lighthouse PWA e a validação da CSP no deploy — está em `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, que é a fonte de verdade; esta linha é só o resumo.
+> **Estado atual (21/10/2026):** Fases 0–37 em `main` e em produção (versão 0.2.3), incluindo o painel de admin completo com menu lateral, empresas e equipas, pedido directo, offline com fila e actualização automática da app. Falta sobretudo **validar no browser e no telemóvel**, e a Fase 7 depende de um staging que não existe. Backlog por aprovar no fim do plano (TRD Adendo v1.65). Domínio oficial em produção: `https://piquete-pro24-front-end-beta.vercel.app`. O estado fino — critérios por marcar, como o Lighthouse PWA e a validação da CSP no deploy — está em `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, que é a fonte de verdade; esta linha é só o resumo.
 
 ---
 
@@ -36,7 +36,9 @@ Estas escolhas estavam em aberto no plano de implementação e ficam decididas a
 | Estado de servidor | **TanStack Query** | Cache, refetch e `isLoading`/`isError` de raiz; scroll infinito na Fase 2 |
 | Estado global (sessão, role) | **Context API** | Objeto pequeno que muda raramente; evita uma dependência |
 | Cliente HTTP | **axios** | Interceptors para injetar JWT e desempacotar o envelope num só sítio |
-| PWA | `vite-plugin-pwa` | Service Worker e manifest, conforme Secção 6 do TRD |
+| PWA | `vite-plugin-pwa` | Service Worker e manifest, conforme Secção 6 do TRD; actualização automática (`skipWaiting`, Adendo v1.63) |
+| Avisos (toasts) | `sonner` | Já em uso em toda a app; não acrescentar outra biblioteca de toasts |
+| Animação | `framer-motion` (instalado) | **Hoje nenhum ficheiro de `src/` o importa** (21/10/2026): decidir se fica (TRD Adendo v1.65, parte E) |
 
 Regra de fronteira: **estado de servidor vive no TanStack Query, não em Context.** Copiar dados da API para Context duplica a fonte de verdade e gera ecrãs dessincronizados.
 
@@ -77,25 +79,26 @@ Regra de fronteira: **estado de servidor vive no TanStack Query, não em Context
 ## 6. Segredos e configuração
 
 - **Tudo o que tem prefixo `VITE_` acaba no bundle e é público.** Nunca pôr aí um segredo.
-- No frontend só entram: `VITE_API_URL`, `VITE_SUPABASE_URL` e a chave pública do Supabase.
+- No frontend só entram: `VITE_API_URL`, `VITE_SUPABASE_URL`, a chave pública do Supabase (`VITE_SUPABASE_ANON_KEY`) e a opção `VITE_MONTRA_DE_DEMONSTRACAO` (Adendo v1.34; nunca ligada em produção aberta ao público).
+- São lidas **no build**: mudar uma na Vercel exige novo deploy. Depois de cada deploy, confirmar o `baseURL` no JS publicado (Adendo v1.28: já esteve gravado `localhost`).
 - `.env` não vai para controlo de versão; `.env.example` documenta as variáveis necessárias.
 
 ## 7. Comandos Úteis do Repositório
-
-A definir na Fase 0, quando o projeto Vite for inicializado. Previsão:
 
 - `npm run dev` — servidor de desenvolvimento (Vite, porta 5173 por omissão)
 - `npm run build` — compilação TypeScript + build de produção
 - `npm run preview` — servir o build localmente (necessário para testar o Service Worker, que não corre igual em `dev`)
 - `npm run lint` — ESLint + Prettier
 - `npm test` — Vitest (Testing Library + jsdom, `vitest.config.ts`); corre no CI entre lint e build (TRD Adendo v1.14)
+- `npm run test:e2e` — Playwright (`e2e/`), com a API simulada no browser (`page.route`). Nesta máquina o Playwright não tem o Chromium dele: usar `E2E_BROWSER=msedge` (ou `chrome`) para correr com o browser já instalado; o CI (`ci.yml`) instala o Chromium.
+- **Cada versão nova** precisa de uma entrada em `src/data/novidadesPorVersao.json`; sem ela, o `vite build` falha (ver Convenções de Git).
 
-**Nota sobre portas:** o backend local corre em `PORT=3000` (ou `3050`, se 3000 estiver ocupada por outro projeto nesta máquina). O `CORS_ORIGIN` do backend tem de corresponder à porta do Vite (`5173`).
+**Nota sobre portas:** o backend local corre em `PORT=3000` (ou `3050`, se 3000 estiver ocupada por outro projeto nesta máquina; o `.env.example` aponta `VITE_API_URL` para `3050`). O `CORS_ORIGIN` do backend tem de corresponder à porta do Vite (`5173`).
 
 ## 8. Coordenação com o Backend
 
 - O contrato de referência é a documentação OpenAPI publicada pelo backend. Enquanto um endpoint não existir, trabalhar contra um mock que siga esse schema — não inventar formatos.
-- As fases deste repositório dependem das do backend: Fase 1 ↔ Backend Fase 2, Fases 2-3 ↔ Backend Fase 3, Fase 4 ↔ Backend Fases 4-5, Fase 7 ↔ Backend Fase 7.
+- As fases deste repositório dependem das do backend: Fase 1 ↔ Backend Fase 2, Fases 2-3 ↔ Backend Fase 3, Fase 4 ↔ Backend Fases 4-5, Fase 7 ↔ Backend Fase 7. A tabela completa (até às Fases 37/30) está no fim de `../PiquePro24_Backend/Doc's/PLANO_IMPLEMENTACAO_BACKEND.md`.
 - Regras de negócio com impacto visível no frontend (ver TRD Secção 5): o contacto e endereço exato de um cliente só são visíveis a profissionais com subscrição `ACTIVE` **e** KYC `APPROVED`. Quando faltar uma das condições, a UI explica **o que falta**, em vez de um botão desativado sem contexto.
 
 ## 9. "Qual é o próximo passo?" — ler a documentação antes de responder

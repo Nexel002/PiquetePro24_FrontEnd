@@ -1,6 +1,8 @@
 import type { SearchedProfessional } from '../../services/professionalSearch'
+import type { ServiceCategory } from '../../services/serviceCategories'
 import { Button } from '../ui/Button'
 import { Card } from '../ui/Card'
+import { AvisaMe } from './AvisaMe'
 import { CartaoDeProfissional, EsqueletoDeResultado } from './CartaoDeProfissional'
 
 interface ResultadosDaBuscaProps {
@@ -18,6 +20,8 @@ interface ResultadosDaBuscaProps {
   aoAlternar: (id: string) => void
   aoTentarDeNovo: () => void
   aoVerMais: () => void
+  // Fase 39 (N4): só para clientes, com um serviço escolhido. null = não oferecer o aviso.
+  avisoDeOferta?: { servico: ServiceCategory; provinciaPadrao: string | null } | null
 }
 
 function CabecalhoDeSecao({ titulo, total, indicador }: { titulo: string; total: number; indicador?: boolean }) {
@@ -36,6 +40,9 @@ export function ResultadosDaBusca(props: ResultadosDaBuscaProps) {
   const { profissionais, comLocalizacao, idsEscolhidos } = props
   const perto = profissionais.filter((profissional) => profissional.is_nearby)
   const outros = profissionais.filter((profissional) => !profissional.is_nearby)
+  // Sem ninguém perto nem a atender a zona (só se sabe com localização) — a mesma regra que o
+  // backend usa para registar a procura sem oferta.
+  const semOfertaPerto = comLocalizacao && profissionais.length > 0 && !profissionais.some((p) => p.is_nearby || p.serves_area)
 
   function cartao(profissional: SearchedProfessional) {
     const escolhido = idsEscolhidos.includes(profissional.id)
@@ -84,12 +91,21 @@ export function ResultadosDaBusca(props: ResultadosDaBuscaProps) {
           {props.comFiltros ? 'Nenhum profissional encontrado para esta pesquisa.' : 'Ainda não há profissionais registados.'}
         </p>
         {props.comFiltros && <p className="text-xs text-piquete-gray">Tenta outro serviço ou limpa os filtros da busca.</p>}
+        {props.avisoDeOferta && (
+          <div className="mt-3 w-full">
+            <AvisaMe servico={props.avisoDeOferta.servico} provinciaPadrao={props.avisoDeOferta.provinciaPadrao} semNinguem />
+          </div>
+        )}
       </Card>
     )
   }
 
   return (
     <div className="flex flex-col gap-8">
+      {semOfertaPerto && props.avisoDeOferta && (
+        <AvisaMe servico={props.avisoDeOferta.servico} provinciaPadrao={props.avisoDeOferta.provinciaPadrao} semNinguem={false} />
+      )}
+
       {comLocalizacao && perto.length > 0 && (
         <section className="flex flex-col gap-4">
           <CabecalhoDeSecao titulo="Perto de ti" total={perto.length} indicador />

@@ -4,6 +4,7 @@ import { SEPARADORES_DA_VISAO_GERAL, type SeparadorDaVisaoGeral } from '../compo
 import { AdminAuditLog } from './AdminAuditLog'
 import { AdminDashboard } from './AdminDashboard'
 import { AdminMetrics } from './AdminMetrics'
+import { AdminProcura } from './AdminProcura'
 import { AdminReports } from './AdminReports'
 import { AdminSystem } from './AdminSystem'
 
@@ -14,6 +15,7 @@ const SEPARADORES: DefinicaoDeSeparador<SeparadorDaVisaoGeral>[] = [
   { id: 'painel', rotulo: 'Painel', icone: 'grelha' },
   { id: 'metricas', rotulo: 'Métricas', icone: 'barras' },
   { id: 'relatorios', rotulo: 'Relatórios', icone: 'documento' },
+  { id: 'procura', rotulo: 'Procura', icone: 'pesquisa' },
   { id: 'auditoria', rotulo: 'Auditoria', icone: 'relogio' },
   { id: 'sistema', rotulo: 'Sistema', icone: 'servidor' },
 ]
@@ -26,6 +28,7 @@ export function AdminVisaoGeral() {
       {separador === 'painel' && <AdminDashboard />}
       {separador === 'metricas' && <AdminMetrics />}
       {separador === 'relatorios' && <AdminReports />}
+      {separador === 'procura' && <AdminProcura />}
       {separador === 'auditoria' && <AdminAuditLog />}
       {separador === 'sistema' && <AdminSystem />}
     </SeccaoComSeparadores>
