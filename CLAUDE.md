@@ -10,7 +10,7 @@ Marketplace de Serviços Locais PWA para Moçambique.
 
 Documentos de referência, nesta ordem de precedência:
 
-1. [`docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md`](./docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md) — requisitos técnicos, **incluindo todos os Adendos (v1.2 a v1.66), que têm precedência sobre o corpo original do TRD**. A Secção 0 do TRD («Leitura rápida — regras em vigor») aponta, por área, para o adendo que manda hoje.
+1. [`docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md`](./docs/TRD_v1.1_Marketplace_Servicos_Locais_PWA.md) — requisitos técnicos, **incluindo todos os Adendos (v1.2 a v1.67), que têm precedência sobre o corpo original do TRD**. A Secção 0 do TRD («Leitura rápida — regras em vigor») aponta, por área, para o adendo que manda hoje.
 2. [`docs/PLANO_IMPLEMENTACAO_FRONTEND.md`](./docs/PLANO_IMPLEMENTACAO_FRONTEND.md) — fases, escopo e critérios de entrega; no fim, o backlog por aprovar
 
 > **Estado atual (21/10/2026):** Fases 0–37 em `main` e em produção (versão 0.2.3), incluindo o painel de admin completo com menu lateral, empresas e equipas, pedido directo, offline com fila e actualização automática da app. Falta sobretudo **validar no browser e no telemóvel**, e a Fase 7 depende de um staging que não existe. Backlog por aprovar no fim do plano (TRD Adendo v1.65). Domínio oficial em produção: `https://piquete-pro24-front-end-beta.vercel.app`. O estado fino — critérios por marcar, como o Lighthouse PWA e a validação da CSP no deploy — está em `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, que é a fonte de verdade; esta linha é só o resumo.

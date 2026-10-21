@@ -3,7 +3,7 @@
 | Campo | Detalhe |
 |---|---|
 | Projeto | Marketplace de Serviços Locais PWA (Moçambique) |
-| Versão | 1.1 + Adendos v1.2 a [v1.66](#adendo-v166) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
+| Versão | 1.1 + Adendos v1.2 a [v1.67](#adendo-v167) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
 | Autor | Engenheiro de Software Lead |
 | Estado | **Em produção** (backend no Fly.io, frontend na Vercel) desde 12/10/2026; ~~Aprovado para Desenvolvimento (Sprint 0)~~ — revisto a 21/10/2026 (Adendo v1.65) |
 
@@ -34,6 +34,7 @@ Com 64 adendos, a regra actual de uma área está muitas vezes no adendo mais re
 | Offline | Fila em IndexedDB para criar pedidos, com `Idempotency-Key` | Adendos v1.26, v1.27 |
 | Actualização da PWA | Automática (`skipWaiting`), com aviso do que mudou depois de recarregar | Adendo v1.63 |
 | Painel de admin | Menu lateral com 5 secções e separadores `?tab=` | Adendo v1.59 |
+| **Por publicar** (branch `feat/novas-funcionalidades`) | Zona de atendimento, procura sem oferta, clientes empresariais e locais guardados, selos de credenciais, serviços recorrentes — implementados, com 5 migrations por aplicar | Adendos v1.66 e v1.67 |
 
 ---
 
@@ -2025,7 +2026,7 @@ O negócio vive de **subscrições de profissionais**, que só se pagam se os pr
 
 ### Sete funcionalidades novas — plano detalhado (21/10/2026)
 
-**Estado: PLANO, por aprovar. Nenhum código foi escrito.** Cada proposta (N1 a N7) é independente e pode ser aprovada sozinha. Ao ser aprovada, ganha número de fase nos dois planos, pela ordem de aprovação: backend a partir da Fase 31, frontend a partir da Fase 38. Os passos de implementação, endpoints, ficheiros e critérios de entrega de cada lado estão em `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` e `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, secção «Propostas N1 a N7». Este adendo guarda o que é comum aos dois: objectivo, regras, modelo de dados, decisões, riscos, assunções e perguntas.
+**Estado (actualizado a 21/10/2026): N1, N3, N4, N5 e N6 aprovadas e implementadas — ver [Adendo v1.67](#adendo-v167). N2 e N7 adiadas pelo utilizador, por aprovar.** Cada proposta (N1 a N7) é independente e pode ser aprovada sozinha. Ao ser aprovada, ganha número de fase nos dois planos, pela ordem de aprovação: backend a partir da Fase 31, frontend a partir da Fase 38. Os passos de implementação, endpoints, ficheiros e critérios de entrega de cada lado estão em `Doc's/PLANO_IMPLEMENTACAO_BACKEND.md` e `docs/PLANO_IMPLEMENTACAO_FRONTEND.md`, secção «Propostas N1 a N7». Este adendo guarda o que é comum aos dois: objectivo, regras, modelo de dados, decisões, riscos, assunções e perguntas.
 
 **Contexto.** Depois da análise do Adendo v1.65, o utilizador pediu para acrescentar à documentação sete ideias que tinham ficado fora dela (Adendo v1.65, D7) e para planear como implementá-las. O plano partiu do código real: pesquisa (`search_professionals`, `GET /professionals/search`), serviços do profissional (`replace_professional_categories`, `PUT /professionals/me/services`), pedido directo (`directRequestService.ts`), KYC (`kycService.ts`, upload por URL assinado), relatórios (`reportService.ts`, `paraCsv`), jobs (`jobs/subscriptionJobs.ts`) e pagamentos (`services/payments/`).
 
@@ -2378,3 +2379,46 @@ Tem um índice `(status, submitted_at)` para a fila do admin.
 ---
 
 **Notas de deploy (para quando houver aprovação):** cada proposta traz as suas migrations e é aplicada **antes** do backend, que é publicado antes do frontend. N7 traz variáveis novas (`.env.example` e `fly secrets`). N4 e N5 pedem uma frase nos Termos de utilização (frontend). **Critérios de entrega correspondentes:** planos do backend e do frontend, secção «Propostas N1 a N7».
+
+## Adendo v1.67
+
+### Implementação de N1, N3, N4, N5 e N6 (21/10/2026)
+
+**Estado: implementado em `feat/novas-funcionalidades` nos dois repositórios, só local. Não está em produção: 5 migrations por aplicar, sem merge nem push.** O utilizador aprovou a 21/10/2026 cinco das sete propostas do Adendo v1.66. **N2 (preço indicativo) e N7 (pagamento com comissão) ficam adiadas** e continuam por aprovar.
+
+| Ideia | Backend | Frontend | Migration |
+|---|---|---|---|
+| N1 — Zona de atendimento | Fase 31 | Fase 38 | `20261021090000_zona_de_atendimento.sql` |
+| N4 — Procura sem oferta | Fase 32 | Fase 39 | `20261021100000_procura_sem_oferta.sql` |
+| N6 — Clientes empresariais e locais | Fase 33 | Fase 40 | `20261021110000_clientes_empresariais_e_locais.sql` |
+| N5 — Selos de credenciais | Fase 34 | Fase 41 | `20261021120000_credenciais.sql` |
+| N3 — Serviços recorrentes | Fase 35 | Fase 42 | `20261021130000_pedidos_recorrentes.sql` |
+
+O detalhe de cada fase (escopo, ficheiros, critérios, testes) está nos dois planos. Aqui ficam só as decisões que mudaram em relação ao Adendo v1.66.
+
+**Desvios ao Adendo v1.66:**
+- **N1:** sem N2, a migration da pesquisa trata só da zona. A função `search_professionals` **antiga (7 argumentos) fica na base**, ao lado da nova (8, com `origin_province`): apagá-la partia a pesquisa entre a migration e o deploy e impedia o rollback. O backend envia sempre `origin_province`, e o PostgREST escolhe a versão por esse nome. O `CHECK` do raio aceita só 5/10/25/50/100.
+- **N4:** sem GPS e com resultados, a procura **não** se regista (sem origem, `is_nearby` é sempre falso e encheria o quadro de falsos «sem oferta»).
+- **N6:** os locais guardados usam `latitude`/`longitude` em `numeric`, não `geography`. O frontend **copia** o local para `location` em vez de enviar `saved_location_id`, para o pedido continuar a caber na fila offline; a API aceita os dois.
+- **N5:** o admin não edita a validade ao rever (rejeita com motivo). Abrir um documento é registado à mão no audit log (o middleware só regista POST/PATCH/PUT/DELETE). O documento do KYC continua sem leitura pelo admin (problema 3 do Adendo v1.65, não aprovado).
+- **N3:** `next_date` (data em Maputo) em vez de `next_run_at`, `anchor_day` para os mensais e coordenadas em `numeric`. A lista do cliente é um ecrã próprio, `/servicos-recorrentes`. **Implementado sem a conclusão automática** (problema 6, não aprovado): se o cliente não concluir o pedido anterior, as vezes seguintes são saltadas e avisadas, e à 3.ª a recorrência pausa.
+
+**Assunções em uso, a confirmar pelo utilizador:**
+- 2 dias de antecedência para cada vez de um serviço recorrente;
+- registo criminal válido 12 meses sem validade indicada;
+- NUIT validado só pelos 9 dígitos;
+- procuras guardadas 12 meses.
+
+**Achados fora do âmbito (reportados, não corrigidos):**
+- `CatalogoTemplatesEmail.trabalhoAtribuido` usa `split(/s+/)` em vez de `split(/\s+/)`: o primeiro nome do técnico sai cortado na letra «s» («Rosa» → «Ro»).
+- Os documentos do KYC nunca são apagados do Storage quando a conta é apagada.
+
+**Notas de deploy (por esta ordem):**
+1. Confirmar primeiro as 4 migrations das empresas (`20261015*`, Adendo v1.65, problema 4).
+2. Aplicar as 5 migrations novas no SQL Editor, por ordem de data. A de N4 depende da de N1; as de N6, N5 e N3 **têm de estar aplicadas antes do backend**, porque o código lê colunas novas em fluxos centrais (perfil, catálogo, pedidos). Registar cada uma em `Doc's/ESQUEMA_BASE_DADOS.md`.
+3. Merge e deploy do backend; confirmar `/health`, `/openapi.json` e uma pesquisa.
+4. Merge e deploy do frontend (versão 0.3.0).
+
+Sem variáveis de ambiente novas. Dois jobs novos no processo do backend: avisos de oferta (de hora a hora, com purga diária) e pedidos recorrentes (de hora a hora).
+
+**Critérios de entrega correspondentes:** backend Fases 31 a 35; frontend Fases 38 a 42.
