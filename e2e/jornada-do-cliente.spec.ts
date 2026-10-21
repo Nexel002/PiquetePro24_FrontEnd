@@ -34,6 +34,7 @@ test.describe('cliente: da pesquisa ao pedido enviado', () => {
       'GET /profile': () => ({ data: CLIENTE }),
       'GET /service-categories': () => ({ data: CATEGORIAS }),
       'GET /professionals/search': () => ({ data: TRES }),
+      'GET /clients/me/locations': () => ({ data: [] }),
       'POST /service_requests': async (pedido) => {
         const corpo = pedido.postDataJSON()
         const criado = pedidoCriado(corpo)
@@ -81,6 +82,7 @@ test.describe('cliente: da pesquisa ao pedido enviado', () => {
       'GET /profile': () => ({ data: CLIENTE }),
       'GET /service-categories': () => ({ data: CATEGORIAS }),
       'GET /professionals/search': () => ({ data: TRES }),
+      'GET /clients/me/locations': () => ({ data: [] }),
     })
 
     await page.goto('/novo-pedido')
@@ -94,6 +96,7 @@ test.describe('cliente: da pesquisa ao pedido enviado', () => {
       'GET /profile': () => ({ data: CLIENTE }),
       'GET /service-categories': () => ({ data: CATEGORIAS }),
       'GET /professionals/search': () => ({ data: TRES }),
+      'GET /clients/me/locations': () => ({ data: [] }),
       'POST /service_requests': () => ({ status: 429, error: 'Demasiados pedidos. Tenta mais tarde.' }),
     })
 

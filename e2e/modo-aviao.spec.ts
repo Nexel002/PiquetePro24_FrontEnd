@@ -14,6 +14,7 @@ test('modo avião: o pedido fica guardado e é enviado, uma só vez, quando a li
     'GET /profile': () => ({ data: CLIENTE }),
     'GET /service-categories': () => ({ data: CATEGORIAS }),
     'GET /professionals/search': () => ({ data: TRES }),
+    'GET /clients/me/locations': () => ({ data: [] }),
     'GET /service_requests': () => ({ data: criados }),
     'POST /service_requests': (pedido) => {
       const corpo = pedido.postDataJSON()
