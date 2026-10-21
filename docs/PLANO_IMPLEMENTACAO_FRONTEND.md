@@ -6,7 +6,7 @@ Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo 
 > 1. **Validar no browser e no telemóvel** os critérios por marcar das Fases 11 a 37 (quase todos são isso). Nesta máquina o Playwright não tem browsers instalados: os E2E só correm no CI.
 > 2. **Fase 7:** depende de um staging que não existe (backend, Fase 7).
 > 3. As **empresas e equipas** (Fases 23 a 26) dependem de 4 migrations do backend sem registo de aplicação (`Doc's/ESQUEMA_BASE_DADOS.md`, no backend).
-> 4. **Backlog** no fim deste plano: correcções e propostas da análise de 21/10/2026, por aprovar.
+> 4. **Backlog** no fim deste plano: correcções e propostas da análise de 21/10/2026, por aprovar. As ideias N1 a N7 têm plano detalhado na secção «Propostas N1 a N7», a seguir ao backlog (TRD Adendo v1.66).
 
 ---
 
@@ -918,7 +918,136 @@ Origem: TRD Adendo v1.65. **Nada aqui está aprovado.** Cada item, quando aprova
 - [ ] D4 — painel de desempenho do profissional (convites, propostas, taxa de escolha, visualizações do catálogo).
 - [ ] D5 — selfie com o BI no ecrã de KYC.
 
+**Ideias novas (Adendo v1.65, D7 — plano detalhado no TRD Adendo v1.66 e na secção «Propostas N1 a N7» abaixo):**
+- [ ] N1 — zona de atendimento do profissional.
+- [ ] N2 — preço indicativo por serviço.
+- [ ] N3 — serviços recorrentes (depois dos problemas 6 e 7).
+- [ ] N4 — procura sem oferta e avisos ao cliente.
+- [ ] N5 — selos de credenciais.
+- [ ] N6 — clientes empresariais e locais guardados.
+- [ ] N7 — pagamento do serviço pela app, com comissão (bloqueada pelo parecer jurídico e pelo M-Pesa real).
+
 **Técnico (Adendo v1.65, parte E):**
 - [ ] Testes de componente de `MyServiceRequests` e `AssignedServiceRequests` (Fase 16).
 - [ ] `framer-motion`: remover das dependências ou usá-lo (hoje nenhum ficheiro de `src/` o importa).
 - [ ] `README.md` do repositório.
+
+---
+
+## Propostas N1 a N7 — implementação no frontend (por aprovar)
+
+**Estado: PLANO, por aprovar (TRD Adendo v1.66, 21/10/2026).** O objectivo, as regras, as decisões e as perguntas de cada proposta estão no TRD, Adendo v1.66. Os endpoints e a migration de cada uma estão no plano do backend, na secção com o mesmo nome. Aqui fica só o que se faz neste repositório. Ao ser aprovada, uma proposta passa a «Fase 38», «Fase 39»… pela ordem de aprovação, **sempre depois** da fase do backend correspondente estar em produção.
+
+**Regras para todas.** São as mesmas de qualquer fase deste plano:
+- **Camadas:** chamadas em `src/services/`, estado de servidor em hooks do TanStack Query em `src/hooks/`, tipos iguais ao que a API devolve.
+- **Estados:** quatro em cada ecrã — a carregar (esqueleto), erro (mensagem compreensível), vazio e com dados.
+- **Desenho:** mobile-first (390 px primeiro) e componentes de `src/components/ui/`.
+- **Testes:** um teste de componente por ecrã novo (Vitest + Testing Library), ao nível dos que já existem.
+- **Versão:** cada entrega visível sobe a versão do `package.json` e acrescenta uma entrada em `src/data/novidadesPorVersao.json`.
+
+### N1 + N2 — Zona de atendimento e preço indicativo
+
+| Ficheiro | Acção | O quê |
+|---|---|---|
+| `src/lib/dinheiro.ts` (+ `.test.ts`) | criar | `formatarMzn(valor)` e `rotuloDaUnidade(unidade)`. Hoje o formato dos preços em MZN repete-se em `RequestProposals.tsx` e `ReceivedInvitations.tsx`: os dois passam a usar este |
+| `src/services/catalog.ts`, `src/services/professionalSearch.ts`, `src/services/serviceCategories.ts` | alterar | Tipos: `service_area` e o preço em cada serviço do catálogo; `serves_area`, `price_from`, `price_unit` na pesquisa; `updateServiceArea()` e `updateServicePrice()` |
+| `src/hooks/useCatalog.ts`, `src/hooks/useServiceCategories.ts` | alterar | `useUpdateServiceArea` e `useUpdateServicePrice`; invalidam a chave do catálogo do próprio |
+| `src/components/catalogo/ZonaDeAtendimento.tsx` | criar | Editor: raio em botões (5, 10, 25, 50, 100 km, «Não definido») e províncias em caixas de selecção (`MOZAMBIQUE_PROVINCES`). Aviso quando o perfil não tem localização: o raio não conta |
+| `src/components/catalogo/PrecoDoServico.tsx` | criar | Por serviço escolhido: valor e unidade, «Retirar preço» e o rótulo «indicativo» |
+| `src/pages/MyCatalog.tsx` | alterar | Secções «Onde trabalho» e preços junto da lista de serviços |
+| `src/components/catalogo/ApresentacaoDoProfissional.tsx` | alterar | «Atende: até 25 km · Maputo, Matola» e os preços («a partir de 500 MZN por visita — indicativo») |
+| `src/hooks/useProfessionalSearch.ts`, `src/pages/FindProfessionals.tsx` | alterar | Sem GPS, enviar a província do perfil (`province`) |
+| `src/components/busca/CartaoDeProfissional.tsx` | alterar | Selo «Atende a tua zona» (com texto, não só cor) e «a partir de …» quando há filtro de serviço |
+
+**Critérios de entrega**
+- [ ] Editar zona e preço, com erro do servidor e gravação optimista desfeita — testes de `ZonaDeAtendimento` e `PrecoDoServico`.
+- [ ] Cartão da pesquisa com e sem selo, com e sem preço — teste.
+- [ ] Catálogo de um profissional sem zona nem preços igual ao de hoje — teste.
+- [ ] Visto num telemóvel a 390 px: botões do raio com alvo de toque adequado.
+
+### N3 — Serviços recorrentes
+
+**Pré-requisito:** os ecrãs da conclusão pelo profissional e da recusa (Adendo v1.65, problemas 6 e 7).
+
+| Ficheiro | Acção | O quê |
+|---|---|---|
+| `src/services/recurringRequests.ts`, `src/hooks/useRecurringRequests.ts` | criar | Chamadas e hooks; ao criar, mudar ou recusar, invalidam as listas de recorrências e de pedidos |
+| `src/components/pedidos/RepetirRegularmente.tsx` | criar | Frequência (semanal, de 15 em 15 dias, mensal) e data da próxima vez; mostra as três datas seguintes antes de confirmar |
+| `src/components/pedidos/ListaDeRecorrencias.tsx` | criar | Estado (activa, pausada, cancelada, falhas), próxima data, pausar, retomar, mudar e cancelar |
+| `src/pages/MyServiceRequests.tsx` | alterar | Botão «Repetir regularmente» nos pedidos concluídos com profissional; secção «Recorrentes» |
+| `src/pages/AssignedServiceRequests.tsx` | alterar | Etiqueta «Recorrente» nos pedidos que vêm de uma recorrência; «Deixar de aceitar» com motivo |
+
+**Critérios de entrega**
+- [ ] Criar, pausar, retomar e cancelar; ver as próximas datas; recusar do lado do profissional — testes.
+- [ ] Estado vazio («Ainda não tens serviços recorrentes») e recorrência pausada por falhas, com o motivo — teste.
+
+### N4 — Procura sem oferta
+
+| Ficheiro | Acção | O quê |
+|---|---|---|
+| `src/services/searchAlerts.ts`, `src/hooks/useSearchAlerts.ts` | criar | Avisos do cliente |
+| `src/components/busca/AvisaMe.tsx` | criar | «Ainda não há [serviço] perto de ti. Avisa-me quando houver», com a província do perfil pré-escolhida; confirma por toast |
+| `src/components/busca/ResultadosDaBusca.tsx` | alterar | Mostrar `AvisaMe` quando não há ninguém perto (lista vazia ou só «Outros profissionais») e há um serviço escolhido |
+| `src/components/profile/OsMeusAvisos.tsx`, `src/pages/Profile.tsx` | criar / alterar | Lista dos avisos com «Apagar» (só `CLIENT`) |
+| `src/services/adminReports.ts`, `src/hooks/useAdminReports.ts` | alterar | Procura e exportação |
+| `src/components/admin/procura/TabelaDaProcura.tsx` | criar | Serviço × província: procuras, clientes, avisos pendentes e profissionais elegíveis, ordenada pela falta de oferta. Filtro de datas e «Exportar CSV» (o mesmo mecanismo de `ExportacoesCsv.tsx`) |
+| `src/pages/AdminVisaoGeral.tsx` | alterar | Separador novo «Procura» |
+| `src/data/termosDeUtilizacao.ts` | alterar | Frase sobre o registo das pesquisas sem resultado (grelha de ~1 km, 12 meses) |
+
+**Critérios de entrega**
+- [ ] `AvisaMe` aparece só no caso certo; criar, duplicado (mensagem do 409) e apagar — testes.
+- [ ] Separador «Procura» com dados, vazio e erro — teste.
+
+### N5 — Selos de credenciais
+
+| Ficheiro | Acção | O quê |
+|---|---|---|
+| `src/services/credentials.ts`, `src/hooks/useCredentials.ts` | criar | Upload (URL assinado, como o KYC em `services/kyc.ts`), submeter, listar e apagar |
+| `src/pages/Credentials.tsx`, `src/App.tsx` | criar / alterar | Ecrã `/credenciais` (`PROFESSIONAL` e `TECHNICIAN`), com a lista, o estado e o motivo de rejeição de cada credencial |
+| `src/components/credenciais/FormularioDeCredencial.tsx` | criar | Tipo, título, emissor, datas e fotografia (reutiliza a conversão de imagem de `lib/imageConversion.ts`) |
+| `src/components/profile/AtalhoDoCatalogo.tsx` (ou um atalho novo) | alterar | Entrada «As minhas credenciais» no perfil do profissional e do técnico |
+| `src/components/catalogo/SelosDeCredenciais.tsx` | criar | Selos com texto («Registo criminal verificado, válido até 03/2027») |
+| `src/components/catalogo/IdentidadeDoProfissional.tsx`, `src/components/catalogo/EquipaDaEmpresa.tsx` | alterar | Selos do profissional e de cada técnico |
+| `src/components/admin/VisualizadorDeDocumento.tsx` | criar | Imagem a partir de um URL temporário, com zoom e aviso de expiração. **Partilhado** com o documento do KYC (Adendo v1.65, problema 3) |
+| `src/services/adminCredentials.ts`, `src/hooks/useAdminCredentials.ts`, `src/components/admin/kyc/CartaoDeCredencial.tsx`, `src/pages/AdminKyc.tsx` | criar / alterar | Separador «Credenciais» na secção KYC: fila por antiguidade, ver o documento, aprovar ou rejeitar com motivo |
+| `src/data/termosDeUtilizacao.ts` | alterar | Tratamento dos documentos de credenciais (só a equipa os vê; apagados com a conta) |
+
+**Critérios de entrega**
+- [ ] Submeter (com upload a falhar a meio), lista com os três estados, apagar — testes.
+- [ ] Selos só com dados aprovados vindos da API; o documento nunca aparece fora do admin — teste.
+- [ ] Revisão no admin: ver o documento, aprovar, rejeitar sem motivo (bloqueado) — teste.
+
+### N6 — Clientes empresariais
+
+| Ficheiro | Acção | O quê |
+|---|---|---|
+| `src/services/profile.ts`, `src/hooks/useProfile.ts` | alterar | Tipos `client_type`, `business_name` e `business_nuit` |
+| `src/components/profile/DadosDaEmpresa.tsx` | criar | «Sou uma empresa ou instituição», nome e NUIT (9 dígitos, validado antes de enviar); só `CLIENT` |
+| `src/services/clientLocations.ts`, `src/hooks/useClientLocations.ts`, `src/components/profile/OsMeusLocais.tsx` | criar | Locais guardados: lista, criar (com o `LocationForm` existente), editar e apagar; máximo de 20 com mensagem própria |
+| `src/components/LocationForm.tsx` | alterar | Opção «Usar um local guardado» antes do GPS e da escolha manual, quando o cliente tem locais |
+| `src/pages/NewServiceRequest.tsx`, `src/pages/SolicitarServico.tsx` | alterar | Enviar `saved_location_id` quando se escolhe um local guardado |
+| `src/pages/MyServiceRequests.tsx`, `src/services/serviceRequests.ts` | alterar | «Exportar (CSV)» com filtro de datas (descarga como em `ExportacoesCsv.tsx`) |
+| `src/components/ContactoCliente.tsx` | alterar | Nome da entidade e NUIT quando o cliente é empresa |
+
+**Critérios de entrega**
+- [ ] Dados da empresa (NUIT inválido bloqueado), locais (limite, apagar), escolher um local no pedido — testes.
+- [ ] Contacto do cliente com e sem dados de empresa — teste.
+
+### N7 — Pagamento do serviço pela app, com comissão e retenção
+
+**Bloqueada** pelas mesmas condições da proposta N7 do backend (parecer jurídico, M-Pesa real, conclusão automática).
+
+| Ficheiro | Acção | O quê |
+|---|---|---|
+| `src/services/servicePayments.ts`, `src/hooks/useServicePayments.ts` | criar | Iniciar o pagamento, ler o estado (polling a cada 3 s só enquanto está pendente, como em `Subscription.tsx`) e propor o preço (profissional) |
+| `src/components/pedidos/PagamentoDoServico.tsx` | criar | Valor, telefone pagador (M-Pesa 84/85, e-Mola 86/87: a regra que hoje vive em `Subscription.tsx` passa para `lib/phone.ts` e serve os dois), «Confirma no teu telemóvel» e o estado em texto («Pago — o valor fica guardado até concluíres o serviço») |
+| `src/pages/RequestProposals.tsx`, `src/pages/SolicitarServico.tsx`, `src/pages/MyServiceRequests.tsx` | alterar | Pagar depois de escolher a proposta, ou de aceitar o preço do pedido directo; estado do pagamento em cada pedido |
+| `src/pages/AssignedServiceRequests.tsx` | alterar | Propor o preço num pedido directo; «Valor a receber» (já sem a comissão) e a data prevista |
+| `src/pages/AdminMais.tsx`, `src/components/admin/pagamentosDeServicos/` | alterar / criar | Separador «Pagamentos de serviços»: lista por estado, libertar, reembolsar ou dividir com nota obrigatória |
+| `src/data/termosDeUtilizacao.ts` | alterar | Retenção, comissão, prazos de libertação e reembolso (texto a rever por jurista) |
+
+**Critérios de entrega**
+- [ ] Pagar (pendente → retido), falha e repetição, e o polling pára fora de `PENDING` — testes.
+- [ ] O profissional vê o valor líquido; o cliente nunca vê a comissão como «taxa escondida» (texto claro) — teste.
+- [ ] Acções do admin com nota obrigatória — teste.
+- [ ] Jornada E2E (Playwright, API simulada) do pagamento até à libertação.
