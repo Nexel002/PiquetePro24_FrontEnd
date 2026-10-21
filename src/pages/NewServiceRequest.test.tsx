@@ -12,6 +12,13 @@ const mocks = vi.hoisted(() => ({
   isPending: false,
 }))
 
+// Fase 40 (N6): locais guardados e exportação do cliente têm testes próprios; aqui não há locais.
+vi.mock('../hooks/useClientLocations', () => ({
+  useClientLocations: () => ({ data: [] }),
+  useCreateClientLocation: () => ({ mutate: vi.fn(), isPending: false }),
+  useDeleteClientLocation: () => ({ mutate: vi.fn(), isPending: false }),
+  useExportMyRequests: () => ({ mutate: vi.fn(), isPending: false }),
+}))
 vi.mock('../hooks/useProfile', () => ({ useProfile: () => mocks.perfil }))
 vi.mock('../hooks/useServiceRequests', () => ({
   useCreateServiceRequest: () => ({ mutate: mocks.mutate, isPending: mocks.isPending }),

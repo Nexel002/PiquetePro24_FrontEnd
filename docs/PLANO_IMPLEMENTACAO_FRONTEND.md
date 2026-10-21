@@ -902,6 +902,26 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 40 — Clientes empresariais e locais guardados (N6)
+
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N6). Consome a Fase 33 do backend.
+
+**Escopo:**
+- Perfil do cliente: `components/profile/DadosDaEmpresa.tsx` («Sou uma empresa ou instituição», nome, NUIT de 9 dígitos validado antes de enviar) e `components/profile/OsMeusLocais.tsx` (lista, acrescentar com província/distrito/bairro e, opcionalmente, as coordenadas GPS do perfil; apagar; limite de 20).
+- Pedidos: `components/pedidos/EscolhaDoLocal.tsx` em «Novo pedido» e «Solicitar serviço» — a localização do perfil ou um local guardado (só aparece a quem tem locais).
+- «Os meus pedidos»: «Exportar (CSV)» (`components/pedidos/ExportarOsMeusPedidos.tsx`, reutiliza `guardarFicheiro`).
+- Contacto do cliente (`ContactoCliente`): «Facturar a: nome · NUIT» quando o cliente é empresa.
+- `services/clientLocations.ts`, `hooks/useClientLocations.ts`; tipos novos em `services/profile.ts` e `services/serviceRequests.ts` (opcionais, para não partir contra um backend antigo).
+- Termos de utilização, secção 9: nome e NUIT mostrados ao profissional do pedido.
+
+**Desvio ao plano:** o frontend **copia** o local guardado para `location` (`lib/localDoPedido.ts`, `moradaEscolhida`) em vez de enviar `saved_location_id`. Assim o pedido continua a poder ir para a fila offline (Fase 5) e sai igual sem rede; `saved_location_id` fica disponível na API.
+
+**Critérios de Entrega:**
+- [x] Dados da empresa (enviar, NUIT incompleto e nome em falta bloqueiam, voltar a particular), locais (acrescentar com coordenadas do perfil, listar e apagar), `moradaEscolhida` (perfil, local copiado, local apagado) — 6 testes (`ClienteEmpresarial.test.tsx`). Os testes de Perfil, Novo pedido, Solicitar serviço e Os meus pedidos passaram a simular `useClientLocations`.
+- [ ] Visto no browser a 390 px e contra o backend real (migration da Fase 33 aplicada); confirmar o CSV no Excel.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -1059,6 +1079,8 @@ Origem: TRD Adendo v1.65. **Nada aqui está aprovado.** Cada item, quando aprova
 - [ ] Revisão no admin: ver o documento, aprovar, rejeitar sem motivo (bloqueado) — teste.
 
 ### N6 — Clientes empresariais
+
+> **21/10/2026:** aprovada e implementada como **Fase 40**.
 
 | Ficheiro | Acção | O quê |
 |---|---|---|

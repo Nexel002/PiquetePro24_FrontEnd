@@ -11,6 +11,7 @@ import { BotaoDenunciar } from '../components/moderacao/BotaoDenunciar'
 import { ContactoDoProfissional } from '../components/pedidos/ContactoDoProfissional'
 import { useChosenProfessional } from '../hooks/useInvitations'
 import { usePedidosPendentes } from '../hooks/usePedidosPendentes'
+import { ExportarOsMeusPedidos } from '../components/pedidos/ExportarOsMeusPedidos'
 
 // Formulário de avaliação (Fase 9, TRD Adendo v1.17): só para pedidos COMPLETED sem
 // avaliação ainda (has_review, calculado pelo backend). Sem edição posterior — uma
@@ -164,6 +165,8 @@ export function MyServiceRequests() {
           para começar.
         </p>
       )}
+
+      {requests && requests.length > 0 && <ExportarOsMeusPedidos />}
 
       {requests && requests.length > 0 && (
         <ul className="flex flex-col gap-3">

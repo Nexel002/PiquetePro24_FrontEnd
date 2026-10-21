@@ -2,7 +2,9 @@ import { useState, type FormEvent } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { useProfile } from '../hooks/useProfile'
 import { useCreateServiceRequest } from '../hooks/useServiceRequests'
-import { localDoPedido, textoDoLocal } from '../lib/localDoPedido'
+import { LOCAL_DO_PERFIL, localDoPedido, moradaEscolhida, textoDoLocal } from '../lib/localDoPedido'
+import { useClientLocations } from '../hooks/useClientLocations'
+import { EscolhaDoLocal } from '../components/pedidos/EscolhaDoLocal'
 import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
 import { Card, CardContent } from '../components/ui/Card'
@@ -30,13 +32,17 @@ export function NewServiceRequest() {
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
+  // Fase 40 (N6): a morada é a do perfil ou um local guardado do cliente.
+  const [escolhaDoLocal, setEscolhaDoLocal] = useState(LOCAL_DO_PERFIL)
+  const locais = useClientLocations(profile?.role === 'CLIENT')
 
   if (!state || state.professionals.length === 0) {
     return <Navigate to="/profissionais" replace />
   }
 
-  const serviceLocation = profile ? localDoPedido(profile) : null
+  const serviceLocation = moradaEscolhida(profile, escolhaDoLocal, locais.data)
   const locationText = textoDoLocal(serviceLocation)
+  const textoDoPerfil = textoDoLocal(profile ? localDoPedido(profile) : null)
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -101,6 +107,8 @@ export function NewServiceRequest() {
                 className="w-full rounded-xl border border-gray-200 p-3 text-sm text-gray-900 focus:border-piquete-blue focus:outline-none focus:ring-2 focus:ring-piquete-blue/20"
               />
             </label>
+
+            <EscolhaDoLocal locais={locais.data ?? []} textoDoPerfil={textoDoPerfil} valor={escolhaDoLocal} aoMudar={setEscolhaDoLocal} />
 
             {isProfileLoading && <div className="h-10 animate-pulse rounded-xl bg-gray-200" />}
 

@@ -36,6 +36,13 @@ export function ContactoCliente({ requestId }: { requestId: string }) {
   return (
     <div className="flex flex-col gap-2 rounded-2xl bg-gray-50 border border-gray-100 p-3 text-sm">
       <p className="font-bold text-piquete-blue">{contact.client_name}</p>
+      {/* Fase 40 (N6): cliente empresa ou instituição — o que é preciso para a factura. */}
+      {contact.business && (
+        <p className="rounded-xl bg-white px-3 py-2 text-xs text-gray-700">
+          <span className="font-semibold">Facturar a:</span> {contact.business.name ?? 'Empresa sem nome indicado'}
+          {contact.business.nuit && <> · NUIT {contact.business.nuit}</>}
+        </p>
+      )}
       {contact.client_phone ? (
         <a href={`tel:${formatInternationalPhone(contact.client_phone)}`} className="self-start text-piquete-blue font-semibold underline">
           Ligar: {formatInternationalPhone(contact.client_phone)}
