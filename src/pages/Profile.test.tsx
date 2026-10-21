@@ -36,6 +36,11 @@ vi.mock('../hooks/useServiceCategories', () => ({
   useServiceCategories: () => ({ data: [] }),
 }))
 vi.mock('../lib/supabase', () => ({ supabase: { auth: { updateUser: mocks.updateUser } } }))
+// Fase 39: os avisos de procura do cliente têm teste próprio (OsMeusAvisos); aqui não há nenhum.
+vi.mock('../hooks/useSearchAlerts', () => ({
+  useSearchAlerts: () => ({ data: [] }),
+  useDeleteSearchAlert: () => ({ mutate: vi.fn(), isPending: false }),
+}))
 
 function perfil(extra: Partial<UserProfile> = {}): UserProfile {
   return {

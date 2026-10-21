@@ -38,6 +38,11 @@ export function FindProfessionals() {
   })
 
   const hasLocation = coordinates !== null
+  // Fase 39 (N4): o «Avisa-me quando houver» é para quem procura um serviço — clientes, com um
+  // serviço escolhido (por texto não há um serviço a que o aviso se possa referir).
+  const servicoEscolhido = categories.data?.find((categoria) => categoria.slug === filtros.category) ?? null
+  const avisoDeOferta =
+    profile?.role === 'CLIENT' && servicoEscolhido ? { servico: servicoEscolhido, provinciaPadrao: profile.province ?? null } : null
   // Num telemóvel, focar o campo ao entrar abre o teclado por cima dos resultados antes de o
   // utilizador ter tocado em nada; só se foca onde há rato (hover) e ainda não há filtros.
   const focarAoMontar = !filtros.q && !filtros.category && (window.matchMedia?.('(hover: hover)')?.matches ?? false)
@@ -113,6 +118,7 @@ export function FindProfessionals() {
           aoAlternar={selecao.alternar}
           aoTentarDeNovo={() => void search.refetch()}
           aoVerMais={() => void search.fetchNextPage()}
+          avisoDeOferta={avisoDeOferta}
         />
       </div>
 

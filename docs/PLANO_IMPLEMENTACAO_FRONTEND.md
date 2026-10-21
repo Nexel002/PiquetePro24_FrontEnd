@@ -884,6 +884,24 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 39 — Procura sem oferta (N4)
+
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N4). Consome a Fase 32 do backend.
+
+**Escopo:**
+- `components/busca/AvisaMe.tsx`: «Ainda não há [serviço] perto de ti. Queres que te avisemos quando houver?», com a província do perfil pré-escolhida (pode mudar) e confirmação no ecrã. Aparece em `ResultadosDaBusca` só para **clientes** com um **serviço escolhido**, quando não há ninguém, ou quando há localização e ninguém está perto nem atende a zona (a mesma regra do backend).
+- `components/profile/OsMeusAvisos.tsx` no Perfil (só `CLIENT`; não aparece sem avisos), com «Apagar».
+- Admin: separador **«Procura»** na Visão Geral (`pages/AdminProcura.tsx` + `components/admin/procura/TabelaDaProcura.tsx`): serviço × província, procuras, clientes, avisos pendentes, profissionais elegíveis e o selo «Falta oferta» em texto; filtro de datas e «Exportar CSV» (o mecanismo de `ExportacoesCsv`).
+- `services/searchAlerts.ts`, `hooks/useSearchAlerts.ts`; `fetchProcura`/`useProcura` e o tipo de exportação `demand` em `services/adminReports.ts`.
+- Termos de utilização, secção 9: o registo das pesquisas sem resultado (grelha de ~1 km, 12 meses) e dos avisos. Data dos termos: 21/10/2026.
+
+**Critérios de Entrega:**
+- [x] `AvisaMe`: pedido com a província do perfil, mudar a província, província inválida no perfil, 409 do servidor; quando aparece e quando não aparece (com alguém perto, a atender a zona, sem localização com resultados, não cliente) — 5 testes.
+- [x] `OsMeusAvisos`: lista com estado, apagar, escondido sem avisos, erro — 3 testes. `AdminProcura`: dados com «Falta oferta», vazio e erro — 3 testes.
+- [ ] Visto no browser a 390 px e contra o backend real (migration da Fase 32 aplicada).
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -1003,6 +1021,8 @@ Origem: TRD Adendo v1.65. **Nada aqui está aprovado.** Cada item, quando aprova
 - [ ] Estado vazio («Ainda não tens serviços recorrentes») e recorrência pausada por falhas, com o motivo — teste.
 
 ### N4 — Procura sem oferta
+
+> **21/10/2026:** aprovada e implementada como **Fase 39**.
 
 | Ficheiro | Acção | O quê |
 |---|---|---|

@@ -1,7 +1,7 @@
 import { api } from '../lib/api'
 
 // Espelha reportService.ts do backend (Fase 21).
-export type TipoDeExportacao = 'users' | 'service-requests' | 'payments'
+export type TipoDeExportacao = 'users' | 'service-requests' | 'payments' | 'demand'
 
 export interface FiltroDeDatas {
   from?: string
@@ -50,6 +50,29 @@ export async function exportar(
     linhas: Number(cabecalhos['x-linhas'] ?? 0),
     truncada: cabecalhos['x-truncada'] === 'true',
   }
+}
+
+// Fase 39 (TRD Adendo v1.66, N4): procura sem oferta, por serviço e província (Backend Fase 32).
+// category_id null = procuras só por texto, sem serviço escolhido (sem contagem de elegíveis).
+export interface LinhaDeProcura {
+  category_id: string | null
+  category_name: string | null
+  province: string
+  searches: number
+  clients: number
+  pending_alerts: number
+  eligible_professionals: number | null
+}
+
+export interface QuadroDaProcura {
+  from: string
+  to: string
+  rows: LinhaDeProcura[]
+}
+
+export async function fetchProcura(filtros: FiltroDeDatas): Promise<QuadroDaProcura> {
+  const response = await api.get<QuadroDaProcura>('/admin/demand', { params: filtros })
+  return response.data
 }
 
 export async function fetchFunil(filtros: FiltroDeDatas): Promise<Funil> {

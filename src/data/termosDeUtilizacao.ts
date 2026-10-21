@@ -9,7 +9,7 @@ export interface SeccaoLegal {
 
 // "Última actualização" mostra-se na página e conta para o utilizador: mudar o texto sem mudar
 // esta data é dizer-lhe que nada mudou.
-export const TERMOS_ACTUALIZADOS_EM = '16 de outubro de 2026'
+export const TERMOS_ACTUALIZADOS_EM = '21 de outubro de 2026'
 
 // Texto redigido a partir do que a plataforma faz hoje (identidade verificada, subscrição do
 // profissional, pedido a 3 profissionais, partilha de contactos só depois da escolha,
@@ -111,6 +111,7 @@ export const TERMOS_DE_UTILIZACAO: SeccaoLegal[] = [
       'Dados de conta: nome, email, telefone e fotografia de perfil (se a puseres).',
       'Localização: a que indicas no perfil e, se deres autorização, a do teu dispositivo. Para ordenar profissionais por proximidade usamos uma localização aproximada (arredondada a cerca de 500 m) e nunca mostramos coordenadas exatas a outros utilizadores.',
       'Profissionais: os documentos da verificação de identidade, que só a equipa autorizada vê.',
+      'Pesquisas sem resultado: quando procuras um serviço e não há ninguém perto, guardamos o serviço, a província e uma localização arredondada a cerca de 1 km, durante 12 meses, para sabermos onde faltam profissionais. Se pedires para ser avisado, guardamos esse pedido até te avisarmos ou o apagares no teu perfil.',
       'Mensagens do sistema: enviamos-te emails sobre a tua conta e os teus pedidos (por exemplo, um novo convite ou uma proposta recebida).',
     ],
     nota: 'Não vendemos os teus dados. Partilhamo-los apenas com quem for necessário para o serviço: o outro utilizador do pedido (nos termos da secção 3) e os fornecedores técnicos que nos permitem operar a plataforma. Podes corrigir os teus dados e eliminar a tua conta, tu mesmo, em O meu perfil → Definições (editar perfil). A eliminação é definitiva e apaga o teu perfil e os dados que estão ligados à tua conta.',

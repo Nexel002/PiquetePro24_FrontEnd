@@ -10,6 +10,7 @@ import { EstatisticasDaConta } from '../components/profile/EstatisticasDaConta'
 import { FotoDoPerfil } from '../components/profile/FotoDoPerfil'
 import { HistoricoDePedidos } from '../components/profile/HistoricoDePedidos'
 import { TelefoneRegistado } from '../components/profile/TelefoneRegistado'
+import { OsMeusAvisos } from '../components/profile/OsMeusAvisos'
 import { AvatarUploadError } from '../services/avatar'
 
 // Compõe o ecrã; cada bloco tem o seu estado e os seus hooks no próprio componente
@@ -85,6 +86,8 @@ export function Profile() {
           {profile.role === 'PROFESSIONAL' && profile.professional_type === 'COMPANY' && <AtalhoDaEquipa />}
 
           <EstatisticasDaConta profile={profile} />
+
+          {profile.role === 'CLIENT' && <OsMeusAvisos />}
 
           {isSettingsOpen ? <DefinicoesDaConta profile={profile} /> : <TelefoneRegistado telefone={profile.phone} />}
 
