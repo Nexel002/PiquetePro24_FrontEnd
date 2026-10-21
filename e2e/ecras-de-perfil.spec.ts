@@ -45,6 +45,18 @@ async function preparar(page: Page) {
   })
 }
 
+// A página entra com a animação `fade-in` (opacidade e scale 0.98 → 1, 0,3 s). Medir a meio dela dá a
+// foto deslocada 0,2–2,4 px e o teste falhava conforme a máquina do CI estava mais ou menos ocupada.
+// Espera-se que as animações finitas acabem; as infinitas (pulse, float) não contam.
+async function esperarAnimacoes(page: Page) {
+  await page.waitForFunction(() =>
+    document
+      .getAnimations()
+      .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+      .every((a) => a.playState === 'finished' || a.playState === 'idle'),
+  )
+}
+
 async function capturar(page: Page, nome: string) {
   const pasta = process.env.SHOTS_DIR
   if (pasta) await page.screenshot({ path: `${pasta}/${nome}.png`, fullPage: true })
@@ -67,6 +79,7 @@ for (const { nome, largura, altura } of TAMANHOS) {
         await expect(h1).toHaveText(esperado, { timeout: 30_000 })
         await expect(h1).toHaveCount(1)
         await expect(h1).toBeVisible()
+        await esperarAnimacoes(page)
 
         const aside = page.locator('aside').first()
         const caixaDaFoto = await aside.locator('> div').first().boundingBox()
@@ -96,12 +109,18 @@ for (const { nome, largura, altura } of TAMANHOS) {
       })
     }
 
+    // Desde a Fase 27/28 o catálogo tem «Solicitar serviço» (pedido directo) e, por baixo, o pedido de
+    // propostas a 3 profissionais do mesmo serviço; o antigo «Pedir Canalização» deixou de existir.
     test('Catálogo: selo «Identidade verificada», pedir serviço e trabalhos', async ({ page }) => {
       await preparar(page)
       await page.goto('/profissionais/pro-1')
 
       await expect(page.getByText('Identidade verificada')).toBeVisible()
-      await expect(page.getByRole('link', { name: 'Pedir Canalização' })).toHaveAttribute('href', '/profissionais?category=canalizacao')
+      await expect(page.getByRole('link', { name: 'Solicitar serviço' })).toHaveAttribute('href', '/solicitar/pro-1')
+      await expect(page.getByRole('link', { name: /Ou pede propostas de Canalização/ })).toHaveAttribute(
+        'href',
+        '/profissionais?category=canalizacao',
+      )
       await expect(page.getByRole('heading', { name: 'Trabalhos realizados' })).toBeVisible()
     })
 

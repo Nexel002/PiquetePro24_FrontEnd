@@ -45,6 +45,8 @@ export default defineConfig({
       VITE_API_URL: API,
       VITE_SUPABASE_URL: SUPABASE,
       VITE_SUPABASE_ANON_KEY: 'chave-publica-de-e2e',
+      // Um .env local com a montra de demonstração ligada esconderia o estado de erro da Home.
+      VITE_MONTRA_DE_DEMONSTRACAO: 'false',
     },
   },
 })

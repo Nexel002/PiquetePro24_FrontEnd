@@ -48,7 +48,10 @@ export function FindProfessionals() {
   const focarAoMontar = !filtros.q && !filtros.category && (window.matchMedia?.('(hover: hover)')?.matches ?? false)
 
   return (
-    <main className="relative min-h-dvh bg-slate-50/50 pb-36">
+    // overflow-x-clip: as formas decorativas saem 80 px pela direita; no telemóvel isso alargava a
+    // página, deixava-a deslizar de lado e empurrava o botão «Pedir a 3» da barra fixa para fora do
+    // ecrã. `clip` e não `hidden`: não cria um contentor de deslocamento.
+    <main className="relative min-h-dvh overflow-x-clip bg-slate-50/50 pb-36">
       {/* Formas decorativas orgânicas inspiradas na referência visual do TaskRabbit */}
       <div className="pointer-events-none absolute -left-20 -top-20 h-72 w-72 rounded-full bg-gradient-to-br from-piquete-blue/10 via-piquete-blue-light/5 to-transparent blur-3xl" />
       <div className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full bg-gradient-to-bl from-piquete-yellow/15 via-piquete-yellow-light/5 to-transparent blur-3xl" />

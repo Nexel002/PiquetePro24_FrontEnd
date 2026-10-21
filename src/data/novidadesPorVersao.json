@@ -49,5 +49,12 @@
       "Num pedido concluído podes marcar o serviço para se repetir com o mesmo profissional.",
       "Empresas e instituições podem indicar o NUIT, guardar locais e exportar os pedidos."
     ]
+  },
+  {
+    "versao": "0.3.1",
+    "data": "2026-10-21",
+    "novidades": [
+      "No telemóvel, a página de procurar profissionais já não desliza para o lado, e o botão «Pedir a 3» fica sempre à vista."
+    ]
   }
 ]

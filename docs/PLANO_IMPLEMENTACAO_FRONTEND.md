@@ -2,8 +2,8 @@
 
 Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo o Adendo v1.2. Este repositório cobre a PWA (React + Vite + Tailwind CSS + Framer Motion), alojada na Vercel, consumindo a API do repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend). O plano começou com 7 fases sequenciais, espelhando as fases do backend para permitir avanço paralelo e integração contínua entre os dois repositórios; tem hoje 37 (da Fase 8 em diante, acrescentadas por adendos do TRD).
 
-> **Estado em 21/10/2026 (TRD Adendo v1.65).** As Fases 0 a 37 estão em `main` e em produção (`https://piquete-pro24-front-end-beta.vercel.app`, versão 0.2.3). **As Fases 38 a 42** (ideias N1, N4, N6, N5 e N3 do Adendo v1.66, aprovadas pelo utilizador a 21/10/2026) estão implementadas em `feat/novas-funcionalidades`, só local, versão 0.3.0. O que falta nas Fases 0 a 37 já não é código:
-> 1. **Validar no browser e no telemóvel** os critérios por marcar das Fases 11 a 37 (quase todos são isso). Nesta máquina o Playwright não tem browsers instalados: os E2E só correm no CI.
+> **Estado em 21/10/2026 (TRD Adendos v1.67 e v1.68).** As Fases 0 a 42 estão em `main` e em produção (`https://piquete-pro24-front-end-beta.vercel.app`, versão 0.3.0; as Fases 38 a 42 entraram pelo merge `4b2cbb7`). **A Fase 43** (E2E do CI de volta ao verde e barra «Pedir a 3» no telemóvel, versão 0.3.1) está em `fix/e2e-ecras-de-perfil`, por fazer merge. O que falta nas Fases 0 a 42 já não é código:
+> 1. **Validar no browser e no telemóvel** os critérios por marcar das Fases 11 a 37 (quase todos são isso). Nesta máquina os E2E correm com o Edge instalado (`E2E_BROWSER=msedge npx playwright test`); no CI usam o Chromium do Playwright.
 > 2. **Fase 7:** depende de um staging que não existe (backend, Fase 7).
 > 3. As **empresas e equipas** (Fases 23 a 26) dependem de 4 migrations do backend sem registo de aplicação (`Doc's/ESQUEMA_BASE_DADOS.md`, no backend).
 > 4. **Backlog** no fim deste plano: correcções e propostas da análise de 21/10/2026, por aprovar. As ideias N1 a N7 têm plano detalhado na secção «Propostas N1 a N7», a seguir ao backlog (TRD Adendo v1.66).
@@ -867,7 +867,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 38 — Zona de atendimento do profissional (N1)
 
-**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N1). Consome a Fase 31 do backend (migration primeiro, depois backend, depois frontend).
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), em `main` pelo merge `4b2cbb7` e em produção; por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N1). Consome a Fase 31 do backend (migration primeiro, depois backend, depois frontend).
 
 **Escopo:**
 - `components/catalogo/ZonaDeAtendimento.tsx` em «O meu catálogo» (secção «Onde trabalhas»): raio em botões (5, 10, 25, 50, 100 km ou «Não definido») e as 11 províncias (`lib/provinces.ts`), com aviso quando o perfil não tem localização (o raio ainda não conta). Grava por `useUpdateServiceArea`, que invalida o catálogo e a pesquisa.
@@ -886,7 +886,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 39 — Procura sem oferta (N4)
 
-**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N4). Consome a Fase 32 do backend.
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), em `main` pelo merge `4b2cbb7` e em produção; por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N4). Consome a Fase 32 do backend.
 
 **Escopo:**
 - `components/busca/AvisaMe.tsx`: «Ainda não há [serviço] perto de ti. Queres que te avisemos quando houver?», com a província do perfil pré-escolhida (pode mudar) e confirmação no ecrã. Aparece em `ResultadosDaBusca` só para **clientes** com um **serviço escolhido**, quando não há ninguém, ou quando há localização e ninguém está perto nem atende a zona (a mesma regra do backend).
@@ -904,7 +904,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 40 — Clientes empresariais e locais guardados (N6)
 
-**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N6). Consome a Fase 33 do backend.
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), em `main` pelo merge `4b2cbb7` e em produção; por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N6). Consome a Fase 33 do backend.
 
 **Escopo:**
 - Perfil do cliente: `components/profile/DadosDaEmpresa.tsx` («Sou uma empresa ou instituição», nome, NUIT de 9 dígitos validado antes de enviar) e `components/profile/OsMeusLocais.tsx` (lista, acrescentar com província/distrito/bairro e, opcionalmente, as coordenadas GPS do perfil; apagar; limite de 20).
@@ -924,7 +924,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 41 — Selos de credenciais (N5)
 
-**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N5). Consome a Fase 34 do backend.
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), em `main` pelo merge `4b2cbb7` e em produção; por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N5). Consome a Fase 34 do backend.
 
 **Escopo:**
 - `pages/Credentials.tsx` em `/credenciais` (profissional e técnico; sem `OnboardingGate`, como os trabalhos do técnico): enviar, ver o estado e o motivo de uma rejeição, apagar. Atalho «As minhas credenciais» no Perfil.
@@ -944,7 +944,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 42 — Serviços recorrentes (N3)
 
-**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser. Versão 0.3.0 (entrada em `novidadesPorVersao.json` cobre as Fases 38 a 42).** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N3). Consome a Fase 35 do backend.
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), em `main` pelo merge `4b2cbb7` e em produção; por validar no browser. Versão 0.3.0 (entrada em `novidadesPorVersao.json` cobre as Fases 38 a 42).** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N3). Consome a Fase 35 do backend.
 
 **Escopo:**
 - «Os meus pedidos»: «Repetir regularmente» nos pedidos concluídos com profissional e serviço (`components/pedidos/RepetirRegularmente.tsx`: frequência, próxima data a partir de amanhã em Maputo e as três datas seguintes, com a mesma regra do backend); ligação a «Serviços recorrentes».
@@ -958,6 +958,27 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 **Critérios de Entrega:**
 - [x] Datas (mensal com fim de mês, mudança de ano), marcar com as próximas datas e confirmação, data antes de amanhã bloqueada, lista do cliente (pausar, cancelar, retomar, pausa por falhas, motivo do profissional, vazio), «Deixar de aceitar» com motivo obrigatório, secção escondida sem recorrências — 9 testes (`Recorrentes.test.tsx`).
 - [ ] Visto no browser e contra o backend real (migration da Fase 35 aplicada), incluindo uma vez criada pelo job.
+
+---
+
+## Fase 43 — E2E do CI de volta ao verde e barra «Pedir a 3» no telemóvel
+
+**Estado: implementada em `fix/e2e-ecras-de-perfil` (21/10/2026), por fazer merge. Versão 0.3.1.** Ver Adendo v1.68 do TRD. Só frontend.
+
+**Problema reportado:** o CI do frontend falhava desde 13/10 (runs #42 a #48) em `e2e/ecras-de-perfil.spec.ts`.
+
+**Causas e correcções:**
+- `ecras-de-perfil.spec.ts` media a posição da foto a meio da animação `fade-in` (`scale(0.98)`, x ≠ 0); agora espera que as animações finitas acabem (`esperarAnimacoes`). Procurava ainda o link «Pedir Canalização», substituído na Fase 28 por «Solicitar serviço» e «Ou pede propostas de Canalização»; as asserções seguem os links actuais.
+- Com a sessão gravada pelo `entrarComo`, `lib/novidades.ts` conclui que «já usava a app» e abre «O que há de novo» por cima da página, que intercepta os cliques. `e2e/ajudas.ts` grava também `piquete:versao-vista` com a versão do `package.json`.
+- **Defeito real no telemóvel:** em `FindProfessionals.tsx`, as formas decorativas (`-right-20`, `w-80`) alargavam a página 80 px. A página deslizava para o lado e o botão «Pedir a 3» da barra fixa saía do ecrã. Correcção: `overflow-x-clip` no `main` (`clip` e não `hidden`, que criaria um contentor de deslocamento).
+- A Fase 40 (N6) pôs o `/novo-pedido` a ler `GET /clients/me/locations`; os E2E que passam pelo formulário simulam essa rota.
+- `playwright.config.ts`: `VITE_MONTRA_DE_DEMONSTRACAO=false` no build dos E2E. Um `.env` local com a montra ligada escondia o estado de erro da Home; o CI não tem `.env`.
+- Versão 0.3.1, com entrada em `novidadesPorVersao.json`.
+
+**Critérios de Entrega:**
+- [x] E2E: 25/25 com `E2E_BROWSER=msedge npx playwright test`; 705 testes unitários, lint (só os 2 avisos que já existiam) e build sem erros.
+- [ ] CI verde em `fix/e2e-ecras-de-perfil`.
+- [ ] No telemóvel: a pesquisa de profissionais não desliza para o lado, e «Pedir a 3» fica à vista.
 
 ---
 

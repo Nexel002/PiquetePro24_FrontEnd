@@ -1,9 +1,16 @@
+import { readFileSync } from 'node:fs'
 import type { Page, Request, Route } from '@playwright/test'
 
 // Tem de coincidir com o `webServer.env` do playwright.config.ts: o build é feito com estes
 // endereços, e a chave do armazenamento da sessão do Supabase deriva do anfitrião.
 export const API = 'http://api.test'
 const CHAVE_DA_SESSAO = 'sb-supabase-auth-token'
+
+// Com a sessão gravada, src/lib/novidades.ts conclui que «já usava a app» e abre o aviso «O que há
+// de novo» por cima da página — que intercepta os cliques. Os testes entram como quem já viu a
+// versão do build; o aviso tem os seus próprios testes unitários.
+const CHAVE_DA_VERSAO_VISTA = 'piquete:versao-vista'
+const VERSAO_DO_BUILD = (JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }).version
 
 export interface RespostaSimulada {
   status?: number
@@ -67,10 +74,11 @@ export async function entrarComo(page: Page, userId: string) {
     },
   }
   await page.addInitScript(
-    ([chave, valor]) => {
+    ([chave, valor, chaveDaVersao, versao]) => {
       window.localStorage.setItem(chave, valor)
+      window.localStorage.setItem(chaveDaVersao, versao)
     },
-    [CHAVE_DA_SESSAO, JSON.stringify(sessao)] as const,
+    [CHAVE_DA_SESSAO, JSON.stringify(sessao), CHAVE_DA_VERSAO_VISTA, VERSAO_DO_BUILD] as const,
   )
 }
 

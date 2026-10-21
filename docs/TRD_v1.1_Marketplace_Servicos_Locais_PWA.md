@@ -2384,7 +2384,7 @@ Tem um índice `(status, submitted_at)` para a fila do admin.
 
 ### Implementação de N1, N3, N4, N5 e N6 (21/10/2026)
 
-**Estado: implementado em `feat/novas-funcionalidades` nos dois repositórios, só local. As 5 migrations foram aplicadas ao Supabase real pelo utilizador a 21/10/2026 (verificação final sem erro); o código ainda não está em produção (sem merge nem push).** O utilizador aprovou a 21/10/2026 cinco das sete propostas do Adendo v1.66. **N2 (preço indicativo) e N7 (pagamento com comissão) ficam adiadas** e continuam por aprovar.
+**Estado: em produção desde 21/10/2026. Backend: merge `3f3d4a1`, publicado no Fly (`/health` e `/openapi.json` verificados). Frontend: merge `4b2cbb7`, versão 0.3.0, publicado na Vercel. As 5 migrations foram aplicadas ao Supabase real pelo utilizador antes do deploy (verificação final sem erro).** O utilizador aprovou a 21/10/2026 cinco das sete propostas do Adendo v1.66. **N2 (preço indicativo) e N7 (pagamento com comissão) ficam adiadas** e continuam por aprovar.
 
 | Ideia | Backend | Frontend | Migration |
 |---|---|---|---|
@@ -2422,3 +2422,26 @@ O detalhe de cada fase (escopo, ficheiros, critérios, testes) está nos dois pl
 Sem variáveis de ambiente novas. Dois jobs novos no processo do backend: avisos de oferta (de hora a hora, com purga diária) e pedidos recorrentes (de hora a hora).
 
 **Critérios de entrega correspondentes:** backend Fases 31 a 35; frontend Fases 38 a 42.
+
+---
+
+## Adendo v1.68
+
+### E2E do frontend de volta ao verde e barra «Pedir a 3» no telemóvel (21/10/2026)
+
+**Estado: em `fix/e2e-ecras-de-perfil` no frontend (Fase 43, versão 0.3.1), por fazer merge.** Sem alterações no backend, na base de dados nem nas variáveis de ambiente de produção.
+
+O CI do frontend falhava desde 13/10 em `e2e/ecras-de-perfil.spec.ts`. A bateria completa, corrida localmente, mostrou outras quatro causas:
+
+| Causa | Tipo | Correcção |
+|---|---|---|
+| Posição da foto medida a meio da animação `fade-in` (`scale(0.98)`) | Teste | Espera que as animações finitas acabem |
+| Link «Pedir Canalização», substituído na Fase 28 do frontend | Teste | Asserções sobre «Solicitar serviço» e «Ou pede propostas de …» |
+| «O que há de novo» aberto por cima da página (a sessão simulada conta como «já usava a app») | Teste | `entrarComo` grava `piquete:versao-vista` com a versão do build |
+| Formas decorativas da pesquisa alargavam a página 80 px no telemóvel | **Defeito real** | `overflow-x-clip` no `main` de `FindProfessionals` |
+| `GET /clients/me/locations` (N6) sem simulação nos E2E do pedido | Teste | Rota simulada |
+
+**O defeito real:** no telemóvel, a pesquisa de profissionais deslizava para o lado, e o botão «Pedir a 3» da barra fixa podia ficar fora do ecrã. Usa-se `overflow-x-clip` e não `overflow-hidden`: `hidden` cria um contentor de deslocamento.
+
+**Ambiente de E2E:** `playwright.config.ts` fixa `VITE_MONTRA_DE_DEMONSTRACAO=false` no build dos E2E, para um `.env` local não esconder o estado de erro da Home. Localmente os E2E correm com o Edge instalado (`E2E_BROWSER=msedge`); no CI, com o Chromium do Playwright.
+
