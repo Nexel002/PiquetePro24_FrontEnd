@@ -50,6 +50,7 @@ const SolicitarServico = lazy(() => import('./pages/SolicitarServico').then((m) 
 const CompanyTeam = lazy(() => import('./pages/CompanyTeam').then((m) => ({ default: m.CompanyTeam })))
 const TechnicianJobs = lazy(() => import('./pages/TechnicianJobs').then((m) => ({ default: m.TechnicianJobs })))
 const Credentials = lazy(() => import('./pages/Credentials').then((m) => ({ default: m.Credentials })))
+const RecurringRequests = lazy(() => import('./pages/RecurringRequests').then((m) => ({ default: m.RecurringRequests })))
 const DefinirNovaPassword = lazy(() => import('./pages/DefinirNovaPassword').then((m) => ({ default: m.DefinirNovaPassword })))
 
 const queryClient = new QueryClient()
@@ -327,6 +328,18 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Credentials />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Fase 42 (N3): serviços recorrentes do cliente (o endereço vem nos emails do backend). */}
+            <Route
+              path="/servicos-recorrentes"
+              element={
+                <ProtectedRoute>
+                  <OnboardingGate>
+                    <RecurringRequests />
+                  </OnboardingGate>
                 </ProtectedRoute>
               }
             />

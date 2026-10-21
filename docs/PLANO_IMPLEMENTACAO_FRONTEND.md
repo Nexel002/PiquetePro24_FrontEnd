@@ -2,7 +2,7 @@
 
 Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo o Adendo v1.2. Este repositório cobre a PWA (React + Vite + Tailwind CSS + Framer Motion), alojada na Vercel, consumindo a API do repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend). O plano começou com 7 fases sequenciais, espelhando as fases do backend para permitir avanço paralelo e integração contínua entre os dois repositórios; tem hoje 37 (da Fase 8 em diante, acrescentadas por adendos do TRD).
 
-> **Estado em 21/10/2026 (TRD Adendo v1.65).** As Fases 0 a 37 estão em `main` e em produção (`https://piquete-pro24-front-end-beta.vercel.app`, versão 0.2.3). O que falta já não é código:
+> **Estado em 21/10/2026 (TRD Adendo v1.65).** As Fases 0 a 37 estão em `main` e em produção (`https://piquete-pro24-front-end-beta.vercel.app`, versão 0.2.3). **As Fases 38 a 42** (ideias N1, N4, N6, N5 e N3 do Adendo v1.66, aprovadas pelo utilizador a 21/10/2026) estão implementadas em `feat/novas-funcionalidades`, só local, versão 0.3.0. O que falta nas Fases 0 a 37 já não é código:
 > 1. **Validar no browser e no telemóvel** os critérios por marcar das Fases 11 a 37 (quase todos são isso). Nesta máquina o Playwright não tem browsers instalados: os E2E só correm no CI.
 > 2. **Fase 7:** depende de um staging que não existe (backend, Fase 7).
 > 3. As **empresas e equipas** (Fases 23 a 26) dependem de 4 migrations do backend sem registo de aplicação (`Doc's/ESQUEMA_BASE_DADOS.md`, no backend).
@@ -942,6 +942,25 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 42 — Serviços recorrentes (N3)
+
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser. Versão 0.3.0 (entrada em `novidadesPorVersao.json` cobre as Fases 38 a 42).** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N3). Consome a Fase 35 do backend.
+
+**Escopo:**
+- «Os meus pedidos»: «Repetir regularmente» nos pedidos concluídos com profissional e serviço (`components/pedidos/RepetirRegularmente.tsx`: frequência, próxima data a partir de amanhã em Maputo e as três datas seguintes, com a mesma regra do backend); ligação a «Serviços recorrentes».
+- `pages/RecurringRequests.tsx` em `/servicos-recorrentes` (o endereço dos emails do backend): estado, próxima data, pausar, retomar, cancelar; explica a pausa por falhas e o motivo de quem deixou de aceitar.
+- «Trabalhos aceites»: etiqueta «Recorrente» nos pedidos que vêm de uma recorrência e a secção `components/pedidos/RecorrenciasDoProfissional.tsx` com «Deixar de aceitar» (motivo obrigatório).
+- `services/recurringRequests.ts`, `hooks/useRecurringRequests.ts`; `recurring_request_id` (opcional) no tipo do pedido.
+- Termos de utilização, secção 3: os serviços recorrentes.
+
+**Desvio ao plano:** a lista do cliente é um ecrã próprio (`/servicos-recorrentes`) e não uma secção de «Os meus pedidos»: é para lá que os emails do backend apontam.
+
+**Critérios de Entrega:**
+- [x] Datas (mensal com fim de mês, mudança de ano), marcar com as próximas datas e confirmação, data antes de amanhã bloqueada, lista do cliente (pausar, cancelar, retomar, pausa por falhas, motivo do profissional, vazio), «Deixar de aceitar» com motivo obrigatório, secção escondida sem recorrências — 9 testes (`Recorrentes.test.tsx`).
+- [ ] Visto no browser e contra o backend real (migration da Fase 35 aplicada), incluindo uma vez criada pelo job.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -1045,6 +1064,8 @@ Origem: TRD Adendo v1.65. **Nada aqui está aprovado.** Cada item, quando aprova
 - [ ] Visto num telemóvel a 390 px: botões do raio com alvo de toque adequado.
 
 ### N3 — Serviços recorrentes
+
+> **21/10/2026:** aprovada e implementada como **Fase 42**.
 
 **Pré-requisito:** os ecrãs da conclusão pelo profissional e da recusa (Adendo v1.65, problemas 6 e 7).
 

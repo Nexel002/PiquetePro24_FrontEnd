@@ -39,5 +39,15 @@
     "novidades": [
       "O logótipo completo do PiquetePro24 aparece agora também no telemóvel."
     ]
+  },
+  {
+    "versao": "0.3.0",
+    "data": "2026-10-21",
+    "novidades": [
+      "Os profissionais dizem até onde se deslocam, e na pesquisa vês quem atende a tua zona.",
+      "Sem ninguém perto? Pede para ser avisado quando houver, e os profissionais podem mostrar credenciais verificadas.",
+      "Num pedido concluído podes marcar o serviço para se repetir com o mesmo profissional.",
+      "Empresas e instituições podem indicar o NUIT, guardar locais e exportar os pedidos."
+    ]
   }
 ]
