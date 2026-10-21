@@ -4,6 +4,7 @@ import { INVITATIONS_PER_REQUEST } from '../../services/invitations'
 import { ContactoDoProfissional } from '../pedidos/ContactoDoProfissional'
 import { Mosaico } from '../ui/Mosaico'
 import { descreverZona } from './zona'
+import { SelosDeCredenciais } from './SelosDeCredenciais'
 
 interface ApresentacaoDoProfissionalProps {
   catalog: ProfessionalCatalog
@@ -52,6 +53,8 @@ export function ApresentacaoDoProfissional({ catalog, ehDono }: ApresentacaoDoPr
       ) : (
         ehDono && <p className="text-sm italic text-piquete-gray">Ainda não escreveste uma descrição. Acrescenta uma no teu catálogo.</p>
       )}
+
+      <SelosDeCredenciais credenciais={catalog.credentials} />
 
       {zona && (
         <p className="flex items-center gap-2 rounded-2xl bg-piquete-blue/5 px-3 py-2 text-xs font-semibold text-piquete-blue">

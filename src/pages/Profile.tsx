@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useProfile, useUploadAvatar } from '../hooks/useProfile'
 import { LocationForm } from '../components/LocationForm'
 import { LayoutDividido } from '../components/layout/LayoutDividido'
@@ -86,6 +87,16 @@ export function Profile() {
 
           {profile.role === 'PROFESSIONAL' && <AtalhoDoCatalogo />}
           {profile.role === 'PROFESSIONAL' && profile.professional_type === 'COMPANY' && <AtalhoDaEquipa />}
+          {/* Fase 41 (N5): credenciais opcionais, para o profissional e para o técnico. */}
+          {(profile.role === 'PROFESSIONAL' || profile.role === 'TECHNICIAN') && (
+            <Link
+              to="/credenciais"
+              className="flex min-h-[44px] items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 text-sm font-semibold text-piquete-blue hover:border-piquete-blue/30"
+            >
+              As minhas credenciais
+              <span aria-hidden>›</span>
+            </Link>
+          )}
 
           <EstatisticasDaConta profile={profile} />
 

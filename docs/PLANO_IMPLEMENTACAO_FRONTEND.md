@@ -922,6 +922,26 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 41 — Selos de credenciais (N5)
+
+**Estado: implementada em `feat/novas-funcionalidades` (21/10/2026), só local, por validar no browser.** Aprovada pelo utilizador a 21/10/2026 (TRD Adendo v1.66, N5). Consome a Fase 34 do backend.
+
+**Escopo:**
+- `pages/Credentials.tsx` em `/credenciais` (profissional e técnico; sem `OnboardingGate`, como os trabalhos do técnico): enviar, ver o estado e o motivo de uma rejeição, apagar. Atalho «As minhas credenciais» no Perfil.
+- `components/credenciais/FormularioDeCredencial.tsx`: tipo, título, emissor, datas e fotografia (upload por URL assinado, como o KYC). O registo criminal exige a data de emissão; validade anterior à emissão bloqueia.
+- `components/catalogo/SelosDeCredenciais.tsx`: «Registo criminal verificado, válido até 03/2027», na apresentação do profissional e em cada técnico da equipa.
+- Admin: separador **«Credenciais»** na secção KYC (`components/admin/kyc/FilaDeCredenciais.tsx`): titular e KYC dele, «Ver documento» (URL de 60 s pedido só ao carregar, mostrado como imagem), aprovar, rejeitar com motivo obrigatório.
+- `services/credentials.ts`, `services/adminCredentials.ts`, `hooks/useCredentials.ts`, `hooks/useAdminCredentials.ts`; `credentials` (opcional) em `services/catalog.ts`.
+- Termos de utilização, secção 9: os documentos das credenciais.
+
+**Desvio ao plano:** o visualizador ficou dentro de `FilaDeCredenciais` (imagem com ligação para o tamanho real) em vez de um `VisualizadorDeDocumento` partilhado — o KYC (problema 3 do Adendo v1.65) não foi aprovado, por isso ainda não há segundo uso.
+
+**Critérios de Entrega:**
+- [x] Formulário (registo criminal sem emissão bloqueado, envio com ficheiro, datas trocadas), selos (texto com validade, nada sem credenciais), fila do admin (documento só a pedido, imagem com o URL, rejeitar exige motivo, fila vazia) — 6 testes (`Credenciais.test.tsx`).
+- [ ] Visto no browser e num telemóvel, contra o backend real (migration da Fase 34 aplicada): upload, URL de 60 s e selo no catálogo.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -1060,6 +1080,8 @@ Origem: TRD Adendo v1.65. **Nada aqui está aprovado.** Cada item, quando aprova
 - [ ] Separador «Procura» com dados, vazio e erro — teste.
 
 ### N5 — Selos de credenciais
+
+> **21/10/2026:** aprovada e implementada como **Fase 41**.
 
 | Ficheiro | Acção | O quê |
 |---|---|---|

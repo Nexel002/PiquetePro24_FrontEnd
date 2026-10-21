@@ -111,6 +111,7 @@ export const TERMOS_DE_UTILIZACAO: SeccaoLegal[] = [
       'Dados de conta: nome, email, telefone e fotografia de perfil (se a puseres).',
       'Localização: a que indicas no perfil e, se deres autorização, a do teu dispositivo. Para ordenar profissionais por proximidade usamos uma localização aproximada (arredondada a cerca de 500 m) e nunca mostramos coordenadas exatas a outros utilizadores.',
       'Profissionais: os documentos da verificação de identidade, que só a equipa autorizada vê.',
+      'Credenciais (opcionais): os documentos que envias como prova — por exemplo, o registo criminal — só são vistos pela equipa, através de um acesso temporário que fica registado, e são apagados com a tua conta ou quando apagares a credencial. No teu catálogo aparece apenas o selo.',
       'Empresas e instituições clientes: o nome e o NUIT que indicares são mostrados ao profissional que fizer o teu pedido, junto do teu contacto, para ele te poder passar a factura. Os locais que guardares servem só para preencher os teus pedidos.',
       'Pesquisas sem resultado: quando procuras um serviço e não há ninguém perto, guardamos o serviço, a província e uma localização arredondada a cerca de 1 km, durante 12 meses, para sabermos onde faltam profissionais. Se pedires para ser avisado, guardamos esse pedido até te avisarmos ou o apagares no teu perfil.',
       'Mensagens do sistema: enviamos-te emails sobre a tua conta e os teus pedidos (por exemplo, um novo convite ou uma proposta recebida).',

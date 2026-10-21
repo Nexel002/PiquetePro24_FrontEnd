@@ -2,6 +2,7 @@ import { api } from '../lib/api'
 import type { PortfolioProject } from './portfolio'
 import type { ProfessionalType } from './profile'
 import type { ServiceCategory } from './serviceCategories'
+import type { PublicCredential } from './credentials'
 
 export interface Review {
   id: string
@@ -29,6 +30,8 @@ export interface PublicTeamMember {
   services: ServiceCategory[]
   rating_avg: number | null
   rating_count: number
+  // Fase 41 (N5): selos das credenciais verificadas do técnico (opcional: backend anterior à Fase 34).
+  credentials?: PublicCredential[]
 }
 
 // Fase 38 (TRD Adendo v1.66, N1): até onde o profissional se desloca e que províncias cobre.
@@ -57,6 +60,8 @@ export interface ProfessionalCatalog {
   services: ServiceCategory[]
   // Fase 38 (N1). Nunca traz coordenadas: o raio diz-se em km, sem o centro.
   service_area: ServiceArea
+  // Fase 41 (N5): selos das credenciais verificadas e válidas. Nunca o documento.
+  credentials?: PublicCredential[]
   // O backend ainda envia `portfolio` (fotos soltas) por compatibilidade com versões antigas
   // do frontend (TRD Adendo v1.23, item D); esta versão só lê `projects`.
   projects: PortfolioProject[]

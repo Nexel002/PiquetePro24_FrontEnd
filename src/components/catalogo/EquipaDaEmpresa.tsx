@@ -1,5 +1,6 @@
 import type { PublicTeamMember } from '../../services/catalog'
 import { Stars } from './Estrelas'
+import { SelosDeCredenciais } from './SelosDeCredenciais'
 
 // Secção «A equipa» do catálogo de uma empresa. O backend só envia técnicos ativos e com a
 // identidade verificada, com o primeiro nome, o título, a foto e a nota: nunca telefone nem email.
@@ -39,6 +40,9 @@ export function EquipaDaEmpresa({ team }: { team: PublicTeamMember[] }) {
               ) : (
                 <p className="text-xs text-piquete-gray">Ainda sem avaliações</p>
               )}
+              <div className="pt-1">
+                <SelosDeCredenciais credenciais={tecnico.credentials} compacto />
+              </div>
             </div>
           </li>
         ))}
