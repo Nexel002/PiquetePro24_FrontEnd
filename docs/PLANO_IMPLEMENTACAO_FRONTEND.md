@@ -1047,6 +1047,31 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 47 — Landing page para visitantes
+
+**Estado: implementada em `feat/landing-page` (22/10/2026), por fundir em `main`. Versão 0.6.0. Decisões no TRD, Adendo v1.73. Sem componente de backend.** Pedido do utilizador (22/10/2026), com a estrutura da piquetapp.com como referência e a identidade da app mantida; avançou-se com os valores por omissão propostos (ver desvios).
+
+**Escopo:**
+- `/` passa a ter dois ecrãs (`PaginaInicial.tsx`): visitante sem sessão vê a `Landing` (carregada sob pedido), quem tem sessão vê a `Home` de sempre. Enquanto a sessão se lê, mostra-se o esqueleto.
+- Secções (`components/landing/`): cabeçalho que fica sólido ao rolar, hero com telemóvel desenhado em CSS e etiquetas flutuantes, faixa de categorias em loop, quatro vantagens, três passos, montra de trabalhos em destaque (a que já era a Home do visitante), «clientes / profissionais», FAQ em `<details>`, convite final e rodapé.
+- Animação sem dependência nova: `Revelar` (IntersectionObserver) e keyframes no `tailwind.config.js`; `prefers-reduced-motion` respeitado em tudo. O céu estrelado passou para `components/CeuEstrelado.tsx` e é partilhado com a 404.
+- Textos num só ficheiro (`components/landing/dados.ts`).
+
+**Desvios / assunções por confirmar com o utilizador:**
+- **Sem números, testemunhos nem preços:** não existem como dados reais; a piquetapp.com mostra-os, aqui ficam de fora até haver dados verdadeiros.
+- **Sem secção de cobertura, newsletter, lojas de apps nem contactos no rodapé:** a app é uma PWA (sem lojas), o backend não tem newsletter, e faltam email, WhatsApp e redes sociais oficiais.
+- **Respostas do FAQ são um rascunho** escrito a partir do TRD; precisam de revisão do utilizador.
+- A montra deixa de aparecer como página inteira para o visitante: é uma secção da landing, e só se mostra quando há trabalhos.
+
+**Critérios de Entrega:**
+- [x] Testes: `PaginaInicial.test.tsx` (visitante / sessão / a carregar) e `Landing.test.tsx` (um só `h1`, CTAs, categorias, FAQ, ligações legais).
+- [x] `tsc -b` e ESLint sem erros nos ficheiros novos; capturas a 1280 px e 390 px sem sobreposições nem scroll horizontal.
+- [ ] No telemóvel real: fluidez das animações num aparelho de gama baixa; com «reduzir movimento» fica estática.
+- [ ] Rever e aprovar os textos (hero, vantagens, FAQ) e decidir quando houver números, testemunhos, cobertura e contactos.
+- [ ] Depois do deploy: `https://www.piquetepro24.co.mz` mostra a landing sem sessão e a Home com sessão; Lighthouse (desempenho e acessibilidade) da landing.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
