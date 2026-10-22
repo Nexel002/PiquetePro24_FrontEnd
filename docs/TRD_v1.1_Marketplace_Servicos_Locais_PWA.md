@@ -3,7 +3,7 @@
 | Campo | Detalhe |
 |---|---|
 | Projeto | Marketplace de Serviços Locais PWA (Moçambique) |
-| Versão | 1.1 + Adendos v1.2 a [v1.71](#adendo-v171) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
+| Versão | 1.1 + Adendos v1.2 a [v1.72](#adendo-v172) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
 | Autor | Engenheiro de Software Lead |
 | Estado | **Em produção** (backend no Fly.io, frontend na Vercel) desde 12/10/2026; ~~Aprovado para Desenvolvimento (Sprint 0)~~ — revisto a 21/10/2026 (Adendo v1.65) |
 
@@ -2721,3 +2721,24 @@ Problemas, por categoria OWASP: banimento que não fechava a sessão nem tirava 
 2. Backend (merge em `main` → deploy). Sem variáveis novas. `npm run smoke`: `/openapi.json` a 404; depois, um login normal (confirma o `iss` real).
 3. Frontend (Vercel), versão 0.4.1. Confirmar o login com email e com Google no `www`, a pesquisa, o catálogo e o upload da foto de perfil; `curl -sI https://www.piquetepro24.co.mz` com a CSP nova e o HSTS.
 4. Banir uma conta de teste: 403 em ≤ 1 minuto e fora da pesquisa; levantar: volta.
+
+## Adendo v1.72
+
+### Página 404 (22/10/2026)
+
+**Estado: implementada em `feat/pagina-404`, frontend Fase 46, versão 0.5.0; por validar no browser e no telemóvel. Sem componente de backend.**
+
+**Contexto.** A rota `*` do `App.tsx` reencaminhava qualquer endereço desconhecido para `/` em silêncio: quem errava um link ou abria um link antigo caía na página inicial sem saber que errou. A app não tinha ecrã de 404.
+
+**Decisão.**
+- `src/pages/PaginaNaoEncontrada.tsx`, carregada sob pedido como os restantes ecrãs, passa a ser o destino da rota `*`. Mostra «Erro 404» (para leitores de ecrã), o título «Perdeste-te no espaço?», o endereço pedido (cortado aos 60 caracteres), «Voltar ao início» (sempre) e «Voltar atrás» (só se houver página anterior no histórico do React Router, `history.state.idx > 0`).
+- A cena — céu cintilante, «404» com o «0» feito planeta com anel e lua em órbita, astronauta de capacete de obra amarelo preso por um cabo, estrelas cadentes (só ≥ 640 px) — é **só CSS e SVG**, sem dependência nova: o público usa telemóveis de gama baixa em 3G e o `framer-motion` (que nenhum ficheiro importa, Adendo v1.65-E) não compensa o download. As animações são `keyframes` do `tailwind.config.js` que só mexem em `transform`/`opacity`.
+- Paralaxe pelo ponteiro: o `onPointerMove` escreve `--px`/`--py` no elemento (sem estado React, sem re-render); cada camada multiplica-as por uma profundidade.
+- `prefers-reduced-motion`: todas as animações têm `motion-reduce:animate-none` e as estrelas cadentes ficam ocultas.
+- A cena é `aria-hidden`; o que fica para tecnologias de apoio é o título, o texto e as ligações.
+
+**Notas.** O Vercel continua a responder 200 com o `app.html` a qualquer caminho (os `rewrites` do `vercel.json` não mudam), por isso o 404 é «suave»: os motores de pesquisa já não o indexam porque `aplicarMetadados` põe `noindex` em tudo o que não é página pública (Adendo v1.70). O título do separador continua `PiquetePro24`.
+
+**Critérios de entrega correspondentes:** frontend, Fase 46.
+
+**Notas de deploy:** só frontend (Vercel), versão 0.5.0; sem migrations nem variáveis novas.

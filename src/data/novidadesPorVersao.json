@@ -71,5 +71,12 @@
     "novidades": [
       "Ao terminares a sessão, os dados da tua conta deixam de ficar no ecrã: quem entrar a seguir no mesmo telemóvel já não os vê."
     ]
+  },
+  {
+    "versao": "0.5.0",
+    "data": "2026-10-22",
+    "novidades": [
+      "Se abrires um endereço que não existe, vês agora uma página a explicar o que aconteceu, com um botão para voltar ao início."
+    ]
   }
 ]
