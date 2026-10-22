@@ -39,7 +39,7 @@ Com 64 adendos, a regra actual de uma área está muitas vezes no adendo mais re
 | Indexação e privacidade | Só `/`, `/termos` e `/privacidade` são indexáveis (lista em `src/lib/paginasPublicas.ts`); o resto recebe `app.html` com `noindex`; política de privacidade em `/privacidade` (rascunho para jurista) | Adendo v1.70 |
 | Publicação, SEO e GEO | Plano P1–P9 e decisões D1–D8; feitos P1 (parcial), P2 (parcial) e P4 | Adendos v1.69, v1.70 |
 | Zona de atendimento, procura sem oferta, clientes empresariais, selos de credenciais, serviços recorrentes | Em produção desde 21/10/2026 (merges backend `3f3d4a1`, frontend `4b2cbb7`), migrations aplicadas | Adendos v1.66 a v1.68 |
-| **Por publicar** (branch `fix/seguranca-owasp`) | Correcções de segurança da auditoria OWASP; migration da suspensão aplicada (22/10), a dos buckets por aplicar | Adendo v1.71 |
+| **Por publicar** (branch `fix/seguranca-owasp`) | Correcções de segurança da auditoria OWASP; as duas migrations aplicadas (22/10), código por publicar | Adendo v1.71 |
 
 ---
 
@@ -2676,7 +2676,7 @@ Do Adendo v1.65 e dos planos, independente do domínio:
 
 ### Segurança: auditoria OWASP Top 10:2025 e correcções (22/10/2026)
 
-**Estado: implementado em `fix/seguranca-owasp` nos dois repositórios (backend Fase 36; frontend Fase 45, versão 0.4.1), por fazer merge. `20261022090000_suspensao_de_contas.sql` aplicada pelo utilizador a 22/10/2026 (antes do backend, como pedido); `20261022100000_limites_dos_buckets.sql` por aplicar, em qualquer altura.** A 21/10/2026 o utilizador pediu uma auditoria do sistema contra o OWASP Top 10:2025, só de leitura; a 22/10 aprovou o plano de melhoria (S1–S10) e decidiu os três pontos em aberto (C).
+**Estado: implementado em `fix/seguranca-owasp` nos dois repositórios (backend Fase 36; frontend Fase 45, versão 0.4.1), por fazer merge. As duas migrations foram aplicadas pelo utilizador a 22/10/2026: `20261022090000_suspensao_de_contas.sql` (antes do backend, como pedido) e `20261022100000_limites_dos_buckets.sql`.** A 21/10/2026 o utilizador pediu uma auditoria do sistema contra o OWASP Top 10:2025, só de leitura; a 22/10 aprovou o plano de melhoria (S1–S10) e decidiu os três pontos em aberto (C).
 
 #### A. Situação encontrada
 
