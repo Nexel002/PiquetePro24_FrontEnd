@@ -550,7 +550,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 **Critérios de Entrega:**
 - [x] Estado do MFA, registo (com limpeza de factores abandonados), verificação, validação do código e mensagens — 11 testes (`mfa.test.ts`); guard por papel e por nível `aal` (desafio, entrada, carregamento, falha de leitura) — 10 testes (`RotaDeAdmin.test.tsx`); ecrã de segurança — 6 testes (`AdminSecurity.test.tsx`); aviso no dashboard — 1 teste. A CSP já permite `img-src data:` para o QR.
 - [ ] **Não testado contra o Supabase real:** o TOTP tem de estar activo no projecto (Authentication → Multi-Factor), e o fluxo completo (registar → sair → entrar → desafio → painel) só se confirma num browser com uma app de autenticação.
-- [ ] Ordem de activação em produção: registar o factor de cada admin **antes** de ligar `ADMIN_REQUIRE_MFA=true` no backend.
+- [x] Ordem de activação em produção: registar o factor de cada admin **antes** de ligar `ADMIN_REQUIRE_MFA=true` no backend — ligada em produção (confirmado pelo utilizador a 22/10/2026).
 
 ---
 

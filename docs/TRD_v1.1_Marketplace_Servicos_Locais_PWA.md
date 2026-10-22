@@ -18,7 +18,7 @@ Com 64 adendos, a regra actual de uma área está muitas vezes no adendo mais re
 | Infraestrutura | Backend Fly.io `fra` (Frankfurt), Supabase Frankfurt, Redis Upstash `fra`, frontend Vercel em **`https://www.piquetepro24.co.mz`** (a raiz faz 308 para o `www`; o `-beta.vercel.app` continua até ao corte) | Adendos v1.3, v1.70 |
 | Esquema da base de dados | 17 tabelas, 8 enums, 21 funções SQL (18 RPC + 3 triggers); mapa e registo de migrations aplicadas em `Doc's/ESQUEMA_BASE_DADOS.md` (backend) | Secção 3, Adendo v1.65 |
 | Papéis | `CLIENT`, `PROFESSIONAL` (`SINGULAR`/`COMPANY`), `TECHNICIAN` (conta de um técnico de empresa), `ADMIN` (só criado por outro admin ou pelo script `npm run admins`) | Adendos v1.4-E/F, v1.50, v1.51 |
-| Autenticação | Supabase Auth (email, telefone, Google); JWT ES256 validado contra o JWKS, com `iss` e `aud`; 2.º factor TOTP nas rotas `/admin/*` quando `ADMIN_REQUIRE_MFA=true` (hoje desligada) | Adendos v1.4, v1.48, v1.57, v1.71 |
+| Autenticação | Supabase Auth (email, telefone, Google); JWT ES256 validado contra o JWKS, com `iss` e `aud`; 2.º factor TOTP nas rotas `/admin/*` quando `ADMIN_REQUIRE_MFA=true` (ligada em produção, confirmado pelo utilizador a 22/10/2026) | Adendos v1.4, v1.48, v1.57, v1.71 |
 | Suspensão de contas | O ban grava `users_profile.suspended_at`: a sessão aberta recebe 403 em ≤ 1 min e a conta sai da pesquisa, dos convites, do catálogo e da montra | Adendo v1.71 (S4) |
 | Segurança (OWASP Top 10) | Auditoria de 22/10/2026; actions por SHA e Dependabot; Storage só com imagens e com limite de tamanho; CSP com origens exactas; `/docs` e `/openapi.json` só fora de produção; alertas de segurança por email aos admins | Adendo v1.71 |
 | Pedido a 3 profissionais | Cliente escolhe exactamente 3 (ou todos, se houver menos); cada um propõe preço + mensagem; o cliente escolhe uma; sem chat | Adendo v1.18 |
@@ -2687,7 +2687,7 @@ Problemas, por categoria OWASP: banimento que não fechava a sessão nem tirava 
 **Correcções à própria auditoria**, apuradas durante a implementação:
 - A regra `runtimeCaching` de `/api/*` do service worker **nunca guardou nada em produção** (a API responde na raiz do Fly, sem `/api/`). O problema real desse ponto era a cache do React Query.
 - «Fotos do portfólio de outro profissional» não existia: `fotosDeOutroUtilizador` (`catalogController.ts`) já o impedia.
-- `ADMIN_REQUIRE_MFA` está **desligada** em produção (Adendo v1.70), e não ligada como a auditoria dizia.
+- `ADMIN_REQUIRE_MFA`: o Adendo v1.70 dava-a como desligada, e a primeira versão deste adendo repetiu-o. **O utilizador confirmou a 22/10/2026 que está ligada em produção** — o 2.º factor é exigido no painel de admin. Fica por rever a frase do v1.70 sobre a política de privacidade não falar da verificação em dois passos da equipa.
 
 #### B. O que mudou
 
@@ -2708,7 +2708,7 @@ Problemas, por categoria OWASP: banimento que não fechava a sessão nem tirava 
 #### D. Desvios ao plano da auditoria
 
 - **`:id` inválido:** traduzido num só sítio (`contextoDoPedido`) em vez de validado em cada router — validar no router obrigava a reescrever os ids legíveis de cerca de 20 ficheiros de teste.
-- **Fora do âmbito, como previsto:** S1 (definições no painel do Supabase e `ADMIN_REQUIRE_MFA`, pelo utilizador), S8 (webhook do gateway real: interface com corpo em bruto e cabeçalhos, HMAC; entra com o M-Pesa/e-Mola) e S10 (papéis dentro de ADMIN). Ficam no backlog dos planos, com a subida do `vitest` (3 → 5) e do `tailwindcss` (3 → 4), que levam as vulnerabilidades de desenvolvimento que restam.
+- **Fora do âmbito, como previsto:** S1 (definições no painel do Supabase, pelo utilizador; `ADMIN_REQUIRE_MFA` já está ligada), S8 (webhook do gateway real: interface com corpo em bruto e cabeçalhos, HMAC; entra com o M-Pesa/e-Mola) e S10 (papéis dentro de ADMIN). Ficam no backlog dos planos, com a subida do `vitest` (3 → 5) e do `tailwindcss` (3 → 4), que levam as vulnerabilidades de desenvolvimento que restam.
 
 **Assunções e limites:**
 - O anfitrião Supabase fixado na CSP é o do `.env` local, igual ao do backend e ao que o Adendo v1.70 mostra no ecrã do Google — há um só projecto. Se o `VITE_SUPABASE_URL` da Vercel for outro, o login falha por CSP: confirmar logo a seguir ao deploy.
