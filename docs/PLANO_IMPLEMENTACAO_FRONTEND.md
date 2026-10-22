@@ -1047,6 +1047,21 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 48 — Favicon nos resultados de pesquisa
+
+**Estado: implementada em `feat/favicon-ico` (22/10/2026), por fundir em `main`. Sem subida de versão (nada que o utilizador veja na app). Decisões no TRD, Adendo v1.74. Sem componente de backend.** Pedido do utilizador: o Google mostrava o globo por omissão em vez do logótipo do PiquetePro24.
+
+**Escopo:**
+- `public/favicon.ico` (16, 32 e 48 px) gerado a partir do `pwa-192x192.png` por `scripts/gerar-favicon.mjs` (sem dependências).
+- `index.html`: ligação `rel="icon"` ao `.ico` (`sizes="48x48"`) além da do PNG de 192 px, que já existia.
+
+**Critérios de Entrega:**
+- [x] `favicon.ico` com as três imagens e o desenho do logótipo legível a 48 px; `index.html` com as duas ligações; testes e build sem erros.
+- [ ] Depois do deploy: `https://www.piquetepro24.co.mz/favicon.ico` devolve 200 com `image/x-icon`; no Search Console, «Pedir indexação» da página inicial.
+- [ ] O ícone aparece nos resultados do Google (depende do Google: dias a semanas, e não há forma de o forçar).
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```

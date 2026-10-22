@@ -2,7 +2,11 @@
 <html lang="pt-MZ">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/pwa-192x192.png" />
+    <!-- O Google mostra o ícone nos resultados de pesquisa a partir daqui (múltiplo de 48 px, ligado
+         na página inicial, rastreável). O .ico existe também porque rastreadores e browsers antigos
+         pedem /favicon.ico à raiz sem ler o HTML (scripts/gerar-favicon.mjs). -->
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" type="image/png" href="/pwa-192x192.png" sizes="192x192" />
     <!-- Sem maximum-scale/user-scalable=no: bloquear o zoom falha WCAG 1.4.4. O zoom
          automático do iOS ao focar um campo evita-se com inputs de font-size >= 16px. -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
