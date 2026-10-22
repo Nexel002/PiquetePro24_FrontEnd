@@ -78,12 +78,5 @@
     "novidades": [
       "Se abrires um endereço que não existe, vês agora uma página a explicar o que aconteceu, com um botão para voltar ao início."
     ]
-  },
-  {
-    "versao": "0.6.0",
-    "data": "2026-10-22",
-    "novidades": [
-      "A página inicial para quem ainda não entrou está renovada: mostra como funciona o PiquetePro24 e responde às perguntas mais comuns."
-    ]
   }
 ]

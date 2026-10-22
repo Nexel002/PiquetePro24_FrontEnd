@@ -45,9 +45,6 @@ export default {
         'orbitar': 'orbitar 9s linear infinite',
         'estrela-cadente': 'estrelaCadente 6s ease-in infinite',
         'cabo': 'cabo 1.6s linear infinite',
-        // Landing (components/landing): faixa de categorias em loop e brilho a pulsar atrás do telemóvel.
-        'faixa': 'faixa 38s linear infinite',
-        'pulsar-brilho': 'pulsarBrilho 5s ease-in-out infinite',
       },
       keyframes: {
         fadeIn: {
@@ -81,13 +78,6 @@ export default {
         },
         cabo: {
           to: { strokeDashoffset: '-14' },
-        },
-        faixa: {
-          to: { transform: 'translateX(-50%)' },
-        },
-        pulsarBrilho: {
-          '0%, 100%': { opacity: '0.45', transform: 'scale(1)' },
-          '50%': { opacity: '0.85', transform: 'scale(1.12)' },
         },
       }
     },
