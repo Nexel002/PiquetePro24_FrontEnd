@@ -1,0 +1,4 @@
+Contact: mailto:geral@piquetepro24.co.mz
+Expires: 2027-10-22T00:00:00.000Z
+Preferred-Languages: pt, en
+Canonical: https://www.piquetepro24.co.mz/.well-known/security.txt

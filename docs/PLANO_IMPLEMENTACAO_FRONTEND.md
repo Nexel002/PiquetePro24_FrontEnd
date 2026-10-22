@@ -2,7 +2,7 @@
 
 Baseado no [TRD v1.1](./TRD_v1.1_Marketplace_Servicos_Locais_PWA.md), incluindo o Adendo v1.2. Este repositório cobre a PWA (React + Vite + Tailwind CSS + Framer Motion), alojada na Vercel, consumindo a API do repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend). O plano começou com 7 fases sequenciais, espelhando as fases do backend para permitir avanço paralelo e integração contínua entre os dois repositórios; tem hoje 37 (da Fase 8 em diante, acrescentadas por adendos do TRD).
 
-> **Estado em 21/10/2026 (TRD Adendos v1.67 e v1.68).** As Fases 0 a 42 estão em `main` e em produção (`https://piquete-pro24-front-end-beta.vercel.app`, versão 0.3.0; as Fases 38 a 42 entraram pelo merge `4b2cbb7`). **A Fase 43** (E2E do CI de volta ao verde e barra «Pedir a 3» no telemóvel, versão 0.3.1) está em `fix/e2e-ecras-de-perfil`, por fazer merge. O que falta nas Fases 0 a 42 já não é código:
+> **Estado em 21/10/2026 (TRD Adendos v1.67 e v1.68).** As Fases 0 a 42 estão em `main` e em produção (`https://piquete-pro24-front-end-beta.vercel.app`, versão 0.3.0; as Fases 38 a 42 entraram pelo merge `4b2cbb7`). **A Fase 43** (E2E do CI de volta ao verde e barra «Pedir a 3» no telemóvel, versão 0.3.1) está em `fix/e2e-ecras-de-perfil`, por fazer merge. **A Fase 44** (política de privacidade e base de SEO para o domínio `www.piquetepro24.co.mz`, versão 0.4.0) está em `feat/privacidade-e-seo-base`, por fazer merge; a publicação no domínio tem secção própria no fim (TRD Adendos v1.69 e v1.70). O que falta nas Fases 0 a 42 já não é código:
 > 1. **Validar no browser e no telemóvel** os critérios por marcar das Fases 11 a 37 (quase todos são isso). Nesta máquina os E2E correm com o Edge instalado (`E2E_BROWSER=msedge npx playwright test`); no CI usam o Chromium do Playwright.
 > 2. **Fase 7:** depende de um staging que não existe (backend, Fase 7).
 > 3. As **empresas e equipas** (Fases 23 a 26) dependem de 4 migrations do backend sem registo de aplicação (`Doc's/ESQUEMA_BASE_DADOS.md`, no backend).
@@ -982,6 +982,29 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 44 — Publicação: política de privacidade e base de SEO
+
+**Estado: implementada em `feat/privacidade-e-seo-base` (22/10/2026), por fazer merge. Versão 0.4.0.** Bloco P4 do TRD Adendo v1.69, aprovado pelo utilizador a 22/10/2026; o que foi feito, as decisões e os desvios estão no Adendo v1.70. Só frontend.
+
+**Objetivo:** com o domínio `www.piquetepro24.co.mz` no ar, ter a política de privacidade que o Google exige, deixar indexar só as páginas públicas e mostrar uma pré-visualização decente quando o endereço é partilhado.
+
+**Escopo:**
+- `src/lib/paginasPublicas.ts` (lista das páginas indexáveis, sitemap) e `src/lib/metadadosDaPagina.ts` + `components/MetadadosDaPagina.tsx` (título, descrição, `canonical` e `robots` por rota).
+- Plugin `indexacao` no `vite.config.ts`: gera `app.html` (com `noindex`) e `sitemap.xml`; `vercel.json` serve `index.html` nas páginas públicas e `app.html` no resto; `Permissions-Policy`.
+- `index.html` com descrição e Open Graph; `public/og-image.jpg`, `public/robots.txt`, `public/.well-known/security.txt`; manifest com `id`, `scope`, `lang`, `dir` e `categories`.
+- Página `/privacidade` (`src/data/politicaDePrivacidade.ts`, `pages/Privacidade.tsx`), ligação no registo e ligações entre os documentos legais (`LegalDocument`).
+
+**Critérios de Entrega:**
+- [x] Testes: lista de páginas contra o `vercel.json` e o `index.html`, sitemap, metadados por rota (públicas e privadas, sem duplicar etiquetas), conteúdo e página da privacidade, ligação no registo — 724 testes, lint (só os 2 avisos que já existiam) e build sem erros.
+- [x] Build: `dist/app.html` com `noindex`, `dist/index.html` com `index, follow`, `sitemap.xml` com as 3 páginas, `.well-known/security.txt` copiado.
+- [x] No browser (Edge, `vite preview`, ecrã de telemóvel): `/privacidade` e `/termos` com título e `canonical` próprios; uma rota privada com `noindex` e sem `canonical`; a política lê-se bem no telemóvel.
+- [ ] Em produção, depois do deploy: `noindex` em `/perfil`, `index, follow` em `/` e `/privacidade`; `sitemap.xml`, `robots.txt`, `security.txt` e `og-image.jpg` respondem 200.
+- [ ] Pré-visualização de `https://www.piquetepro24.co.mz` no WhatsApp com imagem e descrição.
+- [ ] Texto da política revisto por jurista e `geral@piquetepro24.co.mz` confirmado como caixa lida.
+- [ ] Branding do Google com `https://www.piquetepro24.co.mz/privacidade`.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -1178,3 +1201,47 @@ Origem: TRD Adendo v1.65. **Nada aqui está aprovado.** Cada item, quando aprova
 - [ ] O profissional vê o valor líquido; o cliente nunca vê a comissão como «taxa escondida» (texto claro) — teste.
 - [ ] Acções do admin com nota obrigatória — teste.
 - [ ] Jornada E2E (Playwright, API simulada) do pagamento até à libertação.
+
+---
+
+## Publicação em `www.piquetepro24.co.mz` (TRD Adendos v1.69 e v1.70)
+
+Plano completo e justificações no TRD, Adendo v1.69; decisões tomadas e estado verificado no Adendo v1.70. Cada bloco só ganha número de fase quando é aprovado (P4 = Fase 44). Aqui ficam as tarefas do frontend; as do backend e da infra (DNS, Fly, Supabase, Google, email) estão no plano do backend, secção com o mesmo nome.
+
+**Decisões tomadas:** D1 endereço oficial `www` (22/10/2026); D8 todos os rastreadores; plano gratuito do Supabase com cópia manual (Adendo v1.70, B). **Por decidir:** D2 API em `api.piquetepro24.co.mz`; D5 pré-renderização; D6 perfis públicos dos profissionais; D7 ferramenta de analytics.
+
+**P1 — Domínio na Vercel**
+- [x] `piquetepro24.co.mz` → 308 para `www.piquetepro24.co.mz`, que serve a app (verificado a 21/10/2026).
+- [ ] Login com Google e com email em `https://www.piquetepro24.co.mz` termina com sessão (teste do utilizador).
+- [ ] Só com D2: `VITE_API_URL=https://api.piquetepro24.co.mz`, novo deploy, `baseURL` confirmado no JS publicado, e `connect-src` do `vercel.json` com a origem exacta em vez de `https://*.fly.dev`.
+
+**P3 — Mudança de domínio para quem já usa a app**
+- [ ] Aviso fixo quando a app abre num anfitrião `*.vercel.app`, com botão para o `www` e instruções para reinstalar a PWA.
+- [ ] Antes de sair, tentar enviar a fila offline e avisar se ficarem pedidos por enviar — testes.
+
+**P4 — Política de privacidade e base de SEO → Fase 44** (critérios na própria fase).
+
+**P5 — Páginas públicas pré-renderizadas** (com D5)
+- [ ] Entrada SSR do Vite + `scripts/prerender.mjs`: um HTML por rota pública, com título, descrição, `canonical`, Open Graph e JSON-LD próprios. Também resolve a pré-visualização de `/termos` e `/privacidade` (Adendo v1.70, desvios).
+- [ ] Rotas: `/servicos`, `/servicos/<slug>` (8 serviços), `/como-funciona`, `/para-profissionais`, `/empresas`, `/sobre`, `/contacto`, `/perguntas-frequentes`. `/servicos/<slug>/<cidade>` só com ≥ 3 profissionais elegíveis na cidade. Cada uma entra em `src/lib/paginasPublicas.ts` e no `vercel.json`.
+- [ ] As páginas públicas não carregam o Supabase nem o React Query.
+- [ ] JSON-LD: `Organization` + `WebSite` em todas; `Service` + `BreadcrumbList` nos serviços; `FAQPage` nas FAQ — sem erros no Teste de Resultados Enriquecidos.
+- [ ] `public/llms.txt`; `curl -A "GPTBot"` devolve o texto de cada página pública.
+- [ ] Lighthouse no telemóvel: LCP < 2,5 s, CLS < 0,1 nas páginas públicas.
+
+**P6 — Perfil público `/p/:slug`** (só com D6)
+- [ ] Página pública do profissional sem telefone, com `ProfessionalService` + `AggregateRating`; botão «Pedir serviço» que leva ao login.
+- [ ] Botão «Partilhar o meu perfil» (WhatsApp) no ecrã do profissional.
+
+**P7 — Fora do código**
+- [ ] Search Console (propriedade de domínio por DNS) com o sitemap; Bing Webmaster Tools + IndexNow.
+- [ ] Analytics (D7); Google Business Profile e Bing Places; perfis nas redes com os mesmos dados.
+- [ ] Lista mensal de perguntas aos motores de IA (Adendo v1.69, G7).
+
+**P8 — Antes de abrir ao público**
+- [ ] Monitorização externa de `https://www.piquetepro24.co.mz` e registo de erros no browser.
+- [ ] `VITE_MONTRA_DE_DEMONSTRACAO` vazio em produção.
+
+**P9 — Corte do domínio antigo**
+- [ ] Redirect 308 de `*.vercel.app` para o `www` na Vercel; só depois o backend retira o domínio antigo do CORS (Adendo v1.69, C7).
+- [x] `CLAUDE.md` com o domínio oficial novo (22/10/2026, na Fase 44).

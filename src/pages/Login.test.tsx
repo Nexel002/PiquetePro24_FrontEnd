@@ -111,6 +111,15 @@ describe('Login — texto e estrutura', () => {
     expect(ligacao.getAttribute('rel')).toContain('noopener')
   })
 
+  it('liga à política de privacidade, também numa nova aba', () => {
+    mostrar()
+
+    const ligacao = screen.getByRole('link', { name: 'Política de privacidade' })
+
+    expect(ligacao.getAttribute('href')).toBe('/privacidade')
+    expect(ligacao.getAttribute('target')).toBe('_blank')
+  })
+
   it('abre a recuperação de palavra-passe e volta ao login', () => {
     mostrar()
 

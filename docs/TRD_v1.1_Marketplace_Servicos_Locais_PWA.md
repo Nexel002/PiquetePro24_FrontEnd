@@ -3,7 +3,7 @@
 | Campo | Detalhe |
 |---|---|
 | Projeto | Marketplace de Serviços Locais PWA (Moçambique) |
-| Versão | 1.1 + Adendos v1.2 a [v1.67](#adendo-v167) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
+| Versão | 1.1 + Adendos v1.2 a [v1.70](#adendo-v170) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
 | Autor | Engenheiro de Software Lead |
 | Estado | **Em produção** (backend no Fly.io, frontend na Vercel) desde 12/10/2026; ~~Aprovado para Desenvolvimento (Sprint 0)~~ — revisto a 21/10/2026 (Adendo v1.65) |
 
@@ -15,7 +15,7 @@ Com 64 adendos, a regra actual de uma área está muitas vezes no adendo mais re
 
 | Área | Regra em vigor | Onde |
 |---|---|---|
-| Infraestrutura | Backend Fly.io `fra` (Frankfurt), Supabase Frankfurt, Redis Upstash `fra`, frontend Vercel (`piquete-pro24-front-end-beta.vercel.app`) | Adendo v1.3 |
+| Infraestrutura | Backend Fly.io `fra` (Frankfurt), Supabase Frankfurt, Redis Upstash `fra`, frontend Vercel em **`https://www.piquetepro24.co.mz`** (a raiz faz 308 para o `www`; o `-beta.vercel.app` continua até ao corte) | Adendos v1.3, v1.70 |
 | Esquema da base de dados | 17 tabelas, 8 enums, 21 funções SQL (18 RPC + 3 triggers); mapa e registo de migrations aplicadas em `Doc's/ESQUEMA_BASE_DADOS.md` (backend) | Secção 3, Adendo v1.65 |
 | Papéis | `CLIENT`, `PROFESSIONAL` (`SINGULAR`/`COMPANY`), `TECHNICIAN` (conta de um técnico de empresa), `ADMIN` (só criado por outro admin ou pelo script `npm run admins`) | Adendos v1.4-E/F, v1.50, v1.51 |
 | Autenticação | Supabase Auth (email, telefone, Google); JWT ES256 validado contra o JWKS; 2.º factor TOTP nas rotas `/admin/*` quando `ADMIN_REQUIRE_MFA=true` | Adendos v1.4, v1.48, v1.57 |
@@ -34,6 +34,8 @@ Com 64 adendos, a regra actual de uma área está muitas vezes no adendo mais re
 | Offline | Fila em IndexedDB para criar pedidos, com `Idempotency-Key` | Adendos v1.26, v1.27 |
 | Actualização da PWA | Automática (`skipWaiting`), com aviso do que mudou depois de recarregar | Adendo v1.63 |
 | Painel de admin | Menu lateral com 5 secções e separadores `?tab=` | Adendo v1.59 |
+| Indexação e privacidade | Só `/`, `/termos` e `/privacidade` são indexáveis (lista em `src/lib/paginasPublicas.ts`); o resto recebe `app.html` com `noindex`; política de privacidade em `/privacidade` (rascunho para jurista) | Adendo v1.70 |
+| Publicação, SEO e GEO | Plano P1–P9 e decisões D1–D8; feitos P1 (parcial), P2 (parcial) e P4 | Adendos v1.69, v1.70 |
 | **Por publicar** (branch `feat/novas-funcionalidades`) | Zona de atendimento, procura sem oferta, clientes empresariais e locais guardados, selos de credenciais, serviços recorrentes — implementados; migrations aplicadas a 21/10/2026, código por publicar | Adendos v1.66 e v1.67 |
 
 ---
@@ -2445,3 +2447,224 @@ O CI do frontend falhava desde 13/10 em `e2e/ecras-de-perfil.spec.ts`. A bateria
 
 **Ambiente de E2E:** `playwright.config.ts` fixa `VITE_MONTRA_DE_DEMONSTRACAO=false` no build dos E2E, para um `.env` local não esconder o estado de erro da Home. Localmente os E2E correm com o Edge instalado (`E2E_BROWSER=msedge`); no CI, com o Chromium do Playwright.
 
+---
+
+## Adendo v1.69
+
+### Publicação no domínio próprio `piquetepro24.co.mz` — infra, autenticação, SEO, GEO e lançamento (21/10/2026)
+
+**Estado: plano; decisões e execução no Adendo v1.70.** (Escrito a 21/10/2026 como «v1.68» numa branch sem merge; renumerado porque o v1.68 ficou com a Fase 43 do frontend.) O utilizador comprou o domínio `piquetepro24.co.mz` e pediu a lista completa do que muda para publicar o site nele, com o plano de SEO e de GEO (visibilidade nos motores de resposta por IA). As decisões D1 a D8 são **propostas**; a lista de tarefas está nos dois planos, na secção «Publicação em `piquetepro24.co.mz` (por aprovar)», e só ganha número de fase depois de aprovada.
+
+#### A. Ponto de partida — o que o código mostra hoje
+
+1. **Para quem não executa JavaScript, o site está vazio.** O `index.html` tem só `<title>PiquetePro24</title>` e `<div id="root">`: sem `meta description`, Open Graph, `canonical`, dados estruturados, `robots.txt` nem `sitemap.xml`. O Google executa JS (com atraso), mas os rastreadores dos motores de IA (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot) e as pré-visualizações de links (WhatsApp, Facebook) **não executam**: hoje vêem uma página em branco.
+2. **Quase tudo está atrás do login.** Em `src/App.tsx`, `/profissionais` e `/profissionais/:id` estão dentro de `ProtectedRoute`. Só são públicas `/`, `/entrar`, `/termos`, `/auth/callback` e `/definir-nova-password`. Não há página de **política de privacidade** (o comentário em `components/legal/LegalDocument.tsx` já a prevê) — e o ecrã de consentimento do Google exige uma.
+3. **Domínios gravados:** `vercel.json` (CSP `connect-src https://*.fly.dev`); no backend, `FRONTEND_URL` e `CORS_ORIGIN` (fly secrets), `EMAIL_FROM_ADDRESS` numa conta Gmail; exemplos em `.env.example`, `scripts/smoke.mjs`, `scripts/carga.mjs` e `Doc's/RUNBOOK_DEPLOY.md`. Os testes já usam `app.piquetepro24.co.mz` como valor de exemplo — é só um fixture, não precisa de mudar.
+4. **Login Google e recuperação de password:** o frontend pede `redirectTo: ${window.location.origin}/auth/callback` (`src/hooks/useLoginForm.ts`), por isso segue o domínio sozinho, **mas o Supabase só redirecciona para URLs da sua lista autorizada** — sem a actualizar, o utilizador volta para o domínio antigo depois de entrar. A recuperação usa `${FRONTEND_URL}/definir-nova-password` (`passwordRecoveryService.ts`).
+5. **A PWA, a sessão e a fila offline pertencem à origem.** Mudar de domínio é, para o browser, outra aplicação: a sessão (supabase-js em `localStorage`) e a fila offline (IndexedDB) não passam, e quem instalou a PWA a partir do `-beta.vercel.app` continua a abrir essa origem — o service worker serve o `index.html` antigo do precache, mesmo depois de a Vercel redireccionar. Ver C7.
+
+#### B. Decisões propostas (por aprovar)
+
+| # | Proposta | Porquê / alternativa rejeitada |
+|---|---|---|
+| D1 | **Domínio canónico `https://piquetepro24.co.mz`** (sem `www`), site e app no mesmo projecto Vercel. `www.piquetepro24.co.mz` → 308 para o canónico. | Uma só origem soma a autoridade de pesquisa, tem uma só PWA e um só deploy. Rejeitado: site institucional na raiz + app em `app.` — duas PWAs, dois projectos, autoridade dividida; só compensa com uma equipa de marketing a editar o site à parte. |
+| D2 | **API em `https://api.piquetepro24.co.mz`** (certificado do Fly). O `piquetepro24-backend.fly.dev` continua a responder. | Endereço estável que não muda se o alojamento mudar, e uma CSP com origem exacta em vez de `*.fly.dev`, que autoriza qualquer app alojada no Fly. |
+| D3 | **Email no domínio:** remetente `nao-responder@piquetepro24.co.mz` por um serviço transaccional (Brevo, Resend, Amazon SES ou Zoho ZeptoMail), com SPF, DKIM e DMARC; caixas `contacto@`, `suporte@` e `privacidade@` (Google Workspace ou Zoho Mail). | O Gmail limita o envio diário e um `From` `@gmail.com` enviado por SMTP de terceiros falha o DMARC e cai no spam. O código não depende do Gmail: é só trocar `SMTP_*` e `EMAIL_FROM_*`. |
+| D4 | **SMTP próprio também no Supabase Auth** (Authentication → Emails → SMTP), com o mesmo remetente. | O SMTP por omissão do Supabase é só para testes: limite muito baixo por hora e, nos projectos actuais, só entrega a membros da equipa do projecto. Confirmar se o registo/confirmação por email depende dele hoje. |
+| D5 | **Pré-renderizar as páginas públicas no build** (Vite em modo SSR + um script que grava um HTML por rota em `dist/`), mantendo a SPA tal como está para o resto. | Os rastreadores de IA e as pré-visualizações só lêem HTML. Rejeitados: migrar para Next.js/React Router em modo framework (reescreve o router e o deploy), serviço externo de prerender (custo e mais uma dependência), SSR em tempo real (servidor novo). |
+| D6 | **Perfil público do profissional** (`/p/:slug`), indexável, **sem telefone**: nome, serviços, zona de atendimento (N1), selos (N5), fotos de trabalhos e avaliações. Só para KYC aprovado + subscrição activa; o profissional pode desligar. | É a maior alavanca de SEO local («electricista na Matola») e dá ao profissional um link para partilhar no WhatsApp. **Decisão de produto e de privacidade** — muda a regra actual de que o catálogo é só para utilizadores com sessão. |
+| D7 | **Medição:** Google Search Console e Bing Webmaster Tools (gratuitos, obrigatórios). Tráfego com uma ferramenta sem cookies (Cloudflare Web Analytics, Plausible ou Umami) em vez do Google Analytics 4. | Sem cookies de rastreio não é preciso banner de consentimento, e o script é leve no 3G. Com GA4, é preciso banner e texto na política de privacidade. |
+| D8 | **Rastreadores de IA:** permitir os de **pesquisa/resposta** (OAI-SearchBot, ChatGPT-User, PerplexityBot, Claude-SearchBot, Claude-User, Bingbot, Googlebot) — recomendado. Os de **treino** (GPTBot, ClaudeBot, Google-Extended, CCBot) são decisão do negócio; a recomendação é permitir também. | Bloquear os de pesquisa tira o PiquetePro24 das respostas do ChatGPT/Perplexity. Permitir os de treino ajuda os modelos a «conhecer» a marca; o conteúdo público não tem nada sensível. |
+
+#### C. Domínio, infra e autenticação — passo a passo
+
+**C1. DNS.** Confirmar no revendedor onde o `.co.mz` foi registado se é possível mudar os nameservers. Recomendado: DNS na **Cloudflare** (gratuito, propagação rápida, DNSSEC), com os registos da Vercel e do Fly em **«DNS only»** (nuvem cinzenta) — o proxy da Cloudflare à frente deles complica os certificados e não traz ganho. Se não for possível, criar os mesmos registos no painel do revendedor.
+
+| Nome | Tipo | Valor | Para quê |
+|---|---|---|---|
+| `piquetepro24.co.mz` | A | o IP que a Vercel indicar ao adicionar o domínio (tipicamente `76.76.21.21`) | site/app |
+| `www` | CNAME | o alvo que a Vercel indicar (tipicamente `cname.vercel-dns.com`) | redirecciona para o canónico |
+| `api` | CNAME | `piquetepro24-backend.fly.dev` (ou A/AAAA de `flyctl ips list`) | API |
+| `_acme-challenge.api` | CNAME | o que `flyctl certs show api.piquetepro24.co.mz` pedir (se pedir) | certificado do Fly |
+| `@` | MX | os do fornecedor de caixas (D3) | receber email |
+| `@` | TXT | `v=spf1 include:<fornecedor transaccional> include:<fornecedor de caixas> ~all` (**um só** registo SPF) | autorizar remetentes |
+| `<selector>._domainkey` | TXT/CNAME | o que cada fornecedor indicar | DKIM |
+| `_dmarc` | TXT | `v=DMARC1; p=none; rua=mailto:dmarc@piquetepro24.co.mz` → `p=quarantine` depois de 2–4 semanas sem falhas | DMARC |
+| `@` | TXT | `google-site-verification=…` | Search Console e domínio autorizado no Google OAuth |
+| `@` | CAA (opcional) | `0 issue "letsencrypt.org"` | só emite certificados quem a Vercel e o Fly usam |
+
+**C2. Vercel.** Settings → Domains: adicionar `piquetepro24.co.mz` (produção) e `www.piquetepro24.co.mz` (redirect 308 para o primeiro). Environment Variables (Production): `VITE_API_URL=https://api.piquetepro24.co.mz`, **seguido de novo deploy** (as `VITE_*` são lidas no build) e de confirmar o `baseURL` no JS publicado (Adendo v1.28). Os domínios `*.vercel.app` **não** se redireccionam já — ver C7.
+
+**C3. Fly.io.** `flyctl certs add api.piquetepro24.co.mz` e esperar por `flyctl certs show` = *Issued*. Secrets (aplicar com `flyctl secrets set`, que reinicia a máquina):
+- `CORS_ORIGIN=https://piquetepro24.co.mz,https://piquete-pro24-front-end-beta.vercel.app` (manter o antigo durante a transição; acrescentar o padrão dos previews se for usado);
+- `FRONTEND_URL=https://piquetepro24.co.mz` (links dos emails e da recuperação de password);
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM_ADDRESS=nao-responder@piquetepro24.co.mz` (D3);
+- `GEOCODING_USER_AGENT=PiquetePro24/1.0 (contacto@piquetepro24.co.mz)` (a política do Nominatim pede um contacto).
+
+**C4. Supabase.** Authentication → URL Configuration:
+- **Site URL:** `https://piquetepro24.co.mz`;
+- **Redirect URLs:** acrescentar `https://piquetepro24.co.mz/**`; manter `https://piquete-pro24-front-end-beta.vercel.app/**` até ao corte (C7); manter `http://localhost:5173/**` para desenvolvimento;
+- Email Templates: confirmar que os links usam `{{ .ConfirmationURL }}`/`{{ .SiteURL }}` e nenhum endereço escrito à mão; SMTP próprio (D4).
+
+**C5. Google (login com Google) — o que muda e o que não muda.** O fluxo é: app → Google → `https://<ref>.supabase.co/auth/v1/callback` → Supabase → `redirectTo` da app. Por isso:
+- **Authorized redirect URIs: não mudam.** Continuam a ser o callback do Supabase. Mudá-los parte o login.
+- **Authorized JavaScript origins:** acrescentar `https://piquetepro24.co.mz` (inofensivo; só é usado se um dia houver Google One Tap).
+- **OAuth consent screen (Branding):** página inicial `https://piquetepro24.co.mz`, política de privacidade `https://piquetepro24.co.mz/privacidade` (página nova, E), termos `https://piquetepro24.co.mz/termos`, domínio autorizado `piquetepro24.co.mz` — o domínio tem de estar verificado no Search Console com a mesma conta Google. Com logótipo no ecrã, o Google pede verificação da marca (alguns dias).
+- **O que fica:** o ecrã do Google continua a dizer «continuar para `<ref>.supabase.co`». Só desaparece com o **domínio personalizado do Supabase** (`auth.piquetepro24.co.mz`, add-on pago do plano Pro). Se for feito: acrescentar o novo callback (`https://auth.piquetepro24.co.mz/auth/v1/callback`) às Redirect URIs do Google **sem apagar o antigo**, mudar `VITE_SUPABASE_URL` e `SUPABASE_URL`, e confirmar com um login que o emissor do JWT e o JWKS que o backend valida (`src/middlewares/auth.ts`) continuam a bater certo. Opcional, cosmético; não bloqueia o lançamento.
+
+**C6. Código.** Ver a lista de ficheiros em J. Nenhuma alteração de base de dados.
+
+**C7. Transição dos utilizadores actuais (dois domínios em paralelo, depois corte).**
+1. **Fase de convivência (≥ 30 dias):** os dois domínios funcionam (CORS e Redirect URLs com os dois). Sai uma versão da app que, quando aberta num anfitrião `*.vercel.app`, mostra um aviso fixo «A PiquetePro24 mudou para piquetepro24.co.mz» com botão para abrir o novo endereço e instruções para reinstalar a app; **antes de sair, tenta esvaziar a fila offline** e avisa se ainda houver pedidos por enviar. O utilizador terá de iniciar sessão uma vez no domínio novo.
+2. **Corte:** quando as visitas ao domínio antigo forem residuais, redireccionar na Vercel `*.vercel.app` → `piquetepro24.co.mz` (308) e, só depois, retirar o domínio antigo do `CORS_ORIGIN` e das Redirect URLs. Retirar o CORS primeiro deixava a PWA antiga (servida pelo service worker, sem passar pelo redirect) a abrir com todos os pedidos a falhar.
+
+#### D. SEO técnico
+
+- **HTML por rota pública** (D5) com: `<title>` único (≤ 60 caracteres), `meta description` (≤ 155), `<link rel="canonical">` absoluto, Open Graph (`og:title`, `og:description`, `og:image` 1200×630 JPG < 300 KB — o WhatsApp ignora imagens grandes —, `og:url`, `og:locale=pt_MZ`, `og:site_name`), `twitter:card=summary_large_image` e JSON-LD (G). `lang="pt-MZ"` já está certo.
+- **Separar a casca da SPA das páginas públicas:** a página `/` pré-renderizada fica em `dist/index.html`; a casca da SPA passa a `dist/app.html` com `<meta name="robots" content="noindex">`, e o `rewrite` do `vercel.json` e o `navigateFallback` do service worker apontam para ela. Assim, rotas privadas e endereços inexistentes (que hoje redireccionam para `/` com 200) não entram no índice como conteúdo duplicado.
+- `public/robots.txt` (política D8 + `Sitemap: https://piquetepro24.co.mz/sitemap.xml`) e `sitemap.xml` gerado no build a partir da lista de rotas públicas (com D6, um `sitemap-profissionais.xml` servido pela API).
+- **Velocidade no 3G** (também é critério de pesquisa): as páginas públicas não carregam o Supabase nem o React Query; `auth-hero.jpg` em WebP/AVIF com `width`/`height`; pré-carregar a fonte do título. Metas Core Web Vitals no telemóvel: LCP < 2,5 s, CLS < 0,1, INP < 200 ms.
+- **Cabeçalhos (`vercel.json`):** CSP com `connect-src` exacto (`https://api.piquetepro24.co.mz` e, na transição, `https://piquetepro24-backend.fly.dev`, em vez de `https://*.fly.dev`); confirmar o `Strict-Transport-Security` que a Vercel envia; acrescentar `Permissions-Policy` (`geolocation=(self), camera=(self)` se o KYC usar câmara, resto `()`). Confirmar que os previews da Vercel levam `X-Robots-Tag: noindex`.
+- **Manifest (`vite.config.ts`):** `id: '/'`, `scope: '/'`, `lang: 'pt-MZ'`, `categories`, uma `description` que diga o que a app faz, e `screenshots` (o Chrome mostra um ecrã de instalação mais rico).
+- `public/.well-known/security.txt` com `Contact: mailto:seguranca@piquetepro24.co.mz`.
+
+#### E. Páginas públicas e conteúdo (SEO local)
+
+As palavras vêm do catálogo real (`supabase/migrations/20261005120000_servicos_e_pesquisa_profissionais.sql`), incluindo os sinónimos já usados na pesquisa — e as **duas grafias** que os moçambicanos pesquisam (*electricista*/*eletricista*).
+
+| Rota | Intenção de pesquisa | Conteúdo |
+|---|---|---|
+| `/` | «encontrar canalizador/electricista em Maputo» | proposta de valor, como funciona em 3 passos, serviços, cidades, confiança (KYC, avaliações), FAQ curta, botões para registo |
+| `/servicos` | — | índice dos 8 serviços |
+| `/servicos/<slug>` (`canalizacao`, `eletricidade`, `pintura`, `jardinagem`, `limpeza-domestica`, `carpintaria`, `climatizacao`, `serralharia`) | «canalizador Maputo», «técnico de ar condicionado Matola», «picheleiro» | o que o profissional faz, trabalhos típicos, o que verificar antes de contratar, como pedir, FAQ, ligação às cidades |
+| `/servicos/<slug>/<cidade>` | «electricista na Matola» | **só** quando houver pelo menos 3 profissionais elegíveis na cidade (Maputo e Matola primeiro); páginas sem oferta real são vistas pelo Google como *doorway pages* e prejudicam o site todo |
+| `/como-funciona` | «como funciona PiquetePro24» | pedido a 3 profissionais, pedido directo, propostas, avaliação |
+| `/para-profissionais` | «trabalho para canalizador Maputo», «arranjar clientes» | registo, KYC, subscrição (800 MZN/30 dias), zona de atendimento, selos, empresas com técnicos |
+| `/empresas` | «serviços de manutenção para empresas Maputo» | clientes empresariais e locais guardados (N6), serviços recorrentes (N3) |
+| `/sobre` | marca, confiança | quem opera a plataforma (entidade legal, NUIT, morada, contactos), desde quando, onde actua |
+| `/contacto`, `/perguntas-frequentes` | suporte | email, WhatsApp, horário; 15–25 perguntas reais |
+| `/privacidade` (nova), `/termos` | obrigatórias | revistas por jurista antes do lançamento |
+| `/p/:slug` (se D6) | nome do profissional, serviço + bairro | perfil público sem telefone |
+
+Conteúdo contínuo (depois do lançamento): guias práticos («o que verificar antes de contratar um electricista», «manutenção do ar condicionado antes do verão») e um **relatório periódico com dados próprios** — serviços mais pedidos e zonas sem oferta, a partir de N4 (procura sem oferta). **Não publicar preços indicativos** enquanto N2 estiver adiado: preços inventados são o tipo de conteúdo que os motores de IA citam e que depois fica errado. Volume de pesquisa: medir com o Search Console e o Google Trends/Keyword Planner com Moçambique seleccionado, não adivinhar.
+
+#### F. Presença fora do site (SEO local e reputação)
+
+- **Google Business Profile** como empresa de área de serviço (Maputo, Matola), se houver morada verificável; **Bing Places**.
+- Perfis com o **mesmo nome, descrição, logótipo, email e telefone** em Facebook (a rede dominante em Moçambique), Instagram, LinkedIn e **WhatsApp Business** (com o link do site); os mesmos URLs vão no `sameAs` do JSON-LD.
+- Menções de terceiros: imprensa local e de tecnologia, incubadoras e eventos de startups, associações profissionais e câmaras de comércio. Para o Google e para os motores de IA, o que outros dizem da marca pesa mais do que o que o site diz de si.
+- Com D6: o profissional partilha o seu perfil no WhatsApp e nas redes; selo «Verificado na PiquetePro24» para pôr na viatura, no cartão ou na página dele, com o link.
+- Folhetos e cartazes com QR code para o domínio, com `utm_source`, para medir a origem.
+
+#### G. GEO — aparecer nas respostas do ChatGPT, Gemini, Perplexity, Copilot e Claude
+
+Os motores de resposta citam o que conseguem **ler** (HTML, D5), de fontes **consistentes** e **mencionadas por terceiros**, com respostas **directas** e **datadas**. Acções:
+
+1. `robots.txt` segundo D8 e páginas pré-renderizadas — sem isto, nada do resto conta.
+2. **Dados estruturados (JSON-LD):** `Organization` (nome, logótipo, `url`, `sameAs`, `contactPoint`, `areaServed: Moçambique`) e `WebSite` em todas as páginas; `Service` + `BreadcrumbList` nas páginas de serviço; `FAQPage` nas FAQ (o Google já quase não mostra este resultado enriquecido, mas os motores de IA usam a estrutura); com D6, `ProfessionalService` + `AggregateRating` no perfil (avaliações de terceiros sobre o profissional, não da plataforma sobre si própria).
+3. **Respostas directas:** cada pergunta da FAQ com a resposta nas primeiras 40–60 palavras, frases factuais («A subscrição para profissionais custa 800 MZN por 30 dias»), data de actualização visível.
+4. **Página `/sobre` factual** e igual em todo o lado (C, F). Um item no Wikidata só depois de haver cobertura de imprensa independente — antes disso é apagado.
+5. **Bing:** o ChatGPT e o Copilot apoiam-se no índice do Bing. Bing Webmaster Tools + **IndexNow** (aviso automático ao Bing quando uma página muda).
+6. `public/llms.txt` com um resumo do serviço e ligações às páginas principais — custo quase zero; a adopção pelos motores é incerta, não substitui 1 a 5.
+7. **Medição mensal:** uma lista fixa de ~10 perguntas («app para encontrar canalizador em Maputo», «como contratar electricista verificado na Matola», «PiquetePro24 é de confiança?») feitas no ChatGPT, Gemini, Perplexity, Copilot e Claude, registando se e como a marca aparece; e as visitas com origem `chatgpt.com`, `perplexity.ai`, `gemini.google.com` e `copilot.microsoft.com` na ferramenta de D7.
+
+#### H. Lançamento — o que tem de estar resolvido antes de abrir ao público
+
+Do Adendo v1.65 e dos planos, independente do domínio:
+
+1. **Oferta antes da procura.** Em produção a subscrição só é activada à mão pelo admin (sem gateway): definir o processo (como o profissional paga e quem activa) e **recrutar e verificar profissionais em cada serviço em Maputo e Matola antes de anunciar**. Sem profissionais elegíveis, um pedido fica sem propostas — a primeira impressão do cliente.
+2. Confirmar as 4 migrations das empresas (`20261015*`, sem registo de aplicação) e que `main` (Fases 31–35 / 38–42) está publicado.
+3. **Termos (rascunho) e política de privacidade revistos por jurista**, incluindo a Lei n.º 3/2017 (Transacções Electrónicas) e o tratamento de documentos do KYC.
+4. Problemas abertos do Adendo v1.65 que um utilizador real encontra: banidos continuam visíveis na pesquisa (1), o admin aprova o KYC sem ver o documento (3), notificações só por email (5). Decidir quais entram antes do lançamento.
+5. Produção: `ADMIN_REQUIRE_MFA=true` depois de cada admin registar o TOTP; `ENABLE_PAYMENT_MOCK` desligado (já tem guarda); `VITE_MONTRA_DE_DEMONSTRACAO` vazio.
+6. **Plano do Supabase:** confirmar que não é o gratuito (pausa por inactividade, sem cópias de segurança diárias); no Pro, confirmar as cópias e considerar PITR.
+7. **Monitorização** (não existe hoje): verificação externa a cada minuto de `https://api.piquetepro24.co.mz/health` e de `https://piquetepro24.co.mz` com alerta por email/WhatsApp (UptimeRobot, Better Stack); registo de erros no browser e na API (ex.: Sentry, plano gratuito).
+8. Validar no telemóvel os critérios por marcar (localização, actualização da PWA, offline); o staging continua a não existir.
+9. **Marca:** registo no IPI (Instituto da Propriedade Industrial de Moçambique) e reserva do nome nas redes sociais.
+10. **Suporte:** número de WhatsApp Business, `suporte@`, horário e quem responde.
+
+**Calendário proposto (relativo ao dia de lançamento, L):** L−14 DNS, email e certificados; L−10 domínio a servir a app e login Google testado; L−7 páginas públicas e Search Console; L−7 a L−1 lançamento fechado só com profissionais (recrutamento e KYC); L abertura ao público e anúncio; L+30 corte do domínio antigo (C7); L+90 revisão com os dados do Search Console e das respostas de IA.
+
+#### I. Ordem de execução proposta (P1–P9)
+
+| Bloco | O quê | Repositório |
+|---|---|---|
+| P1 | DNS, Vercel, certificado do Fly, secrets, Supabase URL Configuration, Google consent screen (C1–C5) | infra + backend + frontend (`VITE_API_URL`, CSP) |
+| P2 | Email no domínio (D3, D4) | infra + backend (secrets) |
+| P3 | Aviso de mudança de domínio e esvaziar a fila offline (C7); versão nova | frontend |
+| P4 | Base de SEO: meta, `robots.txt`, `sitemap.xml`, imagem OG, manifest, casca com `noindex`, `security.txt`, `/privacidade` | frontend |
+| P5 | Páginas públicas pré-renderizadas + JSON-LD (D, E, G) | frontend |
+| P6 | Perfis públicos (só com D6 aprovado): endpoint público sem telefone + sitemap dos perfis; página `/p/:slug` | backend + frontend |
+| P7 | Search Console, Bing + IndexNow, analytics (D7), Google Business Profile, redes (F) | fora do código |
+| P8 | Monitorização e itens de H | infra + ambos |
+| P9 | Corte do domínio antigo (C7) | infra |
+
+#### J. Ficheiros a alterar
+
+**Backend:** `.env.example` (exemplos de `CORS_ORIGIN`, `FRONTEND_URL`, `EMAIL_FROM_ADDRESS`, `GEOCODING_USER_AGENT` com o domínio); `scripts/smoke.mjs`, `scripts/carga.mjs` (exemplos de `BASE_URL`); `Doc's/RUNBOOK_DEPLOY.md` (endereços); este TRD (Secção 0, linha Infraestrutura, quando executado). Com D6: rota pública nova (`src/routes/`, `src/controllers/`, `src/services/`) e teste que garante que o telefone nunca sai.
+**Frontend:** `vercel.json` (CSP, `Permissions-Policy`, rewrite para `app.html`); `index.html` (metadados por omissão, `noindex` na casca); `vite.config.ts` (manifest, `navigateFallback`, entrada SSR das páginas públicas); `scripts/prerender.mjs` (novo); `public/robots.txt`, `public/og-image.jpg`, `public/llms.txt`, `public/.well-known/security.txt` (novos); `src/App.tsx` e páginas novas em `src/pages/` (públicas e `Privacidade`); aviso de mudança de domínio em `src/components/`; `src/data/novidadesPorVersao.json` e `package.json` (versão); `.env.example`; `CLAUDE.md` (linha do domínio oficial).
+
+#### K. Como verificar
+
+- `nslookup piquetepro24.co.mz`, `nslookup api.piquetepro24.co.mz`; `flyctl certs show api.piquetepro24.co.mz` = *Issued*.
+- `curl -I https://piquetepro24.co.mz` (200, HSTS, CSP nova); `curl -I https://www.piquetepro24.co.mz` (308 para o canónico).
+- Preflight: `curl -X OPTIONS https://api.piquetepro24.co.mz/profile -H "Origin: https://piquetepro24.co.mz" -H "Access-Control-Request-Method: GET" -i` devolve a origem em `Access-Control-Allow-Origin`; `scripts/smoke.mjs` com `BASE_URL` e `FRONTEND_ORIGIN` novos.
+- Login com Google e com email no domínio novo termina em `https://piquetepro24.co.mz/…` com sessão; o email de recuperação de password traz um link para o domínio novo.
+- mail-tester.com ≥ 9/10 e SPF/DKIM/DMARC a «pass» nos cabeçalhos de um email recebido no Gmail.
+- `curl -A "GPTBot" https://piquetepro24.co.mz/servicos/canalizacao` devolve o texto da página (não um `div` vazio); Teste de Resultados Enriquecidos do Google sem erros; inspecção de URL no Search Console; pré-visualização de um link colado no WhatsApp.
+- Lighthouse no telemóvel (perfil 4G lento) nas páginas públicas.
+
+---
+
+## Adendo v1.70
+
+### Domínio no ar com `www` como endereço oficial; política de privacidade e base de SEO (22/10/2026)
+
+**Estado: implementado em `feat/privacidade-e-seo-base` no frontend (Fase 44, versão 0.4.0), por fazer merge. Sem alterações no código do backend nem na base de dados.** O utilizador pôs o domínio no ar e configurou o DNS, o email, o login com Google e os secrets entre 21 e 22/10/2026. A 22/10 aprovou o bloco P4 do Adendo v1.69 e confirmou o `www` como endereço oficial.
+
+#### A. Estado verificado (curl e nslookup, 21–22/10/2026)
+
+| Ponto | Estado |
+|---|---|
+| Endereço oficial | **`https://www.piquetepro24.co.mz`**: a raiz faz 308 para o `www`; nameservers da Vercel; HSTS e CSP servidos |
+| CORS do backend | aceita `https://www.piquetepro24.co.mz`, `https://piquetepro24.co.mz` e `https://piquete-pro24-front-end-beta.vercel.app` (preflight verificado) |
+| `FRONTEND_URL`, SMTP | definidos pelo utilizador nos fly secrets (`smtppro.zoho.com`, porta 465); **entrega por confirmar** com um email de recuperação |
+| Email do domínio | Zoho: MX, SPF, DKIM e DMARC (`p=none`, relatórios para `geral@`) |
+| Supabase Auth | URL Configuration e SMTP próprio configurados pelo utilizador; **login no `www` por confirmar** |
+| Google OAuth | cliente refeito pelo utilizador; o Redirect URI continua a ser o callback do Supabase. O ecrã do Google mostra `loghpagfdjkaruyahnsx.supabase.co`, e só deixa de o mostrar com o domínio personalizado do Supabase (plano Pro) |
+| `api.piquetepro24.co.mz` | **ainda resolve para a Vercel (404)**; a app continua a chamar `piquetepro24-backend.fly.dev`, o que funciona |
+| Search Console | sem o TXT `google-site-verification` no DNS |
+
+#### B. Decisões que mudam o Adendo v1.69
+
+- **D1 — endereço oficial: `https://www.piquetepro24.co.mz`** (já estava assim na Vercel; confirmado pelo utilizador). Onde o v1.69 diz `https://piquetepro24.co.mz` como canónico, `Site URL`, `FRONTEND_URL` ou endereço do sitemap, lê-se o `www`. Nas Redirect URLs do Supabase: `https://www.piquetepro24.co.mz/**`. No Google, o domínio autorizado continua `piquetepro24.co.mz`, que cobre o `www`.
+- **H6 — plano do Supabase: fica no gratuito** até um destes sinais: utilizadores reais com dados que não se podem perder (KYC aprovados, subscrições pagas); mais de ~70 % de um limite em Usage; querer o `auth.piquetepro24.co.mz` no ecrã do Google. Entretanto: um `pg_dump` manual semanal, guardado fora do repositório, porque tem dados pessoais; o `pg_dump` não copia o Storage. A pausa por inactividade não se aplica: o health check do Fly (`/health`, a cada 30 s) consulta a base de dados.
+- **D8 — `robots.txt` deixa entrar todos os rastreadores**, incluindo os de treino. É a recomendação do v1.69; para excluir só os de treino, basta um bloco por agente.
+
+#### C. Implementação (Fase 44 do frontend)
+
+- **Lista única das páginas indexáveis** (`src/lib/paginasPublicas.ts`): `/`, `/termos` e `/privacidade`, com título e descrição. Dela partem o `sitemap.xml` (gerado no build), os metadados que a app aplica a cada mudança de ecrã (`src/lib/metadadosDaPagina.ts` e `components/MetadadosDaPagina.tsx`: título, descrição, `canonical` e `robots`) e um teste que falha se os `rewrites` do `vercel.json` divergirem dela.
+- **Casca com `noindex`:** o build copia o `index.html` para `app.html`, trocando o `robots` por `noindex` (plugin `indexacao` no `vite.config.ts`; o build falha se o `index.html` deixar de ter o `robots` esperado). A Vercel serve o `index.html` em `/`, `/termos` e `/privacidade`, e o `app.html` em tudo o resto — incluindo endereços inexistentes, que a app redirecciona para `/` com 200.
+- **Metadados estáticos no `index.html`** (descrição, Open Graph, `twitter:card`), para o WhatsApp, o Facebook e os rastreadores que não executam JavaScript. Sem `canonical` estático: o mesmo HTML é servido em `/termos` e em `/privacidade`.
+- **Imagem de pré-visualização** `public/og-image.jpg`, 1200×630 e 66 KB (logótipo, frase e endereço), gerada a partir de `pwa-icon.png`.
+- **Política de privacidade** em `/privacidade` (`src/data/politicaDePrivacidade.ts`, apresentada pelo `LegalDocument` dos termos), com ligação no formulário de registo («e confirmas que leste a Política de privacidade») e, no fim dos dois documentos, ligações entre eles. O texto é um **rascunho a rever por jurista**, escrito a partir do que o código faz: dados recolhidos (incluindo o IP do registo de auditoria), fornecedores, armazenamento em Frankfurt, prazos e direitos.
+- `public/robots.txt`, `public/.well-known/security.txt` (expira a 22/10/2027; renovar todos os anos), manifest com `id`, `scope`, `lang`, `dir`, `categories` e uma descrição nova, e cabeçalho `Permissions-Policy` (`geolocation` e `camera` só para a própria origem; `microphone`, `payment` e `usb` desligados).
+- Versão 0.4.0, com entrada em `novidadesPorVersao.json` (endereço novo e política de privacidade).
+
+**Desvios ao Adendo v1.69 (D):**
+- Sem pré-renderização (é o P5): todas as páginas servem o mesmo HTML estático, por isso **a pré-visualização de `/termos` ou `/privacidade` no WhatsApp mostra o título e a descrição da página inicial**. O Google, que executa JavaScript, vê os de cada página.
+- O `navigateFallback` do service worker continua no `index.html`: a quem tem a app instalada é indiferente, e os rastreadores não usam o service worker.
+- Sem `screenshots` no manifest (precisam de capturas reais da app) e sem `llms.txt` (fica para o P5, com as páginas de conteúdo).
+
+**Assunções e pontos em aberto:**
+- `geral@piquetepro24.co.mz` é o contacto da privacidade e do `security.txt`. Assumido por ser o endereço dos relatórios do DMARC; confirmar que é uma caixa lida.
+- A política **não promete** que os documentos da verificação de identidade são apagados com a conta, porque hoje não são (Adendo v1.67, achados fora do âmbito), e não fala em verificação em dois passos da equipa enquanto `ADMIN_REQUIRE_MFA` estiver desligada. A secção 9 dos termos diz que a eliminação «apaga os dados que estão ligados à tua conta», o que contradiz o primeiro ponto. Não foi mexida (fora do âmbito); fica para a correcção do Storage ou para o jurista.
+- O Branding do Google pode passar a usar `https://www.piquetepro24.co.mz/privacidade` depois do deploy.
+
+**Critérios de entrega correspondentes:** frontend, Fase 44.
+
+**Notas de deploy:** só frontend; sem variáveis novas. Depois do deploy, confirmar:
+- `curl -s https://www.piquetepro24.co.mz/perfil | grep robots` → `noindex`, e o mesmo em `/` e `/privacidade` → `index, follow`;
+- `/sitemap.xml`, `/robots.txt`, `/.well-known/security.txt` e `/og-image.jpg` respondem 200;
+- a pré-visualização de `https://www.piquetepro24.co.mz` colada no WhatsApp;
+- no Search Console, depois de verificado o domínio, submeter o sitemap.

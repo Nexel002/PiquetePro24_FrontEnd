@@ -15,7 +15,27 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <title>PiquetePro24</title>
+    <!-- Metadados da página inicial (TRD Adendo v1.70). Ficam no HTML, e não só no JavaScript,
+         porque o WhatsApp, o Facebook e os rastreadores dos motores de IA não executam JS: sem eles,
+         um link partilhado aparece sem título nem imagem. Textos iguais aos de src/lib/paginasPublicas.ts
+         (o teste paginasPublicas.test.ts compara-os). O build copia este ficheiro para app.html, com
+         `noindex` no lugar do robots abaixo — é o que a Vercel serve nas rotas que não são públicas.
+         Sem `canonical` aqui: este HTML também é servido em /termos e /privacidade; a app põe o de
+         cada página. -->
+    <title>PiquetePro24 — profissionais verificados em Moçambique</title>
+    <meta name="description" content="Encontra canalizadores, eletricistas, pintores e outros profissionais com identidade verificada perto de ti, em Moçambique. Pede propostas e compara." />
+    <meta name="robots" content="index, follow" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="PiquetePro24" />
+    <meta property="og:locale" content="pt_MZ" />
+    <meta property="og:url" content="https://www.piquetepro24.co.mz/" />
+    <meta property="og:title" content="PiquetePro24 — profissionais verificados em Moçambique" />
+    <meta property="og:description" content="Encontra canalizadores, eletricistas, pintores e outros profissionais com identidade verificada perto de ti, em Moçambique. Pede propostas e compara." />
+    <meta property="og:image" content="https://www.piquetepro24.co.mz/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Logótipo do PiquetePro24" />
+    <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <div id="root"></div>
