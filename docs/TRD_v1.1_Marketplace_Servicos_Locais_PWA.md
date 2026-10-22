@@ -3,13 +3,13 @@
 | Campo | Detalhe |
 |---|---|
 | Projeto | Marketplace de Serviços Locais PWA (Moçambique) |
-| Versão | 1.1 + Adendos v1.2 a [v1.70](#adendo-v170) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
+| Versão | 1.1 + Adendos v1.2 a [v1.71](#adendo-v171) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
 | Autor | Engenheiro de Software Lead |
 | Estado | **Em produção** (backend no Fly.io, frontend na Vercel) desde 12/10/2026; ~~Aprovado para Desenvolvimento (Sprint 0)~~ — revisto a 21/10/2026 (Adendo v1.65) |
 
 > **Documento único, sincronizado nos dois repositórios** (`PiquePro24_Backend/Doc's/` e `PiquetePro24_FrontEnd/docs/`): as duas cópias são idênticas e qualquer alteração faz-se nas duas. Caminhos de ficheiro dentro de um bloco **«Perspetiva do frontend»** referem-se ao repositório `PiquetePro24_FrontEnd`; os restantes, ao `PiquePro24_Backend`, salvo indicação em contrário.
 
-## 0. Leitura rápida — regras em vigor (21/10/2026)
+## 0. Leitura rápida — regras em vigor (22/10/2026)
 
 Com 64 adendos, a regra actual de uma área está muitas vezes no adendo mais recente que a tocou e não no corpo. Esta tabela aponta para lá. É um índice, não substitui os adendos; actualizar a linha da área sempre que um adendo novo mudar uma regra.
 
@@ -18,7 +18,9 @@ Com 64 adendos, a regra actual de uma área está muitas vezes no adendo mais re
 | Infraestrutura | Backend Fly.io `fra` (Frankfurt), Supabase Frankfurt, Redis Upstash `fra`, frontend Vercel em **`https://www.piquetepro24.co.mz`** (a raiz faz 308 para o `www`; o `-beta.vercel.app` continua até ao corte) | Adendos v1.3, v1.70 |
 | Esquema da base de dados | 17 tabelas, 8 enums, 21 funções SQL (18 RPC + 3 triggers); mapa e registo de migrations aplicadas em `Doc's/ESQUEMA_BASE_DADOS.md` (backend) | Secção 3, Adendo v1.65 |
 | Papéis | `CLIENT`, `PROFESSIONAL` (`SINGULAR`/`COMPANY`), `TECHNICIAN` (conta de um técnico de empresa), `ADMIN` (só criado por outro admin ou pelo script `npm run admins`) | Adendos v1.4-E/F, v1.50, v1.51 |
-| Autenticação | Supabase Auth (email, telefone, Google); JWT ES256 validado contra o JWKS; 2.º factor TOTP nas rotas `/admin/*` quando `ADMIN_REQUIRE_MFA=true` | Adendos v1.4, v1.48, v1.57 |
+| Autenticação | Supabase Auth (email, telefone, Google); JWT ES256 validado contra o JWKS, com `iss` e `aud`; 2.º factor TOTP nas rotas `/admin/*` quando `ADMIN_REQUIRE_MFA=true` (hoje desligada) | Adendos v1.4, v1.48, v1.57, v1.71 |
+| Suspensão de contas | O ban grava `users_profile.suspended_at`: a sessão aberta recebe 403 em ≤ 1 min e a conta sai da pesquisa, dos convites, do catálogo e da montra | Adendo v1.71 (S4) |
+| Segurança (OWASP Top 10) | Auditoria de 22/10/2026; actions por SHA e Dependabot; Storage só com imagens e com limite de tamanho; CSP com origens exactas; `/docs` e `/openapi.json` só fora de produção; alertas de segurança por email aos admins | Adendo v1.71 |
 | Pedido a 3 profissionais | Cliente escolhe exactamente 3 (ou todos, se houver menos); cada um propõe preço + mensagem; o cliente escolhe uma; sem chat | Adendo v1.18 |
 | Pedido directo | «Solicitar serviço» cria o pedido já atribuído e revela o contacto do profissional; um pedido directo em curso por cliente e profissional | Adendo v1.52 |
 | Pedido aberto | Continua a existir (`/pedidos-proximos`), mas o ecrã de pesquisa já não o cria | Adendo v1.18-A |
@@ -29,14 +31,15 @@ Com 64 adendos, a regra actual de uma área está muitas vezes no adendo mais re
 | Elegibilidade para trabalhar | KYC `APPROVED` + subscrição em vigor (calculada por datas); técnico = empresa elegível + KYC do técnico | Adendos v1.12-C, v1.51 |
 | Empresas | Máx. 15 técnicos activos; subscrição única da empresa; o técnico é atribuído depois de a empresa ser escolhida | Adendo v1.51 |
 | Avaliações | Uma por pedido concluído, do cliente para o profissional (e para o técnico, em separado); comentário pode ser ocultado pelo admin | Adendos v1.17, v1.43, v1.51 |
-| Notificações | Só email (SMTP); sem notificações na app, push nem SMS | Adendos v1.7, v1.18-F, v1.46 |
+| Notificações | Só email (SMTP); sem notificações na app, push nem SMS; os admins recebem também alertas de segurança | Adendos v1.7, v1.18-F, v1.46, v1.71 |
 | Localização | GPS com estado «aproximada» (500 m–10 km), captação em 2.º plano só com permissão já dada; fallback manual Província → Distrito → Bairro; nunca se expõem coordenadas de terceiros | Adendos v1.15-C, v1.60, v1.61 |
 | Offline | Fila em IndexedDB para criar pedidos, com `Idempotency-Key` | Adendos v1.26, v1.27 |
 | Actualização da PWA | Automática (`skipWaiting`), com aviso do que mudou depois de recarregar | Adendo v1.63 |
 | Painel de admin | Menu lateral com 5 secções e separadores `?tab=` | Adendo v1.59 |
 | Indexação e privacidade | Só `/`, `/termos` e `/privacidade` são indexáveis (lista em `src/lib/paginasPublicas.ts`); o resto recebe `app.html` com `noindex`; política de privacidade em `/privacidade` (rascunho para jurista) | Adendo v1.70 |
 | Publicação, SEO e GEO | Plano P1–P9 e decisões D1–D8; feitos P1 (parcial), P2 (parcial) e P4 | Adendos v1.69, v1.70 |
-| **Por publicar** (branch `feat/novas-funcionalidades`) | Zona de atendimento, procura sem oferta, clientes empresariais e locais guardados, selos de credenciais, serviços recorrentes — implementados; migrations aplicadas a 21/10/2026, código por publicar | Adendos v1.66 e v1.67 |
+| Zona de atendimento, procura sem oferta, clientes empresariais, selos de credenciais, serviços recorrentes | Em produção desde 21/10/2026 (merges backend `3f3d4a1`, frontend `4b2cbb7`), migrations aplicadas | Adendos v1.66 a v1.68 |
+| **Por publicar** (branch `fix/seguranca-owasp`) | Correcções de segurança da auditoria OWASP; duas migrations por aplicar | Adendo v1.71 |
 
 ---
 
@@ -2668,3 +2671,54 @@ Do Adendo v1.65 e dos planos, independente do domínio:
 - `/sitemap.xml`, `/robots.txt`, `/.well-known/security.txt` e `/og-image.jpg` respondem 200;
 - a pré-visualização de `https://www.piquetepro24.co.mz` colada no WhatsApp;
 - no Search Console, depois de verificado o domínio, submeter o sitemap.
+
+## Adendo v1.71
+
+### Segurança: auditoria OWASP Top 10:2025 e correcções (22/10/2026)
+
+**Estado: implementado em `fix/seguranca-owasp` nos dois repositórios (backend Fase 36; frontend Fase 45, versão 0.4.1), por fazer merge. Duas migrations por aplicar: `20261022090000_suspensao_de_contas.sql` ANTES do backend, `20261022100000_limites_dos_buckets.sql` em qualquer altura.** A 21/10/2026 o utilizador pediu uma auditoria do sistema contra o OWASP Top 10:2025, só de leitura; a 22/10 aprovou o plano de melhoria (S1–S10) e decidiu os três pontos em aberto (C).
+
+#### A. Situação encontrada
+
+Sem falhas críticas exploráveis. Confirmado como bem feito: papel lido de `users_profile` e nunca do JWT; contacto do cliente verificado em cada leitura (KYC + subscrição + atribuição); proximidade sem precisão exacta (Adendo v1.15-C); todas as RPC fechadas a `anon`/`authenticated`; caminhos de documentos presos à pasta do titular; URLs assinados curtos; open redirect bloqueado no pós-login; arranque que recusa CORS `*` e o mock de pagamentos em produção; Zod em todas as fronteiras; nenhum `dangerouslySetInnerHTML`; CSP com `script-src 'self'`; 500 sem detalhe interno; audit log que regista também os 401/403.
+
+Problemas, por categoria OWASP: banimento que não fechava a sessão nem tirava a conta da pesquisa (A07/A01; problema 1 do Adendo v1.65); dados da sessão anterior em memória depois de sair (A01); `setup-flyctl@master` no job que recebe o `FLY_API_TOKEN`, actions por tag e sem `permissions` (A03); buckets públicos sem limite de tipo nem de tamanho no servidor (A02/A05); sem alertas fora do painel (A09); rate limit que deixava passar tudo quando o Redis falhava (A10); `connect-src` com wildcards (A02); documentação da API pública em produção (A02); JWT sem `iss`/`aud`; id malformado a dar 500; tempo de resposta da recuperação de password a revelar se o email tem conta (A07).
+
+**Correcções à própria auditoria**, apuradas durante a implementação:
+- A regra `runtimeCaching` de `/api/*` do service worker **nunca guardou nada em produção** (a API responde na raiz do Fly, sem `/api/`). O problema real desse ponto era a cache do React Query.
+- «Fotos do portfólio de outro profissional» não existia: `fotosDeOutroUtilizador` (`catalogController.ts`) já o impedia.
+- `ADMIN_REQUIRE_MFA` está **desligada** em produção (Adendo v1.70), e não ligada como a auditoria dizia.
+
+#### B. O que mudou
+
+- **S2 — cadeia de CI (os dois repositórios):** actions fixadas pelo SHA do commit, com a versão em comentário (`checkout` e `setup-node` v4.4.0, `upload-artifact` v4.6.2, `setup-flyctl` 1.6 — o mesmo commit do `master`, por isso o deploy não muda); `permissions: contents: read`; `.github/dependabot.yml` semanal (npm agrupado por produção/desenvolvimento, e actions). `npm audit fix` só no lock: o backend fica sem vulnerabilidades em produção (e 3 moderadas no `autocannon`, de desenvolvimento); o frontend fica sem vulnerabilidades em produção.
+- **S3 — dados da sessão (frontend):** o `AuthProvider` faz `queryClient.clear()` em `SIGNED_OUT` e quando entra outra pessoa no mesmo aparelho. Sai o `runtimeCaching` de `/api/*` (decisão do utilizador: «retirar por completo»).
+- **S4 — suspensão efectiva (backend):** `users_profile.suspended_at`, gravada por `banUser`/`unbanUser` depois do ban do Supabase Auth (se a segunda escrita falhar, 500 para o admin repetir). O `requireAuth` recusa com **403 «A tua conta está suspensa»** o token ainda válido — a lista dos suspensos vive em memória (`services/contasSuspensas.ts`), carrega-se antes de o processo escutar e refresca-se a cada minuto (`jobs/contasSuspensasJobs.ts`); a máquina que executa o ban actualiza-a logo, as outras no minuto seguinte (antes: até o token expirar, 1 h). Em memória e não uma consulta por pedido, para não pôr uma ida à base de dados em todas as rotas. A conta suspensa sai da pesquisa, da proximidade, dos elegíveis (avisos «avisa-me» e quadro de procura), do catálogo (404) e da montra; o pedido directo dá 404, os convites 400 (e a função SQL recusa-a com `22023`), a escolha de uma proposta dela 409.
+- **S5 — Storage:** os quatro buckets só aceitam jpeg, png, webp, gif, heic e heif (sem SVG), até 5 MB (8 MB no portfólio) — os limites que o frontend já mostra.
+- **S6 — robustez (backend):** com o Redis em falha, o rate limit passa a contar em memória; `jwtVerify` exige `iss = <SUPABASE_URL>/auth/v1` (composto com `new URL`, indiferente a «/» no fim) e `aud = authenticated`; `invalid input syntax for type uuid` passa de 500 a **404 «Não encontrado.»**, com aviso e não erro no log; a recuperação de password responde sem esperar pelo envio do email.
+- **S7 — cabeçalhos e documentação:** `connect-src 'self' https://<projecto>.supabase.co https://piquetepro24-backend.fly.dev`; `Strict-Transport-Security: max-age=63072000` explícito, sem `includeSubDomains`; `/docs` e `/openapi.json` só fora de produção (decisão do utilizador) — o `npm run smoke` passa a esperar 404.
+- **S9 — alertas por email:** de hora a hora, `admin_security_alerts(1 h, 20)`; cada origem nova (IP ou conta) é reservada no Redis com `SET NX` por 24 h e todos os ADMIN recebem um email `alerta_seguranca` com a lista e um botão para `/admin/visao-geral?tab=auditoria`. Limiar 20 e não os 5 do painel porque o audit log conta qualquer 4xx como falha. Sem serviço externo (decisão do utilizador).
+
+#### C. Decisões do utilizador (22/10/2026)
+
+- Cache da API no telemóvel: retirar por completo.
+- Documentação Swagger: desligada em produção.
+- Alertas: por email, sem serviço externo; o monitor externo do `/health` fica como passo do utilizador.
+
+#### D. Desvios ao plano da auditoria
+
+- **`:id` inválido:** traduzido num só sítio (`contextoDoPedido`) em vez de validado em cada router — validar no router obrigava a reescrever os ids legíveis de cerca de 20 ficheiros de teste.
+- **Fora do âmbito, como previsto:** S1 (definições no painel do Supabase e `ADMIN_REQUIRE_MFA`, pelo utilizador), S8 (webhook do gateway real: interface com corpo em bruto e cabeçalhos, HMAC; entra com o M-Pesa/e-Mola) e S10 (papéis dentro de ADMIN). Ficam no backlog dos planos, com a subida do `vitest` (3 → 5) e do `tailwindcss` (3 → 4), que levam as vulnerabilidades de desenvolvimento que restam.
+
+**Assunções e limites:**
+- O anfitrião Supabase fixado na CSP é o do `.env` local, igual ao do backend e ao que o Adendo v1.70 mostra no ecrã do Google — há um só projecto. Se o `VITE_SUPABASE_URL` da Vercel for outro, o login falha por CSP: confirmar logo a seguir ao deploy.
+- Com duas máquinas do Fly, um unban chega à segunda no minuto seguinte; sem Redis, um alerta de segurança pode sair duas vezes.
+- A contagem que decide se o cliente escolhe 3 profissionais ou todos ainda inclui os suspensos; e os pedidos já atribuídos a uma conta quando é suspensa ficam como estão (o admin cancela-os). Ambos no backlog.
+
+**Critérios de entrega correspondentes:** backend, Fase 36; frontend, Fase 45.
+
+**Notas de deploy (ordem):**
+1. Aplicar `20261022090000_suspensao_de_contas.sql` no SQL Editor e registá-la em `Doc's/ESQUEMA_BASE_DADOS.md` — **antes** do backend (o catálogo e a montra passam a ler `suspended_at`; sem a coluna respondem 500). `20261022100000_limites_dos_buckets.sql` pode ir em qualquer altura.
+2. Backend (merge em `main` → deploy). Sem variáveis novas. `npm run smoke`: `/openapi.json` a 404; depois, um login normal (confirma o `iss` real).
+3. Frontend (Vercel), versão 0.4.1. Confirmar o login com email e com Google no `www`, a pesquisa, o catálogo e o upload da foto de perfil; `curl -sI https://www.piquetepro24.co.mz` com a CSP nova e o HSTS.
+4. Banir uma conta de teste: 403 em ≤ 1 minuto e fora da pesquisa; levantar: volta.
