@@ -105,13 +105,12 @@ export default defineConfig({
         // woff2 acrescentado ao padrão por omissão (js/css/html): sem isto as fontes
         // de @fontsource não entram no precache e, offline, a UI perde a tipografia.
         globPatterns: ['**/*.{js,css,html,woff2}'],
-        runtimeCaching: [
-          {
-            urlPattern: /^https:\/\/.*\/api\/.*/,
-            handler: 'NetworkFirst',
-            options: { cacheName: 'api-cache' },
-          },
-        ],
+        // Sem runtimeCaching de propósito (TRD Adendo v1.71, item S3, decisão do utilizador). Até à
+        // 0.4.0 havia uma regra 'NetworkFirst' para /api/*: nunca apanhou nada em produção (a API
+        // responde na raiz de piquetepro24-backend.fly.dev, sem /api/), mas bastava a API mudar de
+        // caminho para o perfil, o contacto do cliente e as listas do admin passarem a ficar no
+        // disco do telemóvel, com o URL como chave e sem serem apagados ao sair. Nenhum ecrã precisa
+        // de dados da API sem rede: o offline da app é a fila de pedidos (lib/filaOffline.ts).
       },
     }),
   ],

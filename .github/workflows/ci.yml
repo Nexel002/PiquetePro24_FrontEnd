@@ -1,3 +1,6 @@
+# Actions fixadas pelo SHA do commit, com a versão em comentário (TRD Adendo v1.71, item S2): uma
+# tag ou um ramo (`@v4`, `@master`) pode ser movido por quem controla a action, e o passo seguinte
+# corre com os segredos deste workflow. O Dependabot (.github/dependabot.yml) propõe as subidas.
 name: CI
 
 on:
@@ -8,13 +11,19 @@ on:
     branches:
       - main
 
+# Só leitura do repositório (TRD Adendo v1.71, item S2): o token automático do GitHub deixa de
+# poder escrever no repo, abrir releases ou mexer em packages, se um passo do workflow for
+# comprometido. Nenhum passo precisa de mais do que ler o código.
+permissions:
+  contents: read
+
 jobs:
   lint-and-build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 22
           cache: npm
@@ -27,7 +36,7 @@ jobs:
       # Chromium: é o motor do público-alvo (Chrome em Android).
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: failure()
         with:
           name: playwright-traces

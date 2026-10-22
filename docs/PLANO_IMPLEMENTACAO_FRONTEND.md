@@ -550,7 +550,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 **Critérios de Entrega:**
 - [x] Estado do MFA, registo (com limpeza de factores abandonados), verificação, validação do código e mensagens — 11 testes (`mfa.test.ts`); guard por papel e por nível `aal` (desafio, entrada, carregamento, falha de leitura) — 10 testes (`RotaDeAdmin.test.tsx`); ecrã de segurança — 6 testes (`AdminSecurity.test.tsx`); aviso no dashboard — 1 teste. A CSP já permite `img-src data:` para o QR.
 - [ ] **Não testado contra o Supabase real:** o TOTP tem de estar activo no projecto (Authentication → Multi-Factor), e o fluxo completo (registar → sair → entrar → desafio → painel) só se confirma num browser com uma app de autenticação.
-- [ ] Ordem de activação em produção: registar o factor de cada admin **antes** de ligar `ADMIN_REQUIRE_MFA=true` no backend.
+- [x] Ordem de activação em produção: registar o factor de cada admin **antes** de ligar `ADMIN_REQUIRE_MFA=true` no backend — ligada em produção (confirmado pelo utilizador a 22/10/2026).
 
 ---
 
@@ -1005,6 +1005,31 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 45 — Segurança (OWASP Top 10): dados da sessão, cabeçalhos e CI
+
+**Estado: implementada em `fix/seguranca-owasp` (22/10/2026), por fazer merge. Versão 0.4.1.** Auditoria OWASP Top 10:2025 e plano S1–S10 aprovados pelo utilizador a 22/10/2026; o que foi feito, as decisões e os desvios estão no TRD, Adendo v1.71. Corresponde à Fase 36 do backend, mas não depende dela: não lê nada novo da API e pode sair antes ou depois.
+
+**Escopo:**
+- **S3 — dados da sessão anterior:** o `AuthProvider` (`src/store/AuthContext.tsx`) limpa a cache do React Query quando a sessão termina (`SIGNED_OUT`) ou quando entra outra pessoa no mesmo aparelho; até aqui só era limpa ao apagar a conta. O `vite.config.ts` deixa de ter `runtimeCaching` para `/api/*` (decisão do utilizador).
+- **S7 — cabeçalhos:** `connect-src` da CSP com as origens exactas (o projecto Supabase e `piquetepro24-backend.fly.dev`, em vez de `*.supabase.co` e `*.fly.dev`); `Strict-Transport-Security: max-age=63072000` explícito no `vercel.json`.
+- **S2 — CI e dependências:** actions fixadas por SHA, `permissions: contents: read`, `.github/dependabot.yml`; `npm audit fix` (só o lock) — produção passa a 0 vulnerabilidades.
+- Versão 0.4.1, com entrada em `novidadesPorVersao.json`.
+
+**Desvios ao plano (S1–S10 da auditoria):**
+- **A regra `runtimeCaching` de `/api/*` nunca guardou nada em produção:** a API responde na raiz do Fly, sem `/api/` no caminho. Esta parte do item 1 da auditoria foi um erro; o problema real era a cache do React Query em memória. A regra sai na mesma, para não começar a guardar dados se a API mudar de caminho.
+- `Permissions-Policy` já tinha entrado na Fase 44.
+- Ficam por subir o `vitest` (3 → 5) e o `tailwindcss` (3 → 4), que trazem as vulnerabilidades críticas e altas que restam — só de desenvolvimento (testes e build), não chegam ao browser. São subidas de versão major; a do Tailwind é uma migração de configuração e de estilos. No backlog.
+
+**Critérios de Entrega:**
+- [x] `AuthProvider`: sair limpa; outra pessoa a entrar limpa; a mesma a renovar o token não perde nada; o primeiro login no aparelho não apaga — 4 testes (`AuthContext.test.tsx`).
+- [x] `vercel.json`: `connect-src` sem wildcards e com as duas origens, `script-src 'self'`, HSTS — 3 testes (`cabecalhosDeSeguranca.test.ts`).
+- [x] 731 testes unitários, lint (só os 2 avisos que já existiam), build sem erros e sem `api-cache` no `sw.js`; E2E 25/25 com `E2E_BROWSER=msedge`.
+- [ ] Depois do deploy: login com email e com Google no `www` (a CSP só deixa falar com o projecto Supabase indicado), pesquisa e catálogo carregam, upload de foto de perfil funciona; `curl -sI` mostra a CSP nova e o HSTS.
+- [ ] No telemóvel: terminar sessão e entrar com outra conta não mostra nada da anterior.
+- [ ] CI verde com as actions fixadas por SHA; o Dependabot abre o primeiro PR.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -1071,6 +1096,10 @@ Origem: TRD Adendo v1.65. **Nada aqui está aprovado.** Cada item, quando aprova
 - [ ] Testes de componente de `MyServiceRequests` e `AssignedServiceRequests` (Fase 16).
 - [ ] `framer-motion`: remover das dependências ou usá-lo (hoje nenhum ficheiro de `src/` o importa).
 - [ ] `README.md` do repositório.
+
+**Segurança — o que ficou da auditoria OWASP de 22/10/2026 (TRD Adendo v1.71):**
+- [ ] Subir o `vitest` de 3 para 5 (traz o `tinypool` e o `@vitest/mocker` corrigidos — críticas, só em testes).
+- [ ] Subir o `tailwindcss` de 3 para 4 (traz o `braces` e o `postcss-selector-parser` corrigidos — altas e moderadas, só no build); é uma migração de configuração e estilos, com revisão visual dos ecrãs.
 
 ---
 
@@ -1213,7 +1242,7 @@ Plano completo e justificações no TRD, Adendo v1.69; decisões tomadas e estad
 **P1 — Domínio na Vercel**
 - [x] `piquetepro24.co.mz` → 308 para `www.piquetepro24.co.mz`, que serve a app (verificado a 21/10/2026).
 - [ ] Login com Google e com email em `https://www.piquetepro24.co.mz` termina com sessão (teste do utilizador).
-- [ ] Só com D2: `VITE_API_URL=https://api.piquetepro24.co.mz`, novo deploy, `baseURL` confirmado no JS publicado, e `connect-src` do `vercel.json` com a origem exacta em vez de `https://*.fly.dev`.
+- [ ] Só com D2: `VITE_API_URL=https://api.piquetepro24.co.mz`, novo deploy, `baseURL` confirmado no JS publicado, e no `connect-src` do `vercel.json` trocar `https://piquetepro24-backend.fly.dev` (origem exacta desde a Fase 45) por `https://api.piquetepro24.co.mz` — o teste `cabecalhosDeSeguranca.test.ts` acompanha a troca.
 
 **P3 — Mudança de domínio para quem já usa a app**
 - [ ] Aviso fixo quando a app abre num anfitrião `*.vercel.app`, com botão para o `www` e instruções para reinstalar a PWA.

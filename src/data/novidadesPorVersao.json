@@ -64,5 +64,12 @@
       "O PiquetePro24 tem agora endereço próprio: www.piquetepro24.co.mz.",
       "Já podes ler a nossa Política de privacidade: que dados guardamos, para quê e durante quanto tempo."
     ]
+  },
+  {
+    "versao": "0.4.1",
+    "data": "2026-10-22",
+    "novidades": [
+      "Ao terminares a sessão, os dados da tua conta deixam de ficar no ecrã: quem entrar a seguir no mesmo telemóvel já não os vê."
+    ]
   }
 ]

@@ -1,0 +1,32 @@
+# TRD Adendo v1.71, item S2: avisos de dependências com vulnerabilidades conhecidas e subidas das
+# GitHub Actions fixadas por SHA nos workflows. Semanal e agrupado, para chegar como um PR por
+# semana e não como uma fila que ninguém revê. Os PRs passam pelo mesmo CI de qualquer branch;
+# o merge continua manual — nada entra em main (nem em produção) sem revisão.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Africa/Maputo
+    open-pull-requests-limit: 5
+    groups:
+      # As de desenvolvimento (testes, lint, build) num PR só; as de produção ficam à parte,
+      # porque são as que mudam o que corre no servidor ou no browser.
+      desenvolvimento:
+        dependency-type: development
+        update-types: [minor, patch]
+      producao:
+        dependency-type: production
+        update-types: [minor, patch]
+    commit-message:
+      prefix: chore(deps)
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      timezone: Africa/Maputo
+    commit-message:
+      prefix: chore(ci)
