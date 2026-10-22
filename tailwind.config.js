@@ -38,6 +38,13 @@ export default {
         'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
         'float': 'float 4s ease-in-out infinite',
+        // Página 404 (PaginaNaoEncontrada.tsx): só transform/opacity, para correr no compositor
+        // sem custar fluidez em telemóveis de gama baixa.
+        'astronauta': 'astronauta 7s ease-in-out infinite',
+        'cintilar': 'cintilar 3.2s ease-in-out infinite',
+        'orbitar': 'orbitar 9s linear infinite',
+        'estrela-cadente': 'estrelaCadente 6s ease-in infinite',
+        'cabo': 'cabo 1.6s linear infinite',
       },
       keyframes: {
         fadeIn: {
@@ -51,7 +58,27 @@ export default {
         float: {
           '0%, 100%': { transform: 'translateY(0)' },
           '50%': { transform: 'translateY(-6px)' },
-        }
+        },
+        astronauta: {
+          '0%, 100%': { transform: 'translateY(0) rotate(-6deg)' },
+          '50%': { transform: 'translateY(-16px) rotate(5deg)' },
+        },
+        cintilar: {
+          '0%, 100%': { opacity: '0.25', transform: 'scale(0.8)' },
+          '50%': { opacity: '1', transform: 'scale(1.15)' },
+        },
+        orbitar: {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
+        },
+        estrelaCadente: {
+          '0%': { opacity: '0', transform: 'translate3d(0, 0, 0) rotate(-30deg)' },
+          '8%': { opacity: '1' },
+          '22%, 100%': { opacity: '0', transform: 'translate3d(-320px, 190px, 0) rotate(-30deg)' },
+        },
+        cabo: {
+          to: { strokeDashoffset: '-14' },
+        },
       }
     },
   },

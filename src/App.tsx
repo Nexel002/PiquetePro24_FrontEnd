@@ -53,6 +53,7 @@ const CompanyTeam = lazy(() => import('./pages/CompanyTeam').then((m) => ({ defa
 const TechnicianJobs = lazy(() => import('./pages/TechnicianJobs').then((m) => ({ default: m.TechnicianJobs })))
 const Credentials = lazy(() => import('./pages/Credentials').then((m) => ({ default: m.Credentials })))
 const RecurringRequests = lazy(() => import('./pages/RecurringRequests').then((m) => ({ default: m.RecurringRequests })))
+const PaginaNaoEncontrada = lazy(() => import('./pages/PaginaNaoEncontrada').then((m) => ({ default: m.PaginaNaoEncontrada })))
 const DefinirNovaPassword = lazy(() => import('./pages/DefinirNovaPassword').then((m) => ({ default: m.DefinirNovaPassword })))
 
 const queryClient = new QueryClient()
@@ -348,7 +349,9 @@ function App() {
               }
             />
 
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Fase 46: endereço desconhecido mostra o 404 em vez de reencaminhar em silêncio para
+                «/» — quem errou um link ficava sem saber que errou. */}
+            <Route path="*" element={<PaginaNaoEncontrada />} />
           </Routes>
           </Suspense>
           </ErroDeEcraPorRota>

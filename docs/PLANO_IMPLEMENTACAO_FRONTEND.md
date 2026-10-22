@@ -1030,6 +1030,23 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 46 — Página 404
+
+**Estado: implementada em `feat/pagina-404` (22/10/2026), por fundir em `main`. Versão 0.5.0. Decisões no TRD, Adendo v1.72. Sem componente de backend.**
+
+**Escopo:**
+- A rota `*` deixa de reencaminhar em silêncio para `/` e passa a mostrar `PaginaNaoEncontrada` (carregada sob pedido): «Perdeste-te no espaço?», o endereço pedido, «Voltar ao início» e, havendo histórico, «Voltar atrás».
+- Cena animada só com CSS/SVG (planeta-«0» com anel e lua, astronauta de capacete de obra, cabo, estrelas e estrelas cadentes, paralaxe pelo ponteiro), sem dependência nova; respeita `prefers-reduced-motion`.
+- Versão 0.5.0, com entrada em `novidadesPorVersao.json`.
+
+**Critérios de Entrega:**
+- [x] 4 testes (`PaginaNaoEncontrada.test.tsx`): mostra o endereço, ligação ao início, sem «Voltar atrás» sem histórico, endereço enorme cortado.
+- [x] `tsc -b` e ESLint sem erros nos ficheiros tocados; captura de ecrã a 1280 px e 390 px sem sobreposições.
+- [ ] No telemóvel real: a animação corre fluida num aparelho de gama baixa; com «reduzir movimento» ligado fica estática.
+- [ ] Depois do deploy: `https://www.piquetepro24.co.mz/qualquer-coisa` mostra o 404; «Voltar atrás» volta à página anterior.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
