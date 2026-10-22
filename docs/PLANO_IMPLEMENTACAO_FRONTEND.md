@@ -1007,7 +1007,7 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ## Fase 45 — Segurança (OWASP Top 10): dados da sessão, cabeçalhos e CI
 
-**Estado: implementada em `fix/seguranca-owasp` (22/10/2026), por fazer merge. Versão 0.4.1.** Auditoria OWASP Top 10:2025 e plano S1–S10 aprovados pelo utilizador a 22/10/2026; o que foi feito, as decisões e os desvios estão no TRD, Adendo v1.71. Corresponde à Fase 36 do backend, mas não depende dela: não lê nada novo da API e pode sair antes ou depois.
+**Estado: implementada em `fix/seguranca-owasp` (22/10/2026), em `main` pelo merge `19b0418` e publicada na Vercel a 22/10/2026 (CSP nova e HSTS confirmados nos cabeçalhos). Versão 0.4.1.** Auditoria OWASP Top 10:2025 e plano S1–S10 aprovados pelo utilizador a 22/10/2026; o que foi feito, as decisões e os desvios estão no TRD, Adendo v1.71. Corresponde à Fase 36 do backend, mas não depende dela: não lê nada novo da API e pode sair antes ou depois.
 
 **Escopo:**
 - **S3 — dados da sessão anterior:** o `AuthProvider` (`src/store/AuthContext.tsx`) limpa a cache do React Query quando a sessão termina (`SIGNED_OUT`) ou quando entra outra pessoa no mesmo aparelho; até aqui só era limpa ao apagar a conta. O `vite.config.ts` deixa de ter `runtimeCaching` para `/api/*` (decisão do utilizador).
