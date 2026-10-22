@@ -3,7 +3,7 @@
 | Campo | Detalhe |
 |---|---|
 | Projeto | Marketplace de Serviços Locais PWA (Moçambique) |
-| Versão | 1.1 + Adendos v1.2 a [v1.72](#adendo-v172) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
+| Versão | 1.1 + Adendos v1.2 a [v1.74](#adendo-v174) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
 | Autor | Engenheiro de Software Lead |
 | Estado | **Em produção** (backend no Fly.io, frontend na Vercel) desde 12/10/2026; ~~Aprovado para Desenvolvimento (Sprint 0)~~ — revisto a 21/10/2026 (Adendo v1.65) |
 
@@ -2742,3 +2742,17 @@ Problemas, por categoria OWASP: banimento que não fechava a sessão nem tirava 
 **Critérios de entrega correspondentes:** frontend, Fase 46.
 
 **Notas de deploy:** só frontend (Vercel), versão 0.5.0; sem migrations nem variáveis novas.
+
+## Adendo v1.74
+
+### Favicon nos resultados de pesquisa (22/10/2026)
+
+**Estado: implementada em `feat/favicon-ico`, frontend Fase 48; por validar depois do deploy. Sem componente de backend.** (O Adendo v1.73, a landing page, está na branch `feat/landing-page` e não foi para `main`; a numeração mantém-se para quando entrar.)
+
+**Contexto.** Os resultados do Google para `www.piquetepro24.co.mz` mostravam o título e a descrição certos, mas o globo por omissão no lugar do logótipo. O ícone estava ligado só por `<link rel="icon" href="/pwa-192x192.png">` e não havia `/favicon.ico`, que rastreadores e browsers antigos pedem à raiz sem ler o HTML.
+
+**Decisão.** `public/favicon.ico` (PNG de 16, 32 e 48 px dentro do ICO), gerado por `scripts/gerar-favicon.mjs` a partir do `pwa-192x192.png`, e duas ligações `rel="icon"` no `index.html` (o `.ico` com `sizes="48x48"` e o PNG de 192 px). Cumpre o que o Google exige — ligado na página inicial, rastreável (o `robots.txt` permite tudo), múltiplo de 48 px, URL estável — mas o Google trata o favicon numa fila própria, mais lenta que a do texto, e o domínio só entrou no ar a 22/10/2026: o ícone pode demorar dias ou semanas a aparecer.
+
+**Critérios de entrega correspondentes:** frontend, Fase 48.
+
+**Notas de deploy:** só frontend (Vercel); sem versão nova, migrations nem variáveis. Depois do deploy, pedir a indexação da página inicial no Search Console.
