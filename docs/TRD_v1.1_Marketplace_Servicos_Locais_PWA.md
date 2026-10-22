@@ -3,7 +3,7 @@
 | Campo | Detalhe |
 |---|---|
 | Projeto | Marketplace de Serviços Locais PWA (Moçambique) |
-| Versão | 1.1 + Adendos v1.2 a [v1.72](#adendo-v172) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
+| Versão | 1.1 + Adendos v1.2 a [v1.73](#adendo-v173) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
 | Autor | Engenheiro de Software Lead |
 | Estado | **Em produção** (backend no Fly.io, frontend na Vercel) desde 12/10/2026; ~~Aprovado para Desenvolvimento (Sprint 0)~~ — revisto a 21/10/2026 (Adendo v1.65) |
 
@@ -2742,3 +2742,23 @@ Problemas, por categoria OWASP: banimento que não fechava a sessão nem tirava 
 **Critérios de entrega correspondentes:** frontend, Fase 46.
 
 **Notas de deploy:** só frontend (Vercel), versão 0.5.0; sem migrations nem variáveis novas.
+
+## Adendo v1.73
+
+### Landing page para visitantes (22/10/2026)
+
+**Estado: implementada em `feat/landing-page`, frontend Fase 47, versão 0.6.0; por validar no browser e no telemóvel. Sem componente de backend.**
+
+**Contexto.** A rota `/` mostrava a mesma Home a todos: para quem ainda não tinha conta, uma linha de boas-vindas e a montra de trabalhos, sem explicar o produto. Pediu-se uma landing animada e moderna, com a estrutura da piquetapp.com como referência (hero com a app, faixa de serviços, vantagens, passos, FAQ, convite final) e a identidade do PiquetePro24 mantida.
+
+**Decisão.**
+- `PaginaInicial` decide por sessão: sem sessão, `Landing` (`lazy`); com sessão, `Home` (inalterada). Enquanto a sessão se lê, mostra o esqueleto, para quem tem sessão não ver a landing por um instante.
+- Sem dependências novas: o `framer-motion` continua por usar (Adendo v1.65-E). A entrada no ecrã é `Revelar` (IntersectionObserver + transições); a faixa de categorias, o brilho e as etiquetas são `keyframes` do `tailwind.config.js` só com `transform`/`opacity`. Sem `IntersectionObserver` ou com `prefers-reduced-motion`, o conteúdo aparece logo e as animações param; a cópia da faixa que fecha o loop é `aria-hidden` e fora da ordem de tabulação.
+- O telemóvel do hero é CSS puro, sem imagens nem dados de pessoas (peso no 3G; nada inventado).
+- **Nada inventado:** sem números, testemunhos ou preços, ao contrário da referência. `components/landing/dados.ts` concentra os textos; as respostas do FAQ são rascunho a rever.
+- A montra de trabalhos em destaque passa a ser uma secção da landing (`DestaquesDaLanding`, mesma fonte `useHomeFeed`), só visível quando há trabalhos.
+- A rota de ligação e os metadados não mudam: `/` continua a ser a página pública indexável (Adendo v1.70) e o HTML estático já traz o título e a descrição.
+
+**Critérios de entrega correspondentes:** frontend, Fase 47.
+
+**Notas de deploy:** só frontend (Vercel), versão 0.6.0; sem migrations nem variáveis novas.

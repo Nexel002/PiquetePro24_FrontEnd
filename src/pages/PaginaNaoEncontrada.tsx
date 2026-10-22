@@ -1,24 +1,7 @@
 import { useRef, type CSSProperties, type PointerEvent } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { CeuEstrelado } from '../components/CeuEstrelado'
 import { LogoOficial } from '../components/ui/LogoOficial'
-
-// Estrelas geradas uma vez, com uma sequência determinística em vez de Math.random(): o mesmo
-// céu em cada render (sem estrelas a saltar de sítio) e testes estáveis.
-function gerarEstrelas(quantas: number) {
-  let semente = 24
-  const seguinte = () => {
-    semente = (semente * 9301 + 49297) % 233280
-    return semente / 233280
-  }
-  return Array.from({ length: quantas }, () => ({
-    x: seguinte() * 100,
-    y: seguinte() * 100,
-    tamanho: 1 + seguinte() * 2.2,
-    atraso: seguinte() * 3.2,
-    amarela: seguinte() > 0.86,
-  }))
-}
-const ESTRELAS = gerarEstrelas(46)
 
 // Ecrã para qualquer endereço que a app não conhece. Antes, a rota «*» reencaminhava em silêncio
 // para «/»: quem errava um link não percebia que errou. Só CSS e SVG, sem dependências novas — o
@@ -53,19 +36,7 @@ export function PaginaNaoEncontrada() {
       className="bg-mesh-dark relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-6 py-10 text-center text-white"
     >
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 motion-reduce:!transform-none" style={camada(-6)}>
-        {ESTRELAS.map((estrela, i) => (
-          <span
-            key={i}
-            className={`absolute animate-cintilar rounded-full motion-reduce:animate-none ${estrela.amarela ? 'bg-piquete-yellow' : 'bg-white'}`}
-            style={{
-              left: `${estrela.x}%`,
-              top: `${estrela.y}%`,
-              width: estrela.tamanho,
-              height: estrela.tamanho,
-              animationDelay: `${estrela.atraso}s`,
-            }}
-          />
-        ))}
+        <CeuEstrelado />
         <span className="absolute right-[12%] top-[8%] hidden h-px w-24 origin-left animate-estrela-cadente bg-gradient-to-r from-white to-transparent motion-reduce:hidden sm:block" />
         <span
           className="absolute right-[40%] top-[3%] hidden h-px w-16 origin-left animate-estrela-cadente bg-gradient-to-r from-piquete-yellow to-transparent motion-reduce:hidden sm:block"
