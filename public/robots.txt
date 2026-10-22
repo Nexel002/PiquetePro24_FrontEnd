@@ -1,0 +1,10 @@
+# TRD Adendos v1.69 (D8) e v1.70. Todos os rastreadores podem ler o site, incluindo os dos motores
+# de IA (GPTBot, OAI-SearchBot, ClaudeBot, PerplexityBot, Google-Extended): bloqueá-los tirava o
+# PiquetePro24 das respostas do ChatGPT, do Perplexity e afins. Para excluir só os de treino,
+# acrescentar um bloco «User-agent: GPTBot» / «Disallow: /» por cada um.
+# As rotas privadas não se bloqueiam aqui de propósito: levam `noindex` (app.html), e o Google só o
+# vê se puder ler a página — bloqueada, o endereço podia aparecer nos resultados sem descrição.
+User-agent: *
+Allow: /
+
+Sitemap: https://www.piquetepro24.co.mz/sitemap.xml

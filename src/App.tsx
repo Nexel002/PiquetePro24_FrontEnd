@@ -20,10 +20,12 @@ import { AvisoDeNovaVersao } from './components/AvisoDeNovaVersao'
 import { PaginaACarregar } from './components/PaginaACarregar'
 import { ErroDeEcraPorRota } from './components/ErroDeEcra'
 import { ProcessadorDaFila } from './components/ProcessadorDaFila'
+import { MetadadosDaPagina } from './components/MetadadosDaPagina'
 
 // Code-splitting por rota (Fase 6): cada ecrã é descarregado ao entrar nele, em vez de o
 // telemóvel receber os ~30 de uma vez — o painel de admin, por exemplo, só interessa a quem é admin.
 const Terms = lazy(() => import('./pages/Terms').then((m) => ({ default: m.Terms })))
+const Privacidade = lazy(() => import('./pages/Privacidade').then((m) => ({ default: m.Privacidade })))
 const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })))
 const CompletePhone = lazy(() => import('./pages/onboarding/CompletePhone').then((m) => ({ default: m.CompletePhone })))
 const CompleteLocation = lazy(() => import('./pages/onboarding/CompleteLocation').then((m) => ({ default: m.CompleteLocation })))
@@ -67,6 +69,7 @@ function App() {
         <BrowserRouter>
           <ReencaminharParaSegundoFactor />
           <ActualizarAoMudarDeEcra />
+          <MetadadosDaPagina />
           <ErroDeEcraPorRota>
           <Suspense fallback={<PaginaACarregar />}>
           <Routes>
@@ -74,6 +77,7 @@ function App() {
             <Route path="/entrar" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/termos" element={<Terms />} />
+            <Route path="/privacidade" element={<Privacidade />} />
 
             {/* TRD Adendo v1.7 (backend): destino do link de recuperação de
                 password. Sem ProtectedRoute de propósito — ver comentário em

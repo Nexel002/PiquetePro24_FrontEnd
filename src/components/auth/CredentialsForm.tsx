@@ -152,11 +152,16 @@ export function CredentialsForm({ form, aoEsquecerPalavraPasse }: CredentialsFor
 
         <GoogleButton onClick={() => void form.entrarComGoogle()} isLoading={form.aIrParaGoogle} />
 
-        {/* Nova aba: abrir os termos na mesma apagaria o que a pessoa já escreveu no formulário. */}
+        {/* Nova aba: abrir os termos na mesma apagaria o que a pessoa já escreveu no formulário.
+            A política de privacidade informa, não se aceita — daí «leste», e não «aceitas». */}
         <p className="text-center text-xs leading-relaxed text-slate-500">
           Ao continuares, aceitas os{' '}
           <Link to="/termos" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-700 underline underline-offset-2 hover:text-slate-900">
             Termos de utilização
+          </Link>{' '}
+          e confirmas que leste a{' '}
+          <Link to="/privacidade" target="_blank" rel="noopener noreferrer" className="font-semibold text-slate-700 underline underline-offset-2 hover:text-slate-900">
+            Política de privacidade
           </Link>
           .
         </p>

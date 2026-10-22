@@ -1,7 +1,9 @@
 import react from '@vitejs/plugin-react'
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { join, resolve } from 'node:path'
 import { defineConfig, type Plugin } from 'vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { gerarSitemap } from './src/lib/paginasPublicas.ts'
 import { ordenarDaMaisRecente, validarHistorico, type EntradaDeVersao } from './src/lib/versoes.ts'
 
 const versao = (JSON.parse(readFileSync('package.json', 'utf8')) as { version: string }).version
@@ -29,6 +31,30 @@ function novidadesDaVersao(): Plugin {
   }
 }
 
+// Depois do build (TRD Adendo v1.70): grava o sitemap.xml a partir de src/lib/paginasPublicas.ts e
+// uma cópia do index.html com `noindex`, o app.html, que a Vercel serve em todas as rotas que não
+// são públicas (vercel.json). Sem isto, o Google recebia a mesma página inicial, indexável, em
+// /perfil, /os-meus-pedidos ou num endereço que não existe (a app redirecciona-o para / com 200) e
+// tratava-as como cópias da página inicial. Se o index.html deixar de ter o robots esperado, o
+// build falha, em vez de publicar um app.html indexável sem ninguém dar por isso.
+function indexacao(): Plugin {
+  let pastaDeSaida = 'dist'
+  return {
+    name: 'indexacao',
+    apply: 'build',
+    configResolved(config) {
+      pastaDeSaida = resolve(config.root, config.build.outDir)
+    },
+    writeBundle() {
+      const robotsIndexavel = '<meta name="robots" content="index, follow" />'
+      const index = readFileSync(join(pastaDeSaida, 'index.html'), 'utf8')
+      if (!index.includes(robotsIndexavel)) throw new Error(`[indexacao] o index.html já não tem ${robotsIndexavel}`)
+      writeFileSync(join(pastaDeSaida, 'app.html'), index.replace(robotsIndexavel, '<meta name="robots" content="noindex" />'))
+      writeFileSync(join(pastaDeSaida, 'sitemap.xml'), gerarSitemap())
+    },
+  }
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   // Versão do package.json, lida por lib/novidades.ts para saber o que a app instalada já tem.
@@ -36,6 +62,7 @@ export default defineConfig({
   plugins: [
     react(),
     novidadesDaVersao(),
+    indexacao(),
     VitePWA({
       // 'prompt' e não 'autoUpdate', mas sem aviso (Fase 37): com 'autoUpdate' o cliente do plugin
       // recarrega a página no instante em que o service worker novo se activa, e apagava um
@@ -43,13 +70,20 @@ export default defineConfig({
       // service worker novo activa-se sozinho na mesma — skipWaiting/clientsClaim abaixo.
       registerType: 'prompt',
       manifest: {
+        // `id` fixo: o Chrome identifica a app instalada por ele (por omissão, o start_url); mudar o
+        // start_url no futuro deixa assim de criar uma «segunda» app no telemóvel de quem a instalou.
+        id: '/',
         name: 'PiquetePro24',
         short_name: 'PiquetePro24',
-        description: 'Marketplace de Serviços Locais para Moçambique',
+        description: 'Encontra profissionais de serviços com identidade verificada perto de ti, em Moçambique.',
+        lang: 'pt-MZ',
+        dir: 'ltr',
+        categories: ['business', 'lifestyle', 'utilities'],
         theme_color: '#031F4B',
         background_color: '#ffffff',
         display: 'standalone',
         start_url: '/',
+        scope: '/',
         // Ícones quadrados com só o escudo do logótipo: o pwa-icon.png é horizontal
         // (1024x343) e, declarado como 192/512, o Chrome rejeita-o e a PWA deixa de ser
         // instalável. O maskable tem o escudo dentro da zona segura (80%) sobre fundo opaco.

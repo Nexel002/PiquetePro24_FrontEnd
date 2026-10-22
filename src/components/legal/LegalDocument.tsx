@@ -70,6 +70,16 @@ export function LegalDocument({ titulo, actualizadoEm, seccoes }: LegalDocumentP
               </section>
             ))}
           </div>
+
+          {/* Os dois documentos remetem um para o outro (a secção 9 dos termos e a política). */}
+          <nav aria-label="Documentos legais" className="mt-12 flex flex-wrap gap-x-6 gap-y-2 border-t border-slate-200 pt-6 text-sm">
+            <Link to="/termos" className="font-semibold text-slate-700 underline underline-offset-2 hover:text-slate-900">
+              Termos de utilização
+            </Link>
+            <Link to="/privacidade" className="font-semibold text-slate-700 underline underline-offset-2 hover:text-slate-900">
+              Política de privacidade
+            </Link>
+          </nav>
         </main>
       </div>
     </div>
