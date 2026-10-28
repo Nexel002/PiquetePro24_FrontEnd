@@ -17,8 +17,9 @@ import type { DirectRequestResult } from '../services/directRequest'
 // Fase 27: «Solicitar serviço» a um profissional (ou empresa). Carregar em enviar regista o pedido e
 // só então mostra o telefone para ligar: é assim que se obriga a seguir o fluxo (decisão do
 // utilizador, 16/10/2026). O profissional é avisado e vê o cliente ao abrir o pedido.
-export function SolicitarServico() {
-  const { id } = useParams<{ id: string }>()
+export function SolicitarServico({ professionalId }: { professionalId?: string } = {}) {
+  const { id: paramId } = useParams<{ id: string }>()
+  const id = professionalId ?? paramId
   const { data: catalogo, isLoading, isError } = useProfessionalCatalog(id)
   const { data: perfil, isLoading: aCarregarPerfil, isError: erroDoPerfil, refetch: recarregarPerfil } = useProfile()
   const criar = useCreateDirectRequest()

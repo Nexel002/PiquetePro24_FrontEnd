@@ -9,7 +9,6 @@ import { AtalhoDaEquipa } from '../components/profile/AtalhoDaEquipa'
 import { DefinicoesDaConta } from '../components/profile/DefinicoesDaConta'
 import { EstatisticasDaConta } from '../components/profile/EstatisticasDaConta'
 import { FotoDoPerfil } from '../components/profile/FotoDoPerfil'
-import { HistoricoDePedidos } from '../components/profile/HistoricoDePedidos'
 import { TelefoneRegistado } from '../components/profile/TelefoneRegistado'
 import { OsMeusAvisos } from '../components/profile/OsMeusAvisos'
 import { OsMeusLocais } from '../components/profile/OsMeusLocais'
@@ -87,13 +86,13 @@ export function Profile() {
 
           {profile.role === 'PROFESSIONAL' && <AtalhoDoCatalogo />}
           {profile.role === 'PROFESSIONAL' && profile.professional_type === 'COMPANY' && <AtalhoDaEquipa />}
-          {/* Fase 41 (N5): credenciais opcionais, para o profissional e para o técnico. */}
+          {/* Fase 41 (N5): verificação de identidade e credenciais num único ecrã. */}
           {(profile.role === 'PROFESSIONAL' || profile.role === 'TECHNICIAN') && (
             <Link
-              to="/credenciais"
+              to="/verificacao-identidade"
               className="flex min-h-[44px] items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-4 text-sm font-semibold text-piquete-blue hover:border-piquete-blue/30"
             >
-              As minhas credenciais
+              Verificação de identidade e credenciais
               <span aria-hidden>›</span>
             </Link>
           )}
@@ -111,8 +110,6 @@ export function Profile() {
             <LocationForm profile={profile} allowManual={false} />
           </div>
         </section>
-
-        <HistoricoDePedidos />
       </LayoutDividido>
     </main>
   )

@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useOwnKyc, useSubmitKyc } from '../hooks/useKyc'
+import { useProfile } from '../hooks/useProfile'
+import { SecaoDeCredenciais } from './Credentials'
 import { KycUploadError } from '../services/kyc'
 import type { KycStatus } from '../services/kyc'
 import { BackButton } from '../components/BackButton'
@@ -28,6 +30,7 @@ const STATUS_BADGE_VARIANT: Record<KycStatus, 'pending' | 'approved' | 'rejected
 // ver kycService.submitKyc).
 export function Kyc() {
   const { data: kyc, isLoading, isError } = useOwnKyc()
+  const { data: perfil } = useProfile()
   const submitKycMutation = useSubmitKyc()
 
   const [biNumber, setBiNumber] = useState('')
@@ -166,6 +169,8 @@ export function Kyc() {
           </CardContent>
         </Card>
       )}
+
+      {(perfil?.role === 'PROFESSIONAL' || perfil?.role === 'TECHNICIAN') && <SecaoDeCredenciais />}
     </main>
   )
 }

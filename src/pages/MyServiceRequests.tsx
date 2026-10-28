@@ -1,139 +1,37 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { toast } from 'sonner'
 import { useCancelServiceRequest, useCompleteServiceRequest, useMyServiceRequests } from '../hooks/useServiceRequests'
-import { useSubmitReview } from '../hooks/useCatalog'
-import type { RequestStatus } from '../services/serviceRequests'
 import { BackButton } from '../components/BackButton'
-import { Button } from '../components/ui/Button'
 import { PedidosPorEnviar } from '../components/PedidosPorEnviar'
-import { BotaoDenunciar } from '../components/moderacao/BotaoDenunciar'
-import { ContactoDoProfissional } from '../components/pedidos/ContactoDoProfissional'
-import { useChosenProfessional } from '../hooks/useInvitations'
 import { usePedidosPendentes } from '../hooks/usePedidosPendentes'
 import { ExportarOsMeusPedidos } from '../components/pedidos/ExportarOsMeusPedidos'
-import { RepetirRegularmente } from '../components/pedidos/RepetirRegularmente'
+import { CartaoDoPedidoDoCliente } from '../components/pedidos/CartaoDoPedidoDoCliente'
+import { Separadores, type DefinicaoDeSeparador } from '../components/admin/estrutura/Separadores'
+import { useSeparadorDoEndereco } from '../components/admin/estrutura/useSeparadorDoEndereco'
+import { ConteudoDeRecorrentes } from './RecurringRequests'
+import { ConteudoDeProfissionais } from './MyProfessionals'
 
-// Formulário de avaliação (Fase 9, TRD Adendo v1.17): só para pedidos COMPLETED sem
-// avaliação ainda (has_review, calculado pelo backend). Sem edição posterior — uma
-// vez submetida, desaparece (decisão do Adendo v1.17, item E).
-// O contacto do profissional do pedido, só quando o cliente o pede (o backend só o entrega ao dono do pedido).
-// É o mesmo endpoint dos pedidos de 3 profissionais, depois da escolha.
-function VerContactoDoProfissional({ requestId }: { requestId: string }) {
-  const [aberto, setAberto] = useState(false)
-  const contacto = useChosenProfessional(requestId, aberto)
+export const SEPARADORES_DOS_MEUS_PEDIDOS = ['pedidos', 'recorrentes', 'profissionais'] as const
+export type SeparadorDosMeusPedidos = (typeof SEPARADORES_DOS_MEUS_PEDIDOS)[number]
 
-  if (!aberto) {
-    return (
-      <Button type="button" variant="outline" size="sm" className="self-start" onClick={() => setAberto(true)}>
-        Ver contacto do profissional
-      </Button>
-    )
-  }
-  if (contacto.isLoading) return <div role="status" aria-label="A carregar" className="h-14 animate-pulse rounded-2xl bg-gray-200" />
-  if (contacto.isError || !contacto.data) {
-    return <p role="alert" className="text-xs text-gray-600">Não foi possível carregar o contacto. Tenta novamente.</p>
-  }
-  return <ContactoDoProfissional nome={contacto.data.full_name} telefone={contacto.data.phone} />
-}
+const SEPARADORES: DefinicaoDeSeparador<SeparadorDosMeusPedidos>[] = [
+  { id: 'pedidos', rotulo: 'Pedidos' },
+  { id: 'recorrentes', rotulo: 'Recorrentes' },
+  { id: 'profissionais', rotulo: 'Profissionais' },
+]
 
-function ReviewForm({ requestId, professionalId, technicianName }: { requestId: string; professionalId: string; technicianName?: string }) {
-  const submitReview = useSubmitReview(professionalId)
-  const [rating, setRating] = useState(5)
-  const [comment, setComment] = useState('')
-  // Nota do técnico: opcional, só existe se o pedido teve técnico. null = não avaliar o técnico.
-  const [memberRating, setMemberRating] = useState<number | null>(null)
-
-  function handleSubmit(event: React.FormEvent) {
-    event.preventDefault()
-    submitReview.mutate(
-      { requestId, payload: { rating, comment: comment.trim() || undefined, member_rating: technicianName && memberRating !== null ? memberRating : undefined } },
-      {
-        onSuccess: () => toast.success('Avaliação enviada. Obrigado!'),
-        onError: () => toast.error('Não foi possível enviar a tua avaliação. Tenta novamente.'),
-      },
-    )
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2 border-t border-gray-100 pt-2 mt-1">
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((value) => (
-          <button
-            key={value}
-            type="button"
-            onClick={() => setRating(value)}
-            aria-label={`${value} estrela${value === 1 ? '' : 's'}`}
-            className={`text-xl ${value <= rating ? 'text-piquete-yellow' : 'text-gray-300'}`}
-          >
-            ★
-          </button>
-        ))}
-      </div>
-      {technicianName && (
-        <div className="flex flex-col gap-1 rounded-xl bg-gray-50 p-2">
-          <p className="text-xs font-semibold text-gray-600">
-            Avaliar também o {technicianName} <span className="font-normal">(opcional)</span>
-          </p>
-          <div className="flex items-center gap-1" role="group" aria-label={`Nota do ${technicianName}`}>
-            {[1, 2, 3, 4, 5].map((value) => (
-              <button
-                key={value}
-                type="button"
-                // Voltar a tocar na nota escolhida tira-a: o técnico deixa de ser avaliado.
-                onClick={() => setMemberRating(memberRating === value ? null : value)}
-                aria-label={`${value} estrela${value === 1 ? '' : 's'} para ${technicianName}`}
-                aria-pressed={memberRating !== null && value <= memberRating}
-                className={`text-xl ${memberRating !== null && value <= memberRating ? 'text-piquete-yellow' : 'text-gray-300'}`}
-              >
-                ★
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      <textarea
-        value={comment}
-        onChange={(event) => setComment(event.target.value)}
-        maxLength={1000}
-        rows={2}
-        placeholder="Comentário (opcional)"
-        className="w-full rounded-xl border border-gray-200 p-2 text-sm text-gray-900 focus:border-piquete-blue focus:outline-none"
-      />
-      <Button type="submit" size="sm" disabled={submitReview.isPending} isLoading={submitReview.isPending} className="self-start">
-        Avaliar profissional
-      </Button>
-    </form>
-  )
-}
-
-const STATUS_LABELS: Record<RequestStatus, string> = {
-  OPEN: 'Aberto',
-  ASSIGNED: 'Atribuído',
-  COMPLETED: 'Concluído',
-  CANCELLED: 'Cancelado',
-}
-
-const STATUS_STYLES: Record<RequestStatus, string> = {
-  OPEN: 'bg-blue-100 text-blue-700',
-  ASSIGNED: 'bg-amber-100 text-amber-700',
-  COMPLETED: 'bg-green-100 text-green-700',
-  CANCELLED: 'bg-gray-100 text-gray-500',
-}
-
-const createdAtFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'medium', timeStyle: 'short' })
-
-// Espelha as mesmas transições que o backend já valida (serviceRequestService.ts):
-// só ASSIGNED pode ser concluído; OPEN ou ASSIGNED podem ser cancelados — nunca
-// mostra um botão que o backend rejeitaria.
+// Central do cliente: pedidos, serviços recorrentes e profissionais já contratados, por
+// separadores. O que cada pedido mostra e permite fazer vive em CartaoDoPedidoDoCliente.
 export function MyServiceRequests() {
+  const [separador, mudarSeparador] = useSeparadorDoEndereco(SEPARADORES_DOS_MEUS_PEDIDOS)
   const { data: requests, isLoading, isError } = useMyServiceRequests()
   const completeRequest = useCompleteServiceRequest()
   const cancelRequest = useCancelServiceRequest()
   const { pedidos: porEnviar } = usePedidosPendentes()
+  const [propostasAbertasId, setPropostasAbertasId] = useState<string | null>(null)
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col gap-6 p-6">
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-5 p-4 pb-12 sm:p-6">
       <header className="flex items-center gap-3">
         <BackButton />
         <h1 className="flex-1 text-2xl font-semibold text-gray-900">Os meus pedidos</h1>
@@ -142,151 +40,61 @@ export function MyServiceRequests() {
         </Link>
       </header>
 
-      <PedidosPorEnviar />
+      <Separadores rotulo="Secções dos meus pedidos" separadores={SEPARADORES} activo={separador} aoMudar={mudarSeparador} />
 
-      {isLoading && (
-        <div className="flex flex-col gap-2">
-          <div className="h-20 animate-pulse rounded-lg bg-gray-200" />
-          <div className="h-20 animate-pulse rounded-lg bg-gray-200" />
-        </div>
-      )}
+      {separador === 'recorrentes' && <ConteudoDeRecorrentes />}
+      {separador === 'profissionais' && <ConteudoDeProfissionais />}
 
-      {isError && (
-        <p className="text-sm text-gray-600">
-          Não foi possível carregar os teus pedidos. Verifica a tua ligação e tenta novamente.
-        </p>
-      )}
+      {separador === 'pedidos' && (
+        <>
+          <PedidosPorEnviar />
 
-      {requests && requests.length === 0 && porEnviar.length === 0 && (
-        <p className="text-sm text-gray-600">
-          Ainda não criaste nenhum pedido.{' '}
-          <Link to="/profissionais" className="underline">
-            Procura um profissional
-          </Link>{' '}
-          para começar.
-        </p>
-      )}
+          {isLoading && (
+            <div className="flex flex-col gap-2">
+              <div className="h-20 animate-pulse rounded-lg bg-gray-200" />
+              <div className="h-20 animate-pulse rounded-lg bg-gray-200" />
+            </div>
+          )}
 
-      {requests && requests.length > 0 && (
-        <div className="flex items-center justify-between gap-2">
-          <Link to="/servicos-recorrentes" className="text-xs font-semibold text-piquete-blue underline">
-            Serviços recorrentes
-          </Link>
-          <ExportarOsMeusPedidos />
-        </div>
-      )}
+          {isError && (
+            <p className="text-sm text-gray-600">
+              Não foi possível carregar os teus pedidos. Verifica a tua ligação e tenta novamente.
+            </p>
+          )}
 
-      {requests && requests.length > 0 && (
-        <ul className="flex flex-col gap-3">
-          {requests.map((serviceRequest) => (
-            <li key={serviceRequest.id} className="flex flex-col gap-2 rounded-lg border border-gray-200 p-3">
-              <div className="flex items-start justify-between gap-2">
-                <p className="text-sm font-medium text-gray-900">{serviceRequest.title}</p>
-                <span
-                  className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_STYLES[serviceRequest.status]}`}
-                >
-                  {STATUS_LABELS[serviceRequest.status]}
-                </span>
-              </div>
+          {requests && requests.length === 0 && porEnviar.length === 0 && (
+            <p className="text-sm text-gray-600">
+              Ainda não criaste nenhum pedido.{' '}
+              <Link to="/profissionais" className="underline">
+                Procura um profissional
+              </Link>{' '}
+              para começar.
+            </p>
+          )}
 
-              {serviceRequest.description && <p className="text-sm text-gray-600">{serviceRequest.description}</p>}
+          {requests && requests.length > 0 && (
+            <div className="flex items-center justify-end gap-2">
+              <ExportarOsMeusPedidos />
+            </div>
+          )}
 
-              <p className="text-xs text-gray-500">
-                {[serviceRequest.province, serviceRequest.district, serviceRequest.neighborhood]
-                  .filter(Boolean)
-                  .join(' — ')}
-                {' · '}
-                {createdAtFormatter.format(new Date(serviceRequest.created_at))}
-              </p>
-
-              {serviceRequest.professional_name && serviceRequest.professional_id && (
-                <p className="text-xs text-gray-600">
-                  Profissional:{' '}
-                  <Link to={`/profissionais/${serviceRequest.professional_id}`} className="font-semibold text-piquete-blue hover:underline">
-                    {serviceRequest.professional_name}
-                  </Link>
-                </p>
-              )}
-
-              {serviceRequest.is_direct && serviceRequest.status === 'ASSIGNED' && (
-                <p className="text-xs text-gray-600">
-                  {serviceRequest.client_contact_viewed_at ? '✓ O profissional já viu o teu pedido.' : 'O profissional foi avisado e ainda não abriu o pedido.'}
-                </p>
-              )}
-
-              {serviceRequest.professional_id && serviceRequest.status === 'ASSIGNED' && <VerContactoDoProfissional requestId={serviceRequest.id} />}
-
-              {serviceRequest.technician && (
-                <div className="flex items-center gap-2 rounded-xl bg-piquete-blue/5 px-3 py-2 text-xs text-piquete-blue">
-                  {serviceRequest.technician.avatar_url ? (
-                    <img src={serviceRequest.technician.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
-                  ) : (
-                    <span aria-hidden className="flex h-8 w-8 items-center justify-center rounded-full bg-piquete-blue/10 font-bold">
-                      {serviceRequest.technician.first_name.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                  <span>
-                    Vem o <span className="font-bold">{serviceRequest.technician.first_name}</span> · {serviceRequest.technician.title}
-                  </span>
-                </div>
-              )}
-
-              {(serviceRequest.invited_count ?? 0) > 0 && (
-                <Link
-                  to={`/os-meus-pedidos/${serviceRequest.id}/propostas`}
-                  className="flex items-center justify-between rounded-xl bg-piquete-blue/5 px-3 py-2 text-xs font-semibold text-piquete-blue hover:bg-piquete-blue/10"
-                >
-                  <span>
-                    Enviado a {serviceRequest.invited_count} profissionais · {serviceRequest.proposal_count ?? 0}{' '}
-                    {serviceRequest.proposal_count === 1 ? 'proposta' : 'propostas'}
-                  </span>
-                  <span aria-hidden>›</span>
-                </Link>
-              )}
-
-              {serviceRequest.status === 'COMPLETED' && serviceRequest.professional_id && serviceRequest.has_review === false && (
-                <ReviewForm requestId={serviceRequest.id} professionalId={serviceRequest.professional_id} technicianName={serviceRequest.technician?.first_name} />
-              )}
-
-              {/* Fase 42 (N3): o mesmo serviço, com o mesmo profissional, regularmente. */}
-              {serviceRequest.status === 'COMPLETED' && serviceRequest.professional_id && serviceRequest.category_id && (
-                <RepetirRegularmente requestId={serviceRequest.id} />
-              )}
-
-              {serviceRequest.professional_id && serviceRequest.status !== 'OPEN' && (
-                <BotaoDenunciar
-                  targetType="SERVICE_REQUEST"
-                  targetId={serviceRequest.id}
-                  descricao="com este pedido"
-                  rotulo="Reportar um problema"
+          {requests && requests.length > 0 && (
+            <ul className="flex flex-col gap-3">
+              {requests.map((serviceRequest) => (
+                <CartaoDoPedidoDoCliente
+                  key={serviceRequest.id}
+                  pedido={serviceRequest}
+                  propostasAbertas={propostasAbertasId === serviceRequest.id}
+                  aoAlternarPropostas={() => setPropostasAbertasId(propostasAbertasId === serviceRequest.id ? null : serviceRequest.id)}
+                  aoConcluir={() => completeRequest.mutate(serviceRequest.id)}
+                  aoCancelar={() => cancelRequest.mutate(serviceRequest.id)}
+                  aConcluir={completeRequest.isPending}
+                  aCancelar={cancelRequest.isPending}
                 />
-              )}
-
-              {(serviceRequest.status === 'OPEN' || serviceRequest.status === 'ASSIGNED') && (
-                <div className="flex gap-2">
-                  {serviceRequest.status === 'ASSIGNED' && (
-                    <button
-                      type="button"
-                      onClick={() => completeRequest.mutate(serviceRequest.id)}
-                      disabled={completeRequest.isPending}
-                      className="rounded-lg bg-gray-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
-                    >
-                      Concluir
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => cancelRequest.mutate(serviceRequest.id)}
-                    disabled={cancelRequest.isPending}
-                    className="rounded-lg border border-red-300 px-3 py-1.5 text-sm font-medium text-red-700 disabled:opacity-50"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </main>
   )

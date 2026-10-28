@@ -9,18 +9,20 @@ import { SeccaoComSeparadores, type DefinicaoDeSeparador } from '../components/a
 import { useSeparadorDoEndereco } from '../components/admin/estrutura/useSeparadorDoEndereco'
 import { TabelaDeUtilizadores } from '../components/admin/utilizadores/TabelaDeUtilizadores'
 import type { UserRole } from '../services/profile'
+import { AdminAdmins } from './AdminAdmins'
 
 const PAGE_SIZE = 25
 
-type Separador = 'todos' | 'clientes' | 'profissionais' | 'tecnicos'
+type Separador = 'todos' | 'clientes' | 'profissionais' | 'tecnicos' | 'administradores'
 
-// Sem separador de administradores: gerir quem tem acesso ao painel é «Mais › Administradores».
-// «Todos» continua a incluí-los, para a pesquisa encontrar qualquer conta.
+// Todos os tipos de conta num único ecrã: clientes, profissionais, técnicos e a gestão de
+// administradores («Administradores» abre o painel de criação e revogação de contas ADMIN).
 const SEPARADORES: DefinicaoDeSeparador<Separador>[] = [
   { id: 'todos', rotulo: 'Todos' },
   { id: 'clientes', rotulo: 'Clientes' },
   { id: 'profissionais', rotulo: 'Profissionais' },
   { id: 'tecnicos', rotulo: 'Técnicos' },
+  { id: 'administradores', rotulo: 'Administradores' },
 ]
 const IDS = SEPARADORES.map((s) => s.id)
 
@@ -29,6 +31,7 @@ const PAPEL_DO_SEPARADOR: Record<Separador, UserRole | undefined> = {
   clientes: 'CLIENT',
   profissionais: 'PROFESSIONAL',
   tecnicos: 'TECHNICIAN',
+  administradores: 'ADMIN',
 }
 
 export function AdminUsers() {
@@ -53,6 +56,14 @@ export function AdminUsers() {
   function handleSeparadorChange(novo: Separador) {
     setOffset(0)
     mudarSeparador(novo)
+  }
+
+  if (separador === 'administradores') {
+    return (
+      <SeccaoComSeparadores rotulo="Tipos de utilizador" separadores={SEPARADORES} activo={separador} aoMudar={handleSeparadorChange}>
+        <AdminAdmins />
+      </SeccaoComSeparadores>
+    )
   }
 
   return (

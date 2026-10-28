@@ -8,13 +8,9 @@ import { Button } from '../components/ui/Button'
 import { useExportar, useProcura } from '../hooks/useAdminReports'
 import { fimDoDia, guardarFicheiro, inicioDoDia } from '../services/adminReports'
 
-// Fase 39 (TRD Adendo v1.66, N4): o separador «Procura» da Visão Geral — onde os clientes procuram e
-// não encontram ninguém, para saber onde recrutar profissionais. Mesmo filtro de datas dos
-// Relatórios; sem datas, o backend mostra os últimos 30 dias. O guard de role está na rota.
-export function AdminProcura() {
-  const [de, setDe] = useState('')
-  const [ate, setAte] = useState('')
-  const filtros = { from: inicioDoDia(de), to: fimDoDia(ate) }
+// Fase 39 (TRD Adendo v1.66, N4): onde os clientes procuram e não encontram ninguém perto,
+// integrado em Relatórios Operacionais (partilha o mesmo filtro de datas).
+export function SecaoDaProcura({ filtros }: { filtros: { from?: string; to?: string } }) {
   const procura = useProcura(filtros)
   const exportar = useExportar()
 
@@ -36,6 +32,36 @@ export function AdminProcura() {
   }
 
   return (
+    <div className="flex flex-col gap-4">
+      {procura.isLoading && <ACarregar blocos={1} bloco="h-40" />}
+      {procura.isError && <ErroAoCarregar>Não foi possível carregar a procura. Verifica a tua ligação e tenta novamente.</ErroAoCarregar>}
+      {procura.data && procura.data.rows.length === 0 && (
+        <p className="text-sm text-slate-600">Nenhuma procura sem oferta neste período: os clientes encontraram profissionais perto.</p>
+      )}
+      {procura.data && procura.data.rows.length > 0 && (
+        <>
+          <TabelaDaProcura linhas={procura.data.rows} />
+          <div className="flex justify-end">
+            <Button type="button" variant="outline" size="sm" onClick={descarregar} disabled={exportar.isPending} isLoading={exportar.isPending}>
+              Exportar CSV
+            </Button>
+          </div>
+        </>
+      )}
+      <p className="text-xs text-slate-500">
+        Conta-se uma procura por cliente, serviço e dia, quando não havia ninguém perto (ou ninguém de todo). «Profissionais elegíveis» são os
+        que hoje podem atender nessa província (identidade verificada e subscrição activa).
+      </p>
+    </div>
+  )
+}
+
+export function AdminProcura() {
+  const [de, setDe] = useState('')
+  const [ate, setAte] = useState('')
+  const filtros = { from: inicioDoDia(de), to: fimDoDia(ate) }
+
+  return (
     <ConteudoDoSeparador icone="pesquisa" titulo="Procura sem oferta" subtitulo="Onde os clientes procuram e não encontram ninguém perto" selo="Sem dados pessoais">
       <div className="flex flex-col gap-2 border-b border-slate-100 px-4 pb-4 sm:px-6">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -46,25 +72,7 @@ export function AdminProcura() {
       </div>
 
       <div className="flex flex-col gap-4 p-4 sm:p-6">
-        {procura.isLoading && <ACarregar blocos={1} bloco="h-40" />}
-        {procura.isError && <ErroAoCarregar>Não foi possível carregar a procura. Verifica a tua ligação e tenta novamente.</ErroAoCarregar>}
-        {procura.data && procura.data.rows.length === 0 && (
-          <p className="text-sm text-slate-600">Nenhuma procura sem oferta neste período: os clientes encontraram profissionais perto.</p>
-        )}
-        {procura.data && procura.data.rows.length > 0 && (
-          <>
-            <TabelaDaProcura linhas={procura.data.rows} />
-            <div className="flex justify-end">
-              <Button type="button" variant="outline" size="sm" onClick={descarregar} disabled={exportar.isPending} isLoading={exportar.isPending}>
-                Exportar CSV
-              </Button>
-            </div>
-          </>
-        )}
-        <p className="text-xs text-slate-500">
-          Conta-se uma procura por cliente, serviço e dia, quando não havia ninguém perto (ou ninguém de todo). «Profissionais elegíveis» são os
-          que hoje podem atender nessa província (identidade verificada e subscrição activa).
-        </p>
+        <SecaoDaProcura filtros={filtros} />
       </div>
     </ConteudoDoSeparador>
   )

@@ -14,6 +14,7 @@ vi.mock('../../hooks/useProfile', () => ({
   useProfile: () => mocks.consulta,
   useUpdateProfileDetails: () => ({ mutate: mocks.mutate, ...mocks.mutacao }),
 }))
+vi.mock('../../components/LocationForm', () => ({ LocationForm: () => <div>formulário de localização</div> }))
 
 function perfil(extra: Partial<UserProfile> = {}): UserProfile {
   return { id: 'u1', full_name: 'Ana', phone: null, province: null, latitude: null, ...extra } as UserProfile
@@ -68,7 +69,14 @@ describe('CompletePhone', () => {
     expect(screen.getByRole('alert').textContent).toMatch(/Não foi possível guardar o telefone/)
   })
 
-  it('quem já tem telefone não fica preso aqui: segue para o perfil', () => {
+  it('quem já tem telefone mas não tem localização passa no mesmo ecrã para a localização', () => {
+    mostrar({ data: perfil({ phone: '+258840000000', province: null }), isLoading: false, isError: false })
+
+    expect(screen.getByText('Onde estás?')).toBeTruthy()
+    expect(screen.getByText('formulário de localização')).toBeTruthy()
+  })
+
+  it('quem já tem telefone e localização não fica preso aqui: segue para o perfil', () => {
     mostrar({ data: perfil({ phone: '+258840000000', province: 'Maputo' }), isLoading: false, isError: false })
 
     expect(screen.getByText('ecrã do perfil')).toBeTruthy()

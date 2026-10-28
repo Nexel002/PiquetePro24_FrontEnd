@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useProfile } from '../hooks/useProfile'
 import { useCreateServiceRequest } from '../hooks/useServiceRequests'
 import { LOCAL_DO_PERFIL, localDoPedido, moradaEscolhida, textoDoLocal } from '../lib/localDoPedido'
@@ -9,23 +9,28 @@ import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
 import { Card, CardContent } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
+import { SolicitarServico } from './SolicitarServico'
 
 // Estado de navegação vindo de FindProfessionals.tsx: o serviço e os profissionais
-// escolhidos. Sem ele (abrir /novo-pedido diretamente, ou refrescar depois de limpar o
-// histórico) não há a quem enviar — volta-se à pesquisa em vez de mostrar um formulário
-// que não pode ser enviado.
+// escolhidos. Sem ele (abrir /novo-pedido diretamente sem ?professionalId, ou refrescar
+// depois de limpar o histórico) não há a quem enviar — volta-se à pesquisa em vez de
+// mostrar um formulário que não pode ser enviado.
 export interface NewServiceRequestState {
   categoryId: string
   categoryName: string
   professionals: { id: string; full_name: string }[]
 }
 
-// Novo pedido dirigido (Backend Fase 11, TRD Adendo v1.18): o cliente descreve o que
-// precisa e o pedido segue para os profissionais escolhidos, que respondem com uma
-// proposta.
+// Fluxo unificado de criação de pedido:
+// - Com ?professionalId=X ou /solicitar/:id → pedido directo a um profissional (SolicitarServico)
+// - Com state.professionals → pedido dirigido aos profissionais escolhidos na pesquisa
 export function NewServiceRequest() {
   const navigate = useNavigate()
   const routerLocation = useLocation()
+  const { id: paramId } = useParams<{ id: string }>()
+  const [searchParams] = useSearchParams()
+  const directProfessionalId = paramId ?? searchParams.get('professionalId')
+
   const state = routerLocation.state as NewServiceRequestState | null
   const { data: profile, isLoading: isProfileLoading, isError: isProfileError, refetch: refetchProfile } = useProfile()
   const createRequest = useCreateServiceRequest()
@@ -35,6 +40,10 @@ export function NewServiceRequest() {
   // Fase 40 (N6): a morada é a do perfil ou um local guardado do cliente.
   const [escolhaDoLocal, setEscolhaDoLocal] = useState(LOCAL_DO_PERFIL)
   const locais = useClientLocations(profile?.role === 'CLIENT')
+
+  if (directProfessionalId) {
+    return <SolicitarServico professionalId={directProfessionalId} />
+  }
 
   if (!state || state.professionals.length === 0) {
     return <Navigate to="/profissionais" replace />

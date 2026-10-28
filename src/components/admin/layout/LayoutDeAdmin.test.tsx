@@ -114,7 +114,11 @@ describe('rotas antigas', () => {
     cleanup()
 
     mostrar('/admin/metricas')
-    expect(screen.getByTestId('local').textContent).toBe('/admin/visao-geral?tab=metricas|')
+    expect(screen.getByTestId('local').textContent).toBe('/admin/visao-geral?tab=painel|')
+    cleanup()
+
+    mostrar('/admin/administradores')
+    expect(screen.getByTestId('local').textContent).toBe('/admin/utilizadores?tab=administradores|')
   })
 
   it('o «Ver histórico» antigo continua filtrado', () => {

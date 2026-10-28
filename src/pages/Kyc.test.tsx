@@ -18,6 +18,14 @@ vi.mock('../hooks/useKyc', () => ({
   useOwnKyc: () => estadoKyc.atual,
   useSubmitKyc: () => ({ mutate: vi.fn(), isPending: false }),
 }))
+vi.mock('../hooks/useProfile', () => ({
+  useProfile: () => ({ data: { role: 'PROFESSIONAL' }, isLoading: false }),
+}))
+vi.mock('../hooks/useCredentials', () => ({
+  useOwnCredentials: () => ({ data: [], isLoading: false, isError: false }),
+  useDeleteCredential: () => ({ mutate: vi.fn(), isPending: false }),
+  useSubmitCredential: () => ({ mutate: vi.fn(), isPending: false }),
+}))
 
 function mostrar(data: Partial<OwnKyc> | null | undefined, extra: { isLoading?: boolean; isError?: boolean } = {}) {
   estadoKyc.atual = { data, isLoading: false, isError: false, ...extra }

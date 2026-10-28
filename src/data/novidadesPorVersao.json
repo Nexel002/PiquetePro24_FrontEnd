@@ -78,5 +78,14 @@
     "novidades": [
       "Se abrires um endereço que não existe, vês agora uma página a explicar o que aconteceu, com um botão para voltar ao início."
     ]
+  },
+  {
+    "versao": "0.6.0",
+    "data": "2026-10-28",
+    "novidades": [
+      "Em «Os meus pedidos» encontras agora pedidos, propostas, serviços recorrentes e os teus profissionais num único sítio.",
+      "Para os profissionais, «Pedidos recebidos» junta agora os convites, os trabalhos em curso e os recorrentes em separadores.",
+      "A verificação de identidade e o envio de credenciais opcionais fazem-se agora na mesma página."
+    ]
   }
 ]

@@ -8,8 +8,8 @@ export const SECCAO_PEDIDOS = '/admin/pedidos-servico'
 export const SECCAO_VISAO_GERAL = '/admin/visao-geral'
 export const SECCAO_MAIS = '/admin/mais'
 
-export const SEPARADORES_DA_VISAO_GERAL = ['painel', 'metricas', 'relatorios', 'procura', 'auditoria', 'sistema'] as const
-export const SEPARADORES_DE_MAIS = ['subscricoes', 'moderacao', 'servicos', 'comunicados', 'administradores', 'seguranca'] as const
+export const SEPARADORES_DA_VISAO_GERAL = ['painel', 'relatorios', 'auditoria', 'sistema'] as const
+export const SEPARADORES_DE_MAIS = ['subscricoes', 'moderacao', 'servicos', 'comunicados', 'seguranca'] as const
 
 export type SeparadorDaVisaoGeral = (typeof SEPARADORES_DA_VISAO_GERAL)[number]
 export type SeparadorDeMais = (typeof SEPARADORES_DE_MAIS)[number]
@@ -31,9 +31,9 @@ export const ROTAS_ANTIGAS: Array<{ caminho: string; seccao: string; separador: 
   { caminho: 'moderacao', seccao: SECCAO_MAIS, separador: 'moderacao' },
   { caminho: 'servicos', seccao: SECCAO_MAIS, separador: 'servicos' },
   { caminho: 'comunicados', seccao: SECCAO_MAIS, separador: 'comunicados' },
-  { caminho: 'administradores', seccao: SECCAO_MAIS, separador: 'administradores' },
+  { caminho: 'administradores', seccao: SECCAO_UTILIZADORES, separador: 'administradores' },
   { caminho: 'seguranca', seccao: SECCAO_MAIS, separador: 'seguranca' },
-  { caminho: 'metricas', seccao: SECCAO_VISAO_GERAL, separador: 'metricas' },
+  { caminho: 'metricas', seccao: SECCAO_VISAO_GERAL, separador: 'painel' },
   { caminho: 'relatorios', seccao: SECCAO_VISAO_GERAL, separador: 'relatorios' },
   { caminho: 'audit-log', seccao: SECCAO_VISAO_GERAL, separador: 'auditoria' },
   { caminho: 'sistema', seccao: SECCAO_VISAO_GERAL, separador: 'sistema' },

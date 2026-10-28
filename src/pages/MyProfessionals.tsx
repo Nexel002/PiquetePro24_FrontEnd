@@ -8,18 +8,12 @@ const dateFormatter = new Intl.DateTimeFormat('pt-PT', { dateStyle: 'medium' })
 
 // "Profissionais com quem já trabalhaste" (Backend Fase 11, Bloco C, TRD Adendo v1.18):
 // só quem concluiu pelo menos um pedido deste cliente. "Pedir outra vez" abre o catálogo
-// do profissional (/profissionais/:id), de onde o cliente decide o que pedir — não cria
-// um pedido directo, porque o fluxo de pedido parte sempre da escolha de 3 profissionais.
-export function MyProfessionals() {
+// do profissional (/profissionais/:id), de onde o cliente decide o que pedir.
+export function ConteudoDeProfissionais() {
   const { data, isLoading, isError, refetch } = useWorkedWithProfessionals()
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-5 p-4 pb-12 sm:p-6 animate-fade-in">
-      <header className="flex items-center gap-3">
-        <BackButton />
-        <h1 className="flex-1 font-heading text-xl font-bold text-piquete-blue">Os meus profissionais</h1>
-      </header>
-
+    <div className="flex flex-col gap-4">
       <p className="text-sm text-piquete-gray">Profissionais com quem já concluíste trabalhos.</p>
 
       {isLoading && (
@@ -95,6 +89,19 @@ export function MyProfessionals() {
           ))}
         </ul>
       )}
+    </div>
+  )
+}
+
+export function MyProfessionals() {
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-5 p-4 pb-12 sm:p-6 animate-fade-in">
+      <header className="flex items-center gap-3">
+        <BackButton />
+        <h1 className="flex-1 font-heading text-xl font-bold text-piquete-blue">Os meus profissionais</h1>
+      </header>
+
+      <ConteudoDeProfissionais />
     </main>
   )
 }

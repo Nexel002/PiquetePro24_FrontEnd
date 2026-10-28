@@ -112,27 +112,12 @@ describe('AdminDashboard', () => {
     expect(screen.queryByText(/protege a tua conta/i)).toBeNull()
   })
 
-  it('oferece atalho para todos os ecrãs, incluindo Subscrições, Métricas e Auditoria', () => {
-    definir(pronto(METRICAS), pronto([]))
+  it('mostra também as secções de métricas consolidadas', () => {
+    definir(pronto({ ...METRICAS, usersByRole: { CLIENT: 12, PROFESSIONAL: 5 } }), pronto([]))
     mostrar()
 
-    const destinos = screen
-      .getAllByRole('link')
-      .map((a) => a.getAttribute('href'))
-      .filter((href) => href?.startsWith('/admin/'))
-    for (const rota of [
-      '/admin/kyc',
-      '/admin/utilizadores',
-      '/admin/pedidos-servico',
-      '/admin/mais?tab=subscricoes',
-      '/admin/mais?tab=moderacao',
-      '/admin/mais?tab=seguranca',
-      '/admin/mais?tab=administradores',
-      '/admin/visao-geral?tab=sistema',
-      '/admin/visao-geral?tab=metricas',
-      '/admin/visao-geral?tab=auditoria',
-    ]) {
-      expect(destinos).toContain(rota)
-    }
+    expect(screen.getByText('Utilizadores na Plataforma')).toBeTruthy()
+    expect(screen.getByText('Pedidos de Serviço')).toBeTruthy()
+    expect(screen.getByText('Verificação de Identidade (KYC)')).toBeTruthy()
   })
 })

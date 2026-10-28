@@ -24,7 +24,7 @@ export const ACCOES_RAPIDAS: Record<UserRole, AccaoRapida[]> = {
   ],
   CLIENT: [
     { to: '/profissionais', rotulo: 'Novo Pedido', descricao: 'Pede a 3 profissionais de uma vez' },
-    { to: '/os-meus-pedidos', rotulo: 'Os Meus Pedidos', descricao: 'Acompanha propostas e estados' },
-    { to: '/os-meus-profissionais', rotulo: 'Os Meus Profissionais', descricao: 'Quem já trabalhou contigo' },
+    { to: '/os-meus-pedidos', rotulo: 'Os Meus Pedidos', descricao: 'Pedidos, propostas, recorrentes e histórico' },
+    { to: '/perfil', rotulo: 'O Meu Perfil', descricao: 'Locais guardados, avisos e dados da conta' },
   ],
 }

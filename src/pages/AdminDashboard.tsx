@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { CartaoDeAtencao } from '../components/admin/CartaoDeAtencao'
-import { DESTINOS_DE_ADMIN } from '../components/admin/destinos'
 import { ConteudoDoSeparador } from '../components/admin/estrutura/ConteudoDoSeparador'
+import { CartaoDeMetrica, SeccaoDeMetricas, SemDados } from '../components/admin/metricas/SeccaoDeMetricas'
 import { noSeparador, rotaDaAuditoria, ROTA_DE_SEGURANCA, SECCAO_KYC, SECCAO_MAIS, SECCAO_PEDIDOS } from '../components/admin/layout/rotas'
 import { Card } from '../components/ui/Card'
 import { useAdminMetrics } from '../hooks/useAdminMetrics'
@@ -9,6 +9,34 @@ import { useAdminSecurityAlerts } from '../hooks/useAdminSecurityAlerts'
 import { useAdminSubscriptions } from '../hooks/useAdminSubscriptions'
 import { useEstadoDoMfa } from '../hooks/useMfa'
 import { useAdminReports } from '../hooks/useModeration'
+
+const ROLE_LABELS: Record<string, string> = {
+  CLIENT: 'Clientes',
+  PROFESSIONAL: 'Profissionais',
+  ADMIN: 'Administradores',
+  TECHNICIAN: 'Técnicos',
+}
+
+const KYC_STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Em análise',
+  APPROVED: 'Aprovados',
+  REJECTED: 'Rejeitados',
+}
+
+const REQUEST_STATUS_LABELS: Record<string, string> = {
+  OPEN: 'Abertos',
+  ASSIGNED: 'Atribuídos',
+  COMPLETED: 'Concluídos',
+  CANCELLED: 'Cancelados',
+}
+
+function formatMinutes(minutes: number | null): string {
+  if (minutes === null) return 'sem dados'
+  if (minutes < 60) return `${Math.round(minutes)} min`
+  const hours = Math.floor(minutes / 60)
+  const remainingMinutes = Math.round(minutes % 60)
+  return `${hours}h ${remainingMinutes}min`
+}
 
 // Valor de um cartão a partir de uma query: a carregar → `undefined`, falhou → `null`. Cada
 // fonte tem o seu estado, para o erro de uma não esconder o que a outra já trouxe.
@@ -21,9 +49,9 @@ function valorDe<T>(
   return extrair(query.data)
 }
 
-// TRD Adendo v1.39 / Fase 12: entrada única do admin. Não mede nada de novo — os contadores
-// vêm de GET /admin/metrics e GET /admin/security-alerts, os mesmos que alimentam Métricas e
-// Auditoria. O guard de role está na rota (RotaDeAdmin).
+// Painel Geral + Métricas Globais unificados num único separador: alerta de 2FA, os 5 cartões
+// operacionais «Precisa de atenção» e logo abaixo as secções de métricas de GET /admin/metrics
+// (sem a grelha redundante de 13 cartões de navegação que repetia a barra lateral).
 export function AdminDashboard() {
   const metricas = useAdminMetrics()
   // Mesmos parâmetros do painel de alertas do Registo de auditoria, para o número bater.
@@ -33,14 +61,16 @@ export function AdminDashboard() {
   const denuncias = useAdminReports({ status: 'OPEN', limit: 100, offset: 0 })
   const mfa = useEstadoDoMfa()
 
+  const signupsTotal = metricas.data?.signupsLast30Days.reduce((sum, day) => sum + day.count, 0) ?? 0
+
   return (
     <ConteudoDoSeparador
       icone="grelha"
-      titulo="Painel Geral"
-      subtitulo="Métricas em tempo real e monitorização de serviços"
+      titulo="Painel e Métricas"
+      subtitulo="Operações que precisam de atenção e consolidado de métricas da plataforma"
       selo="Área de gestão restrita com auditoria ativa"
     >
-      <div className="border-t border-slate-100 p-4 sm:p-6 flex flex-col gap-6">
+      <div className="border-t border-slate-100 p-4 sm:p-6 flex flex-col gap-8">
         {mfa.data && !mfa.data.temFactor && (
           <Link
             to={ROTA_DE_SEGURANCA}
@@ -89,21 +119,69 @@ export function AdminDashboard() {
           </div>
         </section>
 
-        <section className="flex flex-col gap-3 pt-2">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Ecrãs e Ferramentas</h3>
-          <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {DESTINOS_DE_ADMIN.map((destino) => (
-              <li key={destino.to}>
-                <Link to={destino.to} className="block rounded-2xl focus-visible:outline-2 focus-visible:outline-piquete-blue">
-                  <Card variant="interactive" className="flex flex-col gap-1 p-4 border border-slate-200/70 hover:border-piquete-blue-bright/40 transition-all">
-                    <span className="font-bold text-slate-900 text-sm sm:text-base">{destino.rotulo}</span>
-                    <span className="text-xs sm:text-sm text-slate-500 line-clamp-2">{destino.descricao}</span>
+        {metricas.data && (
+          <div className="space-y-8 border-t border-slate-100 pt-6">
+            <SeccaoDeMetricas titulo="Utilizadores na Plataforma">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+                {Object.entries(metricas.data.usersByRole).map(([role, count]) => (
+                  <CartaoDeMetrica key={role} rotulo={ROLE_LABELS[role] ?? role} valor={count} />
+                ))}
+                <CartaoDeMetrica rotulo="Novos registos" valor={signupsTotal} nota="30 dias" />
+              </div>
+            </SeccaoDeMetricas>
+
+            <SeccaoDeMetricas titulo="Pedidos de Serviço">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
+                {Object.entries(metricas.data.serviceRequestsByStatus).map(([status, count]) => (
+                  <CartaoDeMetrica key={status} rotulo={REQUEST_STATUS_LABELS[status] ?? status} valor={count} />
+                ))}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                <CartaoDeMetrica
+                  rotulo="Tempo médio até atribuição"
+                  valor={formatMinutes(metricas.data.avgTimeToAssignmentMinutes)}
+                  nota="Abertura até técnico"
+                />
+                <CartaoDeMetrica
+                  rotulo="Tempo médio até conclusão"
+                  valor={formatMinutes(metricas.data.avgTimeToCompletionMinutes)}
+                  nota="Início até fecho"
+                />
+              </div>
+            </SeccaoDeMetricas>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+              <SeccaoDeMetricas titulo="Verificação de Identidade (KYC)">
+                {Object.keys(metricas.data.kycByStatus).length === 0 ? (
+                  <SemDados>Ainda não há submissões de KYC.</SemDados>
+                ) : (
+                  <div className="grid grid-cols-3 gap-3">
+                    {Object.entries(metricas.data.kycByStatus).map(([status, count]) => (
+                      <CartaoDeMetrica key={status} rotulo={KYC_STATUS_LABELS[status] ?? status} valor={count} />
+                    ))}
+                  </div>
+                )}
+              </SeccaoDeMetricas>
+
+              <SeccaoDeMetricas titulo="Profissionais Ativos por Província">
+                {metricas.data.activeProfessionalsByProvince.length === 0 ? (
+                  <SemDados>Ainda não há profissionais com província definida.</SemDados>
+                ) : (
+                  <Card variant="solid" className="p-0 border border-slate-100 overflow-hidden shadow-none">
+                    <ul className="divide-y divide-slate-100 text-sm max-h-56 overflow-y-auto">
+                      {metricas.data.activeProfessionalsByProvince.map((row) => (
+                        <li key={row.province} className="flex justify-between items-center px-4 py-2.5 hover:bg-slate-50/60 transition-colors">
+                          <span className="text-slate-700 font-medium">{row.province}</span>
+                          <span className="font-bold text-piquete-blue bg-piquete-blue/5 px-2.5 py-0.5 rounded-full text-xs">{row.count}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </Card>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+                )}
+              </SeccaoDeMetricas>
+            </div>
+          </div>
+        )}
       </div>
     </ConteudoDoSeparador>
   )

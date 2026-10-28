@@ -8,6 +8,19 @@ import { BackButton } from '../components/BackButton'
 import { Button } from '../components/ui/Button'
 import { Card, CardContent } from '../components/ui/Card'
 import { Input } from '../components/ui/Input'
+import { Separadores, type DefinicaoDeSeparador } from '../components/admin/estrutura/Separadores'
+import { useSeparadorDoEndereco } from '../components/admin/estrutura/useSeparadorDoEndereco'
+import { ConteudoTrabalhosAceites } from './AssignedServiceRequests'
+import { RecorrenciasDoProfissional } from '../components/pedidos/RecorrenciasDoProfissional'
+
+export const SEPARADORES_DE_PEDIDOS_RECEBIDOS = ['convites', 'em-curso', 'recorrentes'] as const
+export type SeparadorDePedidosRecebidos = (typeof SEPARADORES_DE_PEDIDOS_RECEBIDOS)[number]
+
+const SEPARADORES: DefinicaoDeSeparador<SeparadorDePedidosRecebidos>[] = [
+  { id: 'convites', rotulo: 'Convites' },
+  { id: 'em-curso', rotulo: 'Em Curso' },
+  { id: 'recorrentes', rotulo: 'Recorrentes' },
+]
 
 const STATUS_LABELS: Record<InvitationStatus, string> = {
   INVITED: 'À espera da tua resposta',
@@ -162,10 +175,10 @@ function InvitationCard({ invitation, canRespond }: { invitation: Invitation; ca
   )
 }
 
-// Pedidos que clientes enviaram ao profissional (Backend Fase 11, TRD Adendo v1.18):
-// responde com uma proposta (preço + mensagem) ou recusa. Guard inline de role, mesmo
-// padrão de Kyc.tsx/Subscription.tsx.
+// Central de trabalho do profissional: Convites recebidos (propostas), Trabalhos em curso e
+// Serviços recorrentes. Guard inline de role, mesmo padrão de Kyc.tsx/Subscription.tsx.
 export function ReceivedInvitations() {
+  const [separador, mudarSeparador] = useSeparadorDoEndereco(SEPARADORES_DE_PEDIDOS_RECEBIDOS)
   const { data: profile, isLoading: isProfileLoading } = useProfile()
   const isProfessional = profile?.role === 'PROFESSIONAL'
   const { data, isLoading, isError, refetch } = useMyInvitations(isProfessional)
@@ -193,45 +206,54 @@ export function ReceivedInvitations() {
         </Link>
       </header>
 
-      {isLoading && (
-        <div className="flex flex-col gap-3">
-          <div className="h-28 animate-pulse rounded-3xl bg-gray-200" />
-          <div className="h-28 animate-pulse rounded-3xl bg-gray-200" />
-        </div>
-      )}
+      <Separadores rotulo="Secções de pedidos do profissional" separadores={SEPARADORES} activo={separador} aoMudar={mudarSeparador} />
 
-      {isError && (
-        <Card className="border-red-100 bg-red-50 p-4 text-center">
-          <p className="text-sm font-medium text-red-600">Não foi possível carregar os pedidos. Verifica a tua ligação.</p>
-          <Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => void refetch()}>
-            Tentar de novo
-          </Button>
-        </Card>
-      )}
+      {separador === 'em-curso' && <ConteudoTrabalhosAceites incluirRecorrentes={false} />}
+      {separador === 'recorrentes' && <RecorrenciasDoProfissional mostrarVazio />}
 
-      {data && !data.eligibility.eligible && data.invitations.length > 0 && <EligibilityNotice eligibility={data.eligibility} />}
+      {separador === 'convites' && (
+        <>
+          {isLoading && (
+            <div className="flex flex-col gap-3">
+              <div className="h-28 animate-pulse rounded-3xl bg-gray-200" />
+              <div className="h-28 animate-pulse rounded-3xl bg-gray-200" />
+            </div>
+          )}
 
-      {data && data.invitations.length === 0 && (
-        <Card className="flex flex-col items-center gap-2 p-8 text-center">
-          <p className="text-sm font-semibold text-gray-700">Ainda não recebeste nenhum pedido.</p>
-          <p className="text-xs text-piquete-gray">
-            Escolhe os teus serviços no{' '}
-            <Link to="/catalogo" className="font-semibold text-piquete-blue underline">
-              catálogo
-            </Link>{' '}
-            para os clientes te encontrarem.
-          </p>
-        </Card>
-      )}
+          {isError && (
+            <Card className="border-red-100 bg-red-50 p-4 text-center">
+              <p className="text-sm font-medium text-red-600">Não foi possível carregar os pedidos. Verifica a tua ligação.</p>
+              <Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => void refetch()}>
+                Tentar de novo
+              </Button>
+            </Card>
+          )}
 
-      {data && data.invitations.length > 0 && (
-        <ul className="flex flex-col gap-3">
-          {data.invitations.map((invitation) => (
-            <li key={invitation.service_request_id}>
-              <InvitationCard invitation={invitation} canRespond={data.eligibility.eligible} />
-            </li>
-          ))}
-        </ul>
+          {data && !data.eligibility.eligible && data.invitations.length > 0 && <EligibilityNotice eligibility={data.eligibility} />}
+
+          {data && data.invitations.length === 0 && (
+            <Card className="flex flex-col items-center gap-2 p-8 text-center">
+              <p className="text-sm font-semibold text-gray-700">Ainda não recebeste nenhum pedido.</p>
+              <p className="text-xs text-piquete-gray">
+                Escolhe os teus serviços no{' '}
+                <Link to="/catalogo" className="font-semibold text-piquete-blue underline">
+                  catálogo
+                </Link>{' '}
+                para os clientes te encontrarem.
+              </p>
+            </Card>
+          )}
+
+          {data && data.invitations.length > 0 && (
+            <ul className="flex flex-col gap-3">
+              {data.invitations.map((invitation) => (
+                <li key={invitation.service_request_id}>
+                  <InvitationCard invitation={invitation} canRespond={data.eligibility.eligible} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </>
       )}
     </main>
   )

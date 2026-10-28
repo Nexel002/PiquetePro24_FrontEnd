@@ -59,10 +59,14 @@ function Recorrencia({ recorrencia }: { recorrencia: RecurringRequest }) {
   )
 }
 
-export function RecorrenciasDoProfissional() {
+export function RecorrenciasDoProfissional({ mostrarVazio = false }: { mostrarVazio?: boolean } = {}) {
   const recorrencias = useAssignedRecurringRequests()
+  if (recorrencias.isLoading) return mostrarVazio ? <div className="h-24 animate-pulse rounded-2xl bg-gray-200" /> : null
   if (recorrencias.isError) return <p className="text-sm text-gray-600">Não foi possível carregar os serviços recorrentes.</p>
-  if (!recorrencias.data || recorrencias.data.length === 0) return null
+  if (!recorrencias.data || recorrencias.data.length === 0) {
+    if (!mostrarVazio) return null
+    return <p className="text-sm text-gray-600">Ainda não tens serviços recorrentes com clientes.</p>
+  }
 
   return (
     <section className="flex flex-col gap-2 rounded-2xl border border-gray-100 bg-gray-50 p-4">

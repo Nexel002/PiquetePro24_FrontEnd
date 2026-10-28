@@ -38,10 +38,11 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
 
   const step = getOnboardingStep(profile)
   const requiredPath = step === 'complete' ? null : ONBOARDING_PATHS[step]
+  const emOnboarding = location.pathname === ONBOARDING_PATHS.phone || location.pathname === ONBOARDING_PATHS.location
 
-  // Já no caminho de onboarding certo: deixa passar, mesmo que ainda falte o passo
-  // seguinte (evita loop de redirect dentro da própria tela de onboarding).
-  if (requiredPath && location.pathname !== requiredPath) {
+  // Já num ecrã de onboarding: deixa passar (CompletePhone transita do telefone para a localização
+  // sem mudar de endereço, evitando um redirect em cascata).
+  if (requiredPath && !emOnboarding) {
     return <Navigate to={requiredPath} replace />
   }
 

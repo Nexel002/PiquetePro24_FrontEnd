@@ -30,12 +30,9 @@ const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.P
 const CompletePhone = lazy(() => import('./pages/onboarding/CompletePhone').then((m) => ({ default: m.CompletePhone })))
 const CompleteLocation = lazy(() => import('./pages/onboarding/CompleteLocation').then((m) => ({ default: m.CompleteLocation })))
 const FindProfessionals = lazy(() => import('./pages/FindProfessionals').then((m) => ({ default: m.FindProfessionals })))
-const MyProfessionals = lazy(() => import('./pages/MyProfessionals').then((m) => ({ default: m.MyProfessionals })))
 const MyServiceRequests = lazy(() => import('./pages/MyServiceRequests').then((m) => ({ default: m.MyServiceRequests })))
-const NearbyServiceRequests = lazy(() => import('./pages/NearbyServiceRequests').then((m) => ({ default: m.NearbyServiceRequests })))
 const Kyc = lazy(() => import('./pages/Kyc').then((m) => ({ default: m.Kyc })))
 const Subscription = lazy(() => import('./pages/Subscription').then((m) => ({ default: m.Subscription })))
-const AssignedServiceRequests = lazy(() => import('./pages/AssignedServiceRequests').then((m) => ({ default: m.AssignedServiceRequests })))
 const MyCatalog = lazy(() => import('./pages/MyCatalog').then((m) => ({ default: m.MyCatalog })))
 const NewServiceRequest = lazy(() => import('./pages/NewServiceRequest').then((m) => ({ default: m.NewServiceRequest })))
 const ReceivedInvitations = lazy(() => import('./pages/ReceivedInvitations').then((m) => ({ default: m.ReceivedInvitations })))
@@ -48,11 +45,8 @@ const AdminServiceRequests = lazy(() => import('./pages/AdminServiceRequests').t
 const AdminVisaoGeral = lazy(() => import('./pages/AdminVisaoGeral').then((m) => ({ default: m.AdminVisaoGeral })))
 const AdminMais = lazy(() => import('./pages/AdminMais').then((m) => ({ default: m.AdminMais })))
 const LayoutDeAdmin = lazy(() => import('./components/admin/layout/LayoutDeAdmin').then((m) => ({ default: m.LayoutDeAdmin })))
-const SolicitarServico = lazy(() => import('./pages/SolicitarServico').then((m) => ({ default: m.SolicitarServico })))
 const CompanyTeam = lazy(() => import('./pages/CompanyTeam').then((m) => ({ default: m.CompanyTeam })))
 const TechnicianJobs = lazy(() => import('./pages/TechnicianJobs').then((m) => ({ default: m.TechnicianJobs })))
-const Credentials = lazy(() => import('./pages/Credentials').then((m) => ({ default: m.Credentials })))
-const RecurringRequests = lazy(() => import('./pages/RecurringRequests').then((m) => ({ default: m.RecurringRequests })))
 const PaginaNaoEncontrada = lazy(() => import('./pages/PaginaNaoEncontrada').then((m) => ({ default: m.PaginaNaoEncontrada })))
 const DefinirNovaPassword = lazy(() => import('./pages/DefinirNovaPassword').then((m) => ({ default: m.DefinirNovaPassword })))
 
@@ -140,21 +134,11 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            {/* Backend Fase 11, Bloco C: histórico de profissionais do cliente. */}
-            <Route
-              path="/os-meus-profissionais"
-              element={
-                <ProtectedRoute>
-                  <OnboardingGate>
-                    <MyProfessionals />
-                  </OnboardingGate>
-                </ProtectedRoute>
-              }
-            />
-            {/* Backend Fase 11, Bloco B (TRD Adendo v1.18): pedido a vários profissionais e
-                propostas. /novo-pedido depende do estado de navegação vindo da pesquisa
-                (sem ele volta à pesquisa); /pedidos-recebidos tem o guard de role dentro
-                do componente, como as outras rotas de profissional. */}
+            {/* Backend Fase 11, Bloco C: histórico de profissionais do cliente (integrado no separador
+                de /os-meus-pedidos na Fase 49; a rota antiga redirecciona para lá). */}
+            <Route path="/os-meus-profissionais" element={<Navigate to="/os-meus-pedidos?tab=profissionais" replace />} />
+            {/* Backend Fase 11, Bloco B (TRD Adendo v1.18): pedido a vários profissionais ou directo, e
+                propostas. /novo-pedido também aceita ?professionalId=X; /solicitar/:id usa o mesmo ecrã. */}
             <Route
               path="/novo-pedido"
               element={
@@ -185,21 +169,10 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/pedidos-proximos"
-              element={
-                <ProtectedRoute>
-                  <OnboardingGate>
-                    <NearbyServiceRequests />
-                  </OnboardingGate>
-                </ProtectedRoute>
-              }
-            />
+            {/* Fluxo antigo por GPS (obsoleto desde a Fase 11): redirecciona para a central do profissional. */}
+            <Route path="/pedidos-proximos" element={<Navigate to="/pedidos-recebidos" replace />} />
 
-            {/* Backend Fase 4: verificação de identidade. Sem requireRole no
-                backend (qualquer utilizador autenticado pode submeter o próprio
-                KYC) — mesma decisão de FindProfessionals/NearbyServiceRequests: o
-                link em Home.tsx só aparece para profile.role === 'PROFESSIONAL'. */}
+            {/* Backend Fase 4 + Fase 41: verificação de identidade e credenciais opcionais num único ecrã. */}
             <Route
               path="/verificacao-identidade"
               element={
@@ -211,9 +184,8 @@ function App() {
               }
             />
 
-            {/* Backend Fase 5 (TRD Adendo v1.12): subscrição e trabalhos aceites. O
-                backend exige role PROFESSIONAL em /subscriptions; o link em Home.tsx
-                só aparece a profissionais, mesma convenção das rotas acima. */}
+            {/* Backend Fase 5 (TRD Adendo v1.12): subscrição. Trabalhos aceites vivem no separador Em Curso
+                de /pedidos-recebidos (links dos emails do backend continuam a funcionar). */}
             <Route
               path="/subscricao"
               element={
@@ -224,16 +196,7 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/trabalhos-aceites"
-              element={
-                <ProtectedRoute>
-                  <OnboardingGate>
-                    <AssignedServiceRequests />
-                  </OnboardingGate>
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/trabalhos-aceites" element={<Navigate to="/pedidos-recebidos?tab=em-curso" replace />} />
 
             {/* Backend Fase 10 (TRD Adendo v1.17): catálogo do profissional. Guard de
                 role dentro do próprio componente (MyCatalog.tsx), mesma convenção de
@@ -289,13 +252,13 @@ function App() {
                 />
               ))}
             </Route>
-            {/* Fase 27: «Solicitar serviço» a um profissional. */}
+            {/* Fase 27 + Fase 49: «Solicitar serviço» a um profissional partilha o fluxo de NewServiceRequest. */}
             <Route
               path="/solicitar/:id"
               element={
                 <ProtectedRoute>
                   <OnboardingGate>
-                    <SolicitarServico />
+                    <NewServiceRequest />
                   </OnboardingGate>
                 </ProtectedRoute>
               }
@@ -325,29 +288,13 @@ function App() {
               }
             />
 
-            {/* Fase 41 (N5): credenciais do profissional e do técnico. Sem OnboardingGate, como os trabalhos
-                do técnico (o técnico não passa pelo onboarding de telefone/localização); o guard de papel
-                está no ecrã. */}
-            <Route
-              path="/credenciais"
-              element={
-                <ProtectedRoute>
-                  <Credentials />
-                </ProtectedRoute>
-              }
-            />
+            {/* Fase 41 (N5) + Fase 49: credenciais integradas em /verificacao-identidade (links do backend
+                continuam a funcionar). */}
+            <Route path="/credenciais" element={<Navigate to="/verificacao-identidade" replace />} />
 
-            {/* Fase 42 (N3): serviços recorrentes do cliente (o endereço vem nos emails do backend). */}
-            <Route
-              path="/servicos-recorrentes"
-              element={
-                <ProtectedRoute>
-                  <OnboardingGate>
-                    <RecurringRequests />
-                  </OnboardingGate>
-                </ProtectedRoute>
-              }
-            />
+            {/* Fase 42 (N3) + Fase 49: serviços recorrentes do cliente integrados em /os-meus-pedidos?tab=recorrentes
+                (links dos emails do backend continuam a funcionar). */}
+            <Route path="/servicos-recorrentes" element={<Navigate to="/os-meus-pedidos?tab=recorrentes" replace />} />
 
             {/* Fase 46: endereço desconhecido mostra o 404 em vez de reencaminhar em silêncio para
                 «/» — quem errou um link ficava sem saber que errou. */}

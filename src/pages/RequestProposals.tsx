@@ -99,29 +99,21 @@ function ProposalCard({ proposal, isCheapest, canChoose, isChoosing, onChoose }:
 
 // Comparação das propostas de um pedido dirigido (Backend Fase 11, TRD Adendo v1.18):
 // o cliente vê preço e mensagem de quem respondeu, lado a lado, e escolhe um. Só depois
-// de escolher é revelado o telefone do profissional.
-export function RequestProposals() {
-  const { id } = useParams<{ id: string }>()
-  const { data, isLoading, isError, refetch } = useRequestProposals(id)
-  const chooseProposal = useChooseProposal(id ?? '')
+// de escolher é revelado o telefone do profissional. Usado inline em MyServiceRequests
+// e também na rota /os-meus-pedidos/:id/propostas (links de email do backend).
+export function PropostasDoPedido({ requestId }: { requestId?: string }) {
+  const { data, isLoading, isError, refetch } = useRequestProposals(requestId)
+  const chooseProposal = useChooseProposal(requestId ?? '')
 
   const hasChosen = data !== undefined && data.request_status !== 'OPEN' && data.request_status !== 'CANCELLED'
-  const chosenProfessional = useChosenProfessional(id, hasChosen)
+  const chosenProfessional = useChosenProfessional(requestId, hasChosen)
   const isOpen = data?.request_status === 'OPEN'
 
   const cheapestPrice = data?.proposals.length ? Math.min(...data.proposals.map((proposal) => proposal.proposal_price)) : null
   const pending = data ? data.invited_count - data.proposals.length : 0
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-5 p-4 pb-12 sm:p-6 animate-fade-in">
-      <header className="flex items-center gap-3">
-        <BackButton />
-        <h1 className="flex-1 font-heading text-xl font-bold text-piquete-blue">Propostas</h1>
-        <Link to="/os-meus-pedidos" className="text-xs font-semibold text-piquete-blue hover:underline">
-          Os meus pedidos
-        </Link>
-      </header>
-
+    <div className="flex flex-col gap-3">
       {isLoading && (
         <div className="flex flex-col gap-3">
           <div className="h-32 animate-pulse rounded-3xl bg-gray-200" />
@@ -132,7 +124,7 @@ export function RequestProposals() {
       {isError && (
         <Card className="border-red-100 bg-red-50 p-4 text-center">
           <p className="text-sm font-medium text-red-600">Não foi possível carregar as propostas. Verifica a tua ligação.</p>
-          <Button type="button" variant="outline" size="sm" className="mt-3" onClick={() => void refetch()}>
+          <Button type="button" variant="outline" size="sm" onClick={() => void refetch()}>
             Tentar de novo
           </Button>
         </Card>
@@ -191,6 +183,24 @@ export function RequestProposals() {
           </ul>
         </>
       )}
+    </div>
+  )
+}
+
+export function RequestProposals() {
+  const { id } = useParams<{ id: string }>()
+
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-5 p-4 pb-12 sm:p-6 animate-fade-in">
+      <header className="flex items-center gap-3">
+        <BackButton />
+        <h1 className="flex-1 font-heading text-xl font-bold text-piquete-blue">Propostas</h1>
+        <Link to="/os-meus-pedidos" className="text-xs font-semibold text-piquete-blue hover:underline">
+          Os meus pedidos
+        </Link>
+      </header>
+
+      <PropostasDoPedido requestId={id} />
     </main>
   )
 }

@@ -1062,6 +1062,35 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 49 — Refacção e Consolidação do Fluxo de Ecrãs
+
+**Estado: implementada em `refactor/fluxo-de-telas` (28/10/2026), por fundir em `main`. Versão 0.6.0. Decisões no TRD, Adendo v1.75. Sem componente de backend.** Pedido do utilizador: analisar toda a sequência de uso do sistema para Cliente, Profissional/Empresa/Técnico e Admin, retirar ecrãs redundantes ou desnecessários e consolidar o fluxo de ecrãs mantendo compatibilidade retroactiva com todos os links de emails transaccionais.
+
+**Escopo:**
+- **Onboarding unificado (`/completar-perfil/telefone`):** quando falta telefone e localização (ex.: registo por Google), o passo 2 (`LocationForm`) surge directamente no mesmo ecrã logo após gravar o telefone, sem redireccionamento em cascata. A rota `/completar-perfil/localizacao` permanece funcional para quem entra já com telefone.
+- **Cliente — central de pedidos unificada (`/os-meus-pedidos`):**
+  - Ecrã com 3 separadores (`?tab=pedidos | recorrentes | profissionais` via `useSeparadorDoEndereco`): «Pedidos Activos e Histórico», «Serviços Recorrentes» (`ConteudoDeRecorrentes`) e «Os Meus Profissionais» (`ConteudoDeProfissionais`).
+  - As propostas de um pedido a 3 profissionais expandem-se inline dentro do próprio cartão do pedido (`PropostasDoPedido`); a rota `/os-meus-pedidos/:id/propostas` continua activa para links directos vindos de emails transaccionais.
+  - Removido `<HistoricoDePedidos />` de `/perfil` (duplicava `/os-meus-pedidos`).
+  - Unificado o formulário de criação de pedido em `NewServiceRequest.tsx` (`/novo-pedido` para 3 profissionais ou `?professionalId=X`, e `/solicitar/:id` para pedido directo).
+  - Na Home do cliente, reduzidos os atalhos rápidos para 3 («Novo Pedido», «Os Meus Pedidos», «O Meu Perfil»).
+  - O cartão de cada pedido (estado, contacto, técnico, propostas inline, avaliação, repetição, denúncia, concluir/cancelar) saiu de `MyServiceRequests.tsx` para `components/pedidos/CartaoDoPedidoDoCliente.tsx`, e o formulário de avaliação para `components/pedidos/ReviewForm.tsx`: com os 3 separadores, a página tinha passado a acumular tudo (327 linhas) — fica só com separadores, estados da lista e as mutations de concluir/cancelar. Sem mudança de comportamento.
+- **Profissional e Técnico — área de trabalho e verificação unificadas:**
+  - `/pedidos-recebidos` passa a ser a central «Os Meus Trabalhos» com 3 separadores (`?tab=convites | em-curso | recorrentes`), integrando `ConteudoTrabalhosAceites` e `RecorrenciasDoProfissional`.
+  - `/verificacao-identidade` (`Kyc.tsx`) integra `SecaoDeCredenciais` para `PROFESSIONAL` e `TECHNICIAN` num único ecrã de «Verificação de identidade e credenciais».
+- **Admin — consolidação de separadores e eliminação de duplicações:**
+  - Em `/admin/visao-geral`, fundidos «Painel» e «Métricas» num único separador «Painel e Métricas» (`AdminDashboard.tsx`, sem a grelha redundante de 13 atalhos que repetia a barra lateral), e integrado o quadro «Procura sem Oferta» (`SecaoDaProcura`) dentro de «Relatórios» (`AdminReports.tsx`).
+  - Em `/admin/utilizadores`, adicionado o 5.º separador «Administradores» (`?tab=administradores`, `AdminAdmins`), retirando-o de `/admin/mais`; a secção «Mais» passa a chamar-se «Plataforma» na barra lateral.
+- **Redireccionamentos retrocompatíveis (`<Navigate ... replace />`):** `/os-meus-profissionais` → `/os-meus-pedidos?tab=profissionais`; `/servicos-recorrentes` → `/os-meus-pedidos?tab=recorrentes`; `/pedidos-proximos` → `/pedidos-recebidos`; `/trabalhos-aceites` → `/pedidos-recebidos?tab=em-curso`; `/credenciais` → `/verificacao-identidade`; `?tab=metricas` → `?tab=painel`; `?tab=procura` → `?tab=relatorios`; `/admin/mais?tab=administradores` → `/admin/utilizadores?tab=administradores`.
+- Versão `0.6.0` no `package.json` e entrada correspondente em `src/data/novidadesPorVersao.json`.
+
+**Critérios de Entrega:**
+- [x] Todos os testes unitários e de componente actualizados e verdes (`730/730` testes em 94 ficheiros, incluindo `CompletePhone.test.tsx`, `Profile.test.tsx`, `MyServiceRequests.test.tsx`, `ReceivedInvitations.test.tsx`, `Kyc.test.tsx`, `AdminDashboard.test.tsx`, `AdminReports.test.tsx`, `AdminUsers.test.tsx`, `LayoutDeAdmin.test.tsx` e `versoes.test.ts`).
+- [x] `npm run lint` e `npm run build` limpos sem erros.
+- [ ] Validar no browser (1280 px e 390 px) a navegação pelos separadores em `/os-meus-pedidos`, `/pedidos-recebidos`, `/admin/visao-geral` e `/admin/utilizadores`, e os redireccionamentos das rotas antigas.
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -1081,7 +1110,7 @@ Fase 0 (Fundação PWA)
                                              ├─> Fases 23–26 (Empresas e equipas — backend 25–28)
                                              └─> Fase 27 (Pedido directo — backend 29) ─> Fase 28 (Contacto no catálogo — backend 30)
 
-Só frontend, sem dependência do backend: Fases 29, 33, 35 e 36 (localização), 30 e 37 (aviso e actualização da app).
+Só frontend, sem dependência do backend: Fases 29, 33, 35 e 36 (localização), 30 e 37 (aviso e actualização da app), 46 (404), 48 (favicon) e 49 (consolidação do fluxo de ecrãs).
 ```
 
 **Alinhamento com o Backend:** cada fase deste plano depende do endpoint correspondente já estar disponível (ainda que em staging) no repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend) — Fase 1 ↔ Backend Fase 2, Fase 2/3 ↔ Backend Fase 3, Fase 4 ↔ Backend Fases 4-5, Fase 7 ↔ Backend Fase 7. A documentação OpenAPI publicada desde cedo pelo backend (ver Adendo v1.2 no plano do backend) é o contrato de referência para desbloquear o desenvolvimento do frontend antes de cada endpoint estar 100% pronto (mock local contra o schema documentado).

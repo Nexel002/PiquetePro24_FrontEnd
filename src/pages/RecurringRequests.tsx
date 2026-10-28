@@ -59,16 +59,11 @@ function LinhaDaRecorrencia({ r }: { r: RecurringRequest }) {
   )
 }
 
-export function RecurringRequests() {
+export function ConteudoDeRecorrentes() {
   const recorrencias = useMyRecurringRequests()
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 pb-12 sm:p-6 animate-fade-in">
-      <header className="flex items-center gap-3">
-        <BackButton />
-        <h1 className="flex-1 font-heading text-xl font-extrabold text-piquete-blue">Serviços recorrentes</h1>
-      </header>
-
+    <div className="flex flex-col gap-3">
       {recorrencias.isLoading && <div className="h-24 animate-pulse rounded-2xl bg-gray-200" />}
       {recorrencias.isError && <p className="text-sm text-gray-600">Não foi possível carregar os teus serviços recorrentes. Tenta novamente.</p>}
       {recorrencias.data && recorrencias.data.length === 0 && (
@@ -87,6 +82,19 @@ export function RecurringRequests() {
           ))}
         </ul>
       )}
+    </div>
+  )
+}
+
+export function RecurringRequests() {
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 pb-12 sm:p-6 animate-fade-in">
+      <header className="flex items-center gap-3">
+        <BackButton />
+        <h1 className="flex-1 font-heading text-xl font-extrabold text-piquete-blue">Serviços recorrentes</h1>
+      </header>
+
+      <ConteudoDeRecorrentes />
     </main>
   )
 }

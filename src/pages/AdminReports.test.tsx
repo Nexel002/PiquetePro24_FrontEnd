@@ -19,6 +19,7 @@ vi.mock('../hooks/useAdminReports', () => ({
     estado.filtrosDoFunil.push(filtros)
     return estado.funil
   },
+  useProcura: () => ({ data: { from: '', to: '', rows: [] }, isLoading: false, isError: false }),
   useExportar: () => ({ mutate: estado.exportar, isPending: false }),
 }))
 vi.mock('../services/adminReports', async (importOriginal) => ({

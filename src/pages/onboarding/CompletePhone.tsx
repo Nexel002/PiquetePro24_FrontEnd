@@ -2,14 +2,15 @@ import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useProfile, useUpdateProfileDetails } from '../../hooks/useProfile'
 import { ErroAoCarregarPerfil } from '../../components/ErroAoCarregarPerfil'
+import { LocationForm } from '../../components/LocationForm'
 import { getOnboardingStep } from '../../services/profile'
 import { PHONE_PREFIX } from '../../lib/phone'
 import { Card } from '../../components/ui/Card'
 import { Button } from '../../components/ui/Button'
 
-// Passo 1 do onboarding obrigatório (ver OnboardingGate) — só chega aqui quem tem
-// phone null, o que hoje só acontece a quem se regista via Google. Sem opção de
-// "saltar": o botão só existe para submeter, sem link de "mais tarde".
+// Onboarding obrigatório (ver OnboardingGate) — se faltar o telefone (registo via Google), pede-o;
+// assim que fica guardado, se ainda faltar a localização, passa no mesmo ecrã ao passo de localização
+// sem um redirect intermédio para outra página.
 export function CompletePhone() {
   const { data: profile, isLoading, isError, refetch } = useProfile()
   const updateDetails = useUpdateProfileDetails()
@@ -27,12 +28,33 @@ export function CompletePhone() {
     return <ErroAoCarregarPerfil aoTentarDeNovo={() => void refetch()} />
   }
 
-  // Já tem telefone: nada a fazer aqui — segue para o próximo passo em falta, ou para
-  // o perfil se o onboarding já estiver completo. Evita ficar preso nesta tela depois
+  const step = getOnboardingStep(profile)
+
+  // Onboarding completo: segue para o perfil. Evita ficar preso nesta tela depois
   // de já ter sido concluída (ex. utilizador volta atrás no browser).
-  if (getOnboardingStep(profile) !== 'phone') {
+  if (step === 'complete') {
     return <Navigate to="/perfil" replace />
   }
+
+  if (step === 'location') {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center p-6">
+        <Card className="p-6 md:p-8">
+          <header className="mb-6 text-center">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-piquete-gray">Passo 2 de 2</p>
+            <h1 className="text-2xl font-bold text-piquete-blue mb-2">Onde estás?</h1>
+            <p className="text-sm text-gray-500">
+              Precisamos da tua localização para te mostrar profissionais e pedidos perto de ti.
+            </p>
+          </header>
+
+          <LocationForm profile={profile} />
+        </Card>
+      </main>
+    )
+  }
+
+  const faltaLocalizacao = !profile.province && profile.latitude == null
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault()
@@ -43,6 +65,7 @@ export function CompletePhone() {
     <main className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center p-6">
       <Card className="p-6 md:p-8">
         <header className="mb-6 text-center">
+          {faltaLocalizacao && <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-piquete-gray">Passo 1 de 2</p>}
           <h1 className="text-2xl font-bold text-piquete-blue mb-2">Qual é o teu telefone?</h1>
           <p className="text-sm text-gray-500">
             Precisamos do teu contacto para que clientes e profissionais te consigam encontrar.

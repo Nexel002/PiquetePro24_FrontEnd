@@ -16,33 +16,21 @@ const ESTADO: Record<EstadoDaCredencial, { rotulo: string; classe: string }> = {
 }
 
 // Fase 41 (TRD Adendo v1.66, N5): as credenciais do profissional ou do técnico — enviar, ver o
-// estado (e o motivo de uma rejeição) e apagar. Guard inline, como em MyCatalog.tsx.
-export function Credentials() {
-  const { data: perfil, isLoading: aCarregarPerfil } = useProfile()
+// estado (e o motivo de uma rejeição) e apagar. Integrado no ecrã de Verificação de Identidade (Kyc.tsx).
+export function SecaoDeCredenciais() {
   const credenciais = useOwnCredentials()
   const apagar = useDeleteCredential()
   const [aEnviar, setAEnviar] = useState(false)
 
-  if (aCarregarPerfil) {
-    return (
-      <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 sm:p-6">
-        <div className="h-40 animate-pulse rounded-3xl bg-gray-200" />
-      </main>
-    )
-  }
-  if (perfil?.role !== 'PROFESSIONAL' && perfil?.role !== 'TECHNICIAN') return <Navigate to="/" replace />
-
   return (
-    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 pb-12 sm:p-6 animate-fade-in">
-      <header className="flex items-center gap-3">
-        <BackButton />
-        <h1 className="flex-1 font-heading text-xl font-extrabold text-piquete-blue">As minhas credenciais</h1>
-      </header>
-
-      <p className="text-sm text-gray-600">
-        Provas opcionais — registo criminal, carteira profissional, formação. Depois de verificadas, aparecem como selo no catálogo e dão
-        mais confiança a quem te deixa entrar em casa.
-      </p>
+    <section className="flex flex-col gap-4 border-t border-gray-100 pt-4">
+      <div className="flex flex-col gap-1">
+        <h2 className="font-heading text-lg font-extrabold text-piquete-blue">As minhas credenciais</h2>
+        <p className="text-sm text-gray-600">
+          Provas opcionais — registo criminal, carteira profissional, formação. Depois de verificadas, aparecem como selo no catálogo e dão
+          mais confiança a quem te deixa entrar em casa.
+        </p>
+      </div>
 
       <Card variant="solid">
         <CardContent className="flex flex-col gap-3">
@@ -86,6 +74,30 @@ export function Credentials() {
           ))}
         </ul>
       )}
+    </section>
+  )
+}
+
+export function Credentials() {
+  const { data: perfil, isLoading: aCarregarPerfil } = useProfile()
+
+  if (aCarregarPerfil) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 sm:p-6">
+        <div className="h-40 animate-pulse rounded-3xl bg-gray-200" />
+      </main>
+    )
+  }
+  if (perfil?.role !== 'PROFESSIONAL' && perfil?.role !== 'TECHNICIAN') return <Navigate to="/" replace />
+
+  return (
+    <main className="mx-auto flex min-h-dvh max-w-lg flex-col gap-6 p-4 pb-12 sm:p-6 animate-fade-in">
+      <header className="flex items-center gap-3">
+        <BackButton />
+        <h1 className="flex-1 font-heading text-xl font-extrabold text-piquete-blue">As minhas credenciais</h1>
+      </header>
+
+      <SecaoDeCredenciais />
     </main>
   )
 }

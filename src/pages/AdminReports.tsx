@@ -7,9 +7,10 @@ import { BarrasDoFunil } from '../components/admin/relatorios/BarrasDoFunil'
 import { ExportacoesCsv } from '../components/admin/relatorios/ExportacoesCsv'
 import { useFunil } from '../hooks/useAdminReports'
 import { fimDoDia, inicioDoDia } from '../services/adminReports'
+import { SecaoDaProcura } from './AdminProcura'
 
-// Fase 19: números para decidir (funil) e dados para levar (CSV). O período aplica-se às duas
-// coisas. O guard de role está na rota.
+// Fase 19 + Fase 39: funil de profissionais, procura sem oferta e exportações CSV partilham o
+// mesmo filtro de período. O guard de role está na rota.
 export function AdminReports() {
   const [de, setDe] = useState('')
   const [ate, setAte] = useState('')
@@ -21,7 +22,7 @@ export function AdminReports() {
     <ConteudoDoSeparador
       icone="barras"
       titulo="Relatórios Operacionais"
-      subtitulo="Funil de profissionais e exportação em formato CSV"
+      subtitulo="Funil de profissionais, procura sem oferta e exportação em formato CSV"
       selo="Descarregamentos registados em auditoria"
     >
       <div className="px-4 sm:px-6 pb-4 border-b border-slate-100 flex flex-col gap-2">
@@ -45,6 +46,11 @@ export function AdminReports() {
             Cada linha conta pessoas, não eventos. As etapas a seguir ao registo contam o que aconteceu no período, por isso nem sempre
             diminuem.
           </p>
+        </Card>
+
+        <Card variant="solid" className="flex flex-col gap-4 p-5 border border-slate-200">
+          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">Procura sem oferta</h3>
+          <SecaoDaProcura filtros={filtros} />
         </Card>
 
         <ExportacoesCsv filtros={filtros} />

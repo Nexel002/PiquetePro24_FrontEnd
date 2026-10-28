@@ -3,7 +3,7 @@
 | Campo | Detalhe |
 |---|---|
 | Projeto | Marketplace de Serviços Locais PWA (Moçambique) |
-| Versão | 1.1 + Adendos v1.2 a [v1.74](#adendo-v174) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
+| Versão | 1.1 + Adendos v1.2 a [v1.75](#adendo-v175) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
 | Autor | Engenheiro de Software Lead |
 | Estado | **Em produção** (backend no Fly.io, frontend na Vercel) desde 12/10/2026; ~~Aprovado para Desenvolvimento (Sprint 0)~~ — revisto a 21/10/2026 (Adendo v1.65) |
 
@@ -35,7 +35,7 @@ Com 64 adendos, a regra actual de uma área está muitas vezes no adendo mais re
 | Localização | GPS com estado «aproximada» (500 m–10 km), captação em 2.º plano só com permissão já dada; fallback manual Província → Distrito → Bairro; nunca se expõem coordenadas de terceiros | Adendos v1.15-C, v1.60, v1.61 |
 | Offline | Fila em IndexedDB para criar pedidos, com `Idempotency-Key` | Adendos v1.26, v1.27 |
 | Actualização da PWA | Automática (`skipWaiting`), com aviso do que mudou depois de recarregar | Adendo v1.63 |
-| Painel de admin | Menu lateral com 5 secções e separadores `?tab=` | Adendo v1.59 |
+| Painel de admin | Menu lateral com 5 secções (KYC, Utilizadores + Administradores, Pedidos, Visão Geral, Plataforma) e separadores `?tab=` consolidados | Adendos v1.59, v1.75 |
 | Indexação e privacidade | Só `/`, `/termos` e `/privacidade` são indexáveis (lista em `src/lib/paginasPublicas.ts`); o resto recebe `app.html` com `noindex`; política de privacidade em `/privacidade` (rascunho para jurista) | Adendo v1.70 |
 | Publicação, SEO e GEO | Plano P1–P9 e decisões D1–D8; feitos P1 (parcial), P2 (parcial) e P4 | Adendos v1.69, v1.70 |
 | Zona de atendimento, procura sem oferta, clientes empresariais, selos de credenciais, serviços recorrentes | Em produção desde 21/10/2026 (merges backend `3f3d4a1`, frontend `4b2cbb7`), migrations aplicadas | Adendos v1.66 a v1.68 |
@@ -2756,3 +2756,32 @@ Problemas, por categoria OWASP: banimento que não fechava a sessão nem tirava 
 **Critérios de entrega correspondentes:** frontend, Fase 48.
 
 **Notas de deploy:** só frontend (Vercel); sem versão nova, migrations nem variáveis. Depois do deploy, pedir a indexação da página inicial no Search Console.
+
+## Adendo v1.75
+
+### Refacção e consolidação do fluxo de ecrãs (28/10/2026)
+
+**Estado: implementada em `refactor/fluxo-de-telas`, frontend Fase 49, versão 0.6.0; por validar no browser. Sem componente de backend.**
+
+**Contexto.** Com o crescimento incremental da aplicação ao longo de 48 fases, acumularam-se ecrãs isolados para acções correlacionadas, duplicações de listagens e caminhos órfãos na navegação: dois ecrãs separados para completar telefone e localização no onboarding; quatro rotas de cliente para gerir pedidos (`/os-meus-pedidos`, `/os-meus-pedidos/:id/propostas`, `/servicos-recorrentes`, `/os-meus-profissionais`) mais um bloco duplicado de histórico dentro de `/perfil`; dois componentes quase idênticos para criar pedido (`NewServiceRequest` e `SolicitarServico`); três rotas de trabalho para o profissional (`/pedidos-recebidos`, `/trabalhos-aceites`, `/pedidos-proximos` órfã); dois ecrãs separados para documentos de verificação (`/verificacao-identidade` e `/credenciais`); e separadores redundantes no painel de administração (`Painel` vs. `Métricas`, `Relatórios` vs. `Procura`, e `Administradores` fora de `Utilizadores`).
+
+**Decisão.**
+- **Onboarding num único ecrã progressivo (`/completar-perfil/telefone`):** quem entra sem telefone e sem localização (registo via Google) preenche o telefone (Passo 1 de 2) e passa de imediato ao `LocationForm` (Passo 2 de 2) no mesmo ecrã, sem redireccionamento intermédio. `/completar-perfil/localizacao` mantém-se para quem já tem telefone.
+- **Central do cliente em `/os-meus-pedidos`:**
+  - Três separadores sincronizados com `?tab=` (`pedidos`, `recorrentes`, `profissionais`), reunindo pedidos activos/histórico, serviços recorrentes e profissionais já contratados.
+  - As propostas de cada pedido a 3 profissionais abrem inline dentro do próprio cartão do pedido (`PropostasDoPedido`); a rota `/os-meus-pedidos/:id/propostas` permanece funcional para quem segue o link directo do email transaccional.
+  - Retirado `<HistoricoDePedidos />` de `/perfil` (que fica dedicado a dados pessoais/empresa, localização, locais guardados, avisos e segurança).
+  - Unificado o formulário de criação de pedido em `NewServiceRequest.tsx` (serve `/novo-pedido` e `/solicitar/:id`).
+  - Atalhos da Home do cliente simplificados para 3 («Novo Pedido», «Os Meus Pedidos», «O Meu Perfil»).
+  - O cartão de cada pedido (estado, contacto, técnico, propostas inline, avaliação, repetição, denúncia, concluir/cancelar) saiu de `MyServiceRequests.tsx` para `components/pedidos/CartaoDoPedidoDoCliente.tsx`, e o formulário de avaliação para `components/pedidos/ReviewForm.tsx`: com os 3 separadores, a página tinha passado a acumular tudo (327 linhas) — fica só com separadores, estados da lista e as mutations de concluir/cancelar. Sem mudança de comportamento.
+- **Central do profissional e técnico:**
+  - `/pedidos-recebidos` («Os Meus Trabalhos») reúne 3 separadores (`?tab=convites | em-curso | recorrentes`), absorvendo `/trabalhos-aceites` e as recorrências atribuídas ao profissional.
+  - `/verificacao-identidade` (`Kyc.tsx`) passa a incluir `SecaoDeCredenciais` para `PROFESSIONAL` e `TECHNICIAN`, concentrando BI/identidade e certificados/registo criminal num só ecrã.
+- **Painel de administração:**
+  - Em `/admin/visao-geral`, fundidos «Painel» e «Métricas» no separador «Painel e Métricas» (e removida a grelha redundante de 13 cartões que duplicava a barra lateral), e integrado o quadro «Procura sem Oferta» (`SecaoDaProcura`) dentro do separador «Relatórios» (passando de 6 para 4 separadores: `painel`, `relatorios`, `auditoria`, `sistema`).
+  - Em `/admin/utilizadores`, acrescentado o 5.º separador «Administradores» (`?tab=administradores`), retirando-o de `/admin/mais`. A secção «Mais» da barra lateral passa a denominar-se «Plataforma».
+- **Compatibilidade retroactiva total:** todas as rotas antigas e links enviados pelos templates de email do backend (`/trabalhos-aceites`, `/servicos-recorrentes`, `/credenciais`, `/os-meus-profissionais`, `/pedidos-proximos`, `/os-meus-pedidos/:id/propostas`, e as queries antigas `?tab=metricas`, `?tab=procura` e `/admin/mais?tab=administradores`) redireccionam com `<Navigate ... replace />` para os novos destinos.
+
+**Critérios de entrega correspondentes:** frontend, Fase 49.
+
+**Notas de deploy:** só frontend (Vercel), versão 0.6.0; sem migrations nem variáveis novas.
