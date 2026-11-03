@@ -28,7 +28,7 @@ export const GRUPOS_DO_PAINEL: GrupoDoPainel[] = [
     rotulo: 'Gestão',
     seccoes: [
       { to: '/admin/visao-geral', rotulo: 'Visão Geral', icone: 'grelha' },
-      { to: '/admin/mais', rotulo: 'Plataforma', icone: 'pontos' },
+      { to: '/admin/mais', rotulo: 'Plataforma', icone: 'caixas' },
     ],
   },
 ]

@@ -1091,6 +1091,26 @@ Continua a ser só uma cache legível ao lado das coordenadas (mostrada em `curr
 
 ---
 
+## Fase 50 — Lista de utilizadores do painel: separadores com totais e redesenho
+
+**Estado: implementada em `refactor/fluxo-de-telas` (29/10/2026), por fundir em `main`, a seguir à Fase 49. Decisões no TRD, Adendo v1.76. Depende do Backend Fase 37 (`/admin/users/counts` e `?group=`).** Pedido do utilizador, em refinamento dos ecrãs da Fase 49.
+
+**Escopo:**
+- **Separadores de `/admin/utilizadores`:** Todos · Clientes · Técnicos · Empresas · Administradores (`?tab=todos|clientes|tecnicos|empresas|administradores`), cada um com o total (`useAdminUserCounts`). «Técnicos» inclui os profissionais singulares; «Empresas» são os `PROFESSIONAL` do tipo `COMPANY`. Sem totais (a carregar ou erro) o separador mostra só o rótulo, não um «0». Mudar o papel de um utilizador invalida os totais. O antigo `?tab=profissionais` cai em «Todos» (valor desconhecido).
+- **Separador activo:** sublinhado de 3 px na cor primária. A linha de base passou a ser uma sombra interior do contentor: com `overflow-x-auto`, a borda sobreposta por margem negativa ficava cortada a 1 px.
+- **Redesenho do painel de admin** (alterações do utilizador, registadas aqui): lista de utilizadores em tabela com linha expansível e pesquisa com sugestões instantâneas; barra lateral e cabeçalho; ícones; `Paginacao`.
+- **Organização (God Components):** `AdminUsers.tsx` (235 → ~140 linhas) perdeu a pesquisa e a filtragem para `PesquisaDeUtilizadores`, `AvatarDoUtilizador` e `utilizadores.ts`; `BarraLateral.tsx` (194 → 132) perdeu o menu do perfil para `MenuDoPerfil`. Na Fase 49, `MyServiceRequests.tsx` (327 → 104) perdeu o cartão do pedido e o formulário de avaliação.
+- **Tipografia:** Google Sans via Google Fonts (`index.html`, `index.css`, `tailwind.config.js`); CSP do `vercel.json` alargada a `fonts.googleapis.com` e `fonts.gstatic.com`; o carregamento das fontes locais saiu de `main.tsx`.
+
+**Critérios de entrega:**
+- [x] `tsc -b` limpo; `npm run lint` sem erros; testes de `src/pages` e `src/components/admin` verdes (334), com casos novos para os 5 separadores, os totais, o estado sem totais e o grupo pedido ao servidor.
+- [ ] Validar no browser (1280 px e 390 px) os separadores, o sublinhado e os totais contra o backend com a Fase 37.
+- [ ] Corrigir a coluna «Estado» da tabela, que mostra sempre «Activo»: `AdminUserSummary` não traz `banned_until`, por isso uma conta banida aparece como activa.
+- [ ] Decidir as fontes: o `@fontsource/open-sans` está em `package.json` sem uso, `inter` e `outfit` ficaram sem uso, e offline a PWA perde a tipografia (motivo da escolha original, Adendo v1.11).
+- [ ] Versão e `novidadesPorVersao.json` (a Fase 49 já usa 0.6.0).
+
+---
+
 ## Resumo de Dependências entre Fases
 
 ```
@@ -1110,7 +1130,7 @@ Fase 0 (Fundação PWA)
                                              ├─> Fases 23–26 (Empresas e equipas — backend 25–28)
                                              └─> Fase 27 (Pedido directo — backend 29) ─> Fase 28 (Contacto no catálogo — backend 30)
 
-Só frontend, sem dependência do backend: Fases 29, 33, 35 e 36 (localização), 30 e 37 (aviso e actualização da app), 46 (404), 48 (favicon) e 49 (consolidação do fluxo de ecrãs).
+Só frontend, sem dependência do backend: Fases 29, 33, 35 e 36 (localização), 30 e 37 (aviso e actualização da app), 46 (404), 48 (favicon) e 49 (consolidação do fluxo de ecrãs). A Fase 50 depende do Backend Fase 37.
 ```
 
 **Alinhamento com o Backend:** cada fase deste plano depende do endpoint correspondente já estar disponível (ainda que em staging) no repositório [PiquetePro24_Backend](https://github.com/Nexel002/PiquePro24_Backend) — Fase 1 ↔ Backend Fase 2, Fase 2/3 ↔ Backend Fase 3, Fase 4 ↔ Backend Fases 4-5, Fase 7 ↔ Backend Fase 7. A documentação OpenAPI publicada desde cedo pelo backend (ver Adendo v1.2 no plano do backend) é o contrato de referência para desbloquear o desenvolvimento do frontend antes de cada endpoint estar 100% pronto (mock local contra o schema documentado).

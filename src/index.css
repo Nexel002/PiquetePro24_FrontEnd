@@ -10,13 +10,27 @@
 
   body {
     @apply bg-gray-50 text-gray-900 font-sans antialiased min-h-screen selection:bg-piquete-yellow selection:text-piquete-blue;
+    font-family: "Google Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+    font-variation-settings: "GRAD" 0;
   }
-  
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading font-bold text-piquete-blue tracking-tight;
+    font-family: "Google Sans", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+    font-variation-settings: "GRAD" 0;
   }
 }
 
+.google-sans {
+  font-family: "Google Sans", sans-serif;
+  font-optical-sizing: auto;
+  font-style: normal;
+  font-variation-settings: "GRAD" 0;
+}
 
 @layer components {
   /* Glassmorphism Cards */
@@ -89,4 +103,3 @@
     scrollbar-width: none;
   }
 }
-

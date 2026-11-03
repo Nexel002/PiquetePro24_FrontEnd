@@ -3,7 +3,7 @@
 | Campo | Detalhe |
 |---|---|
 | Projeto | Marketplace de Serviços Locais PWA (Moçambique) |
-| Versão | 1.1 + Adendos v1.2 a [v1.75](#adendo-v175) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
+| Versão | 1.1 + Adendos v1.2 a [v1.76](#adendo-v176) (o último adendo é sempre o mais recente; um adendo prevalece sobre o corpo original e sobre os adendos anteriores que contradiga) |
 | Autor | Engenheiro de Software Lead |
 | Estado | **Em produção** (backend no Fly.io, frontend na Vercel) desde 12/10/2026; ~~Aprovado para Desenvolvimento (Sprint 0)~~ — revisto a 21/10/2026 (Adendo v1.65) |
 
@@ -35,7 +35,7 @@ Com 64 adendos, a regra actual de uma área está muitas vezes no adendo mais re
 | Localização | GPS com estado «aproximada» (500 m–10 km), captação em 2.º plano só com permissão já dada; fallback manual Província → Distrito → Bairro; nunca se expõem coordenadas de terceiros | Adendos v1.15-C, v1.60, v1.61 |
 | Offline | Fila em IndexedDB para criar pedidos, com `Idempotency-Key` | Adendos v1.26, v1.27 |
 | Actualização da PWA | Automática (`skipWaiting`), com aviso do que mudou depois de recarregar | Adendo v1.63 |
-| Painel de admin | Menu lateral com 5 secções (KYC, Utilizadores + Administradores, Pedidos, Visão Geral, Plataforma) e separadores `?tab=` consolidados | Adendos v1.59, v1.75 |
+| Painel de admin | Menu lateral com 5 secções (KYC, Utilizadores + Administradores, Pedidos, Visão Geral, Plataforma) e separadores `?tab=` consolidados; utilizadores em Todos/Clientes/Técnicos/Empresas/Administradores com totais | Adendos v1.59, v1.75, v1.76 |
 | Indexação e privacidade | Só `/`, `/termos` e `/privacidade` são indexáveis (lista em `src/lib/paginasPublicas.ts`); o resto recebe `app.html` com `noindex`; política de privacidade em `/privacidade` (rascunho para jurista) | Adendo v1.70 |
 | Publicação, SEO e GEO | Plano P1–P9 e decisões D1–D8; feitos P1 (parcial), P2 (parcial) e P4 | Adendos v1.69, v1.70 |
 | Zona de atendimento, procura sem oferta, clientes empresariais, selos de credenciais, serviços recorrentes | Em produção desde 21/10/2026 (merges backend `3f3d4a1`, frontend `4b2cbb7`), migrations aplicadas | Adendos v1.66 a v1.68 |
@@ -859,7 +859,7 @@ Surgidos ao implementar o consumo desta fase no frontend: `GET /service_requests
 **Decisões:**
 - **Paleta e tipografia no `tailwind.config.js`:** cores `piquete-*` (azul `#031F4B`, amarelo `#FFC700`, cinza `#8A8D91` e variantes), `font-sans` Inter e `font-heading` Outfit, sombra `shadow-card`. `theme_color` do manifest e do `index.html` passam a `#031F4B`.
 - **Componentes partilhados em `src/components/ui/`:** `Button` (variantes `primary`/`secondary`/`outline`/`danger`, `isLoading` com spinner e botão desactivado), `Input` (label ligada ao campo por `htmlFor`/`useId`, `aria-invalid`, texto a 16 px para evitar o zoom automático do iOS ao focar) e `Card`. Migrados: `Login`, `Home`, `FindProfessionals`, `LocationForm` e os dois passos do onboarding. Os ecrãs vindos da Fase 4 (subscrição, trabalhos aceites, KYC) e o painel de admin ainda usam o estilo antigo.
-- **Fontes alojadas no bundle (`@fontsource/inter`, `@fontsource/outfit`), e não via Google Fonts:** a CSP do Adendo v1.11 (`style-src`/`font-src 'self'`) bloquearia `fonts.googleapis.com`/`fonts.gstatic.com` sem erro visível, e offline a PWA perderia a tipografia. Só o subconjunto `latin` e os pesos usados (Inter 400–700, Outfit 500–800), importados em `src/main.tsx`; `woff2` acrescentado ao `globPatterns` do Workbox para entrar no precache. Duas dependências novas, sem custo de runtime além dos ficheiros de fonte.
+- **[Substituída pelo Adendo v1.76: Google Sans via Google Fonts.] Fontes alojadas no bundle (`@fontsource/inter`, `@fontsource/outfit`), e não via Google Fonts:** a CSP do Adendo v1.11 (`style-src`/`font-src 'self'`) bloquearia `fonts.googleapis.com`/`fonts.gstatic.com` sem erro visível, e offline a PWA perderia a tipografia. Só o subconjunto `latin` e os pesos usados (Inter 400–700, Outfit 500–800), importados em `src/main.tsx`; `woff2` acrescentado ao `globPatterns` do Workbox para entrar no precache. Duas dependências novas, sem custo de runtime além dos ficheiros de fonte.
 - **Ícones PWA:** o logótipo fornecido (`public/pwa-icon.png`) é horizontal (1024×343) e não serve de ícone — declarado como 192/512, o Chrome rejeita-o. Gerados a partir do escudo do logótipo: `pwa-192x192.png`, `pwa-512x512.png` (transparentes), `pwa-maskable-512x512.png` (escudo dentro da zona segura de 80 %, fundo branco) e `apple-touch-icon.png` (180 px, fundo opaco — o iOS pinta a transparência de preto). Manifest único, gerado pelo `vite-plugin-pwa`.
 - **Viewport sem `user-scalable=no`/`maximum-scale`:** bloquear o zoom falha WCAG 1.4.4 (Secção 5 do `CLAUDE.md`).
 
@@ -2785,3 +2785,22 @@ Problemas, por categoria OWASP: banimento que não fechava a sessão nem tirava 
 **Critérios de entrega correspondentes:** frontend, Fase 49.
 
 **Notas de deploy:** só frontend (Vercel), versão 0.6.0; sem migrations nem variáveis novas.
+
+## Adendo v1.76
+
+### Lista de utilizadores do painel: grupos, totais e redesenho (29/10/2026)
+
+**Estado: backend Fase 37 em `feat/admin-utilizadores-por-grupo`, frontend Fase 50 em `refactor/fluxo-de-telas`; ambos por fundir em `main`. Pedido do utilizador. Sem migrations nem variáveis de ambiente.**
+
+**Decisão.** Os separadores de `/admin/utilizadores` passam de Todos/Clientes/Profissionais/Técnicos/Administradores a **Todos, Clientes, Técnicos, Empresas, Administradores**, com o total em cada um e o separador activo sublinhado.
+- **Grupos (decisão do utilizador):** «Técnicos» = `TECHNICIAN` + `PROFESSIONAL` singular (incluindo `professional_type` nulo); «Empresas» = `PROFESSIONAL` + `COMPANY`. Cada conta cai em exactamente um grupo, por isso Clientes + Técnicos + Empresas + Administradores = Todos. O separador «Profissionais» deixou de existir.
+- **O agrupamento é do servidor:** `GET /admin/users?group=CLIENTS|TECHNICIANS|COMPANIES|ADMINS` (soma-se a `role`; grupo e pesquisa num só `.or(and(or(…),or(…)))`) e `GET /admin/users/counts` → `{ all, clients, technicians, companies, admins }`, cinco contagens `head: true` em paralelo, sem pesquisa nem paginação. Filtrar no cliente falsearia a paginação e os totais. `/counts` está registada antes de `/:id`. Só ADMIN.
+- **Frontend:** `useAdminUserCounts`; sem totais o separador mostra só o rótulo. Mudar o papel de um utilizador invalida os totais. O sublinhado do separador activo tem 3 px; a linha de base é uma sombra interior do contentor, porque com `overflow-x-auto` a borda sobreposta por margem negativa ficava cortada a 1 px. O antigo `?tab=profissionais` cai em «Todos».
+- **Redesenho do painel** (alterações do utilizador): tabela de utilizadores com linha expansível e pesquisa com sugestões, barra lateral e cabeçalho novos. Reorganização sem mudança de comportamento: `PesquisaDeUtilizadores`, `AvatarDoUtilizador`, `utilizadores.ts` e `MenuDoPerfil`.
+- **Tipografia — substitui a decisão de fontes alojadas no bundle (Adendo v1.11):** Google Sans via Google Fonts, com a CSP do `vercel.json` alargada a `https://fonts.googleapis.com` (`style-src`) e `https://fonts.gstatic.com` (`font-src`). O carregamento de `@fontsource/inter` e `@fontsource/outfit` saiu de `main.tsx`; offline a PWA cai para a fonte do sistema, que era o motivo da decisão original. `@fontsource/open-sans` entrou em `package.json` sem uso.
+
+**Pendente:** a coluna «Estado» da tabela mostra sempre «Activo» (`AdminUserSummary` não traz `banned_until`); decidir as fontes (dependências sem uso, tipografia offline); validar no browser; confirmar na base real que a soma dos grupos bate com «Todos».
+
+**Critérios de entrega correspondentes:** backend Fase 37, frontend Fase 50.
+
+**Notas de deploy:** sem migrations nem variáveis novas. Backend primeiro, depois o frontend (que chama `/admin/users/counts`). A CSP nova só tem efeito com o deploy do `vercel.json`.

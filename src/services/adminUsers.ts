@@ -29,8 +29,21 @@ export interface AdminUserDetail extends AdminUserSummary {
   company?: { id: string; full_name: string; title: string; status: 'ACTIVE' | 'INACTIVE' }
 }
 
+// Espelha ADMIN_USER_GROUPS do backend (adminUserService.ts). TECHNICIANS junta os técnicos das
+// empresas e os profissionais singulares; COMPANIES são os PROFESSIONAL do tipo COMPANY.
+export type AdminUserGroup = 'CLIENTS' | 'TECHNICIANS' | 'COMPANIES' | 'ADMINS'
+
+export interface AdminUserCounts {
+  all: number
+  clients: number
+  technicians: number
+  companies: number
+  admins: number
+}
+
 export interface AdminUserFilters {
   role?: UserRole
+  group?: AdminUserGroup
   search?: string
   province?: string
   limit: number
@@ -44,12 +57,19 @@ export async function fetchUsers(filters: AdminUserFilters): Promise<AdminUserSu
   const response = await api.get<AdminUserSummary[]>('/admin/users', {
     params: {
       role: filters.role,
+      group: filters.group,
       search: filters.search || undefined,
       province: filters.province || undefined,
       limit: filters.limit,
       offset: filters.offset,
     },
   })
+  return response.data
+}
+
+// Totais dos separadores, sem pesquisa: o número ao lado de cada um é o do grupo inteiro.
+export async function fetchUserCounts(): Promise<AdminUserCounts> {
+  const response = await api.get<AdminUserCounts>('/admin/users/counts')
   return response.data
 }
 

@@ -7,8 +7,8 @@ interface IconeDeAdminProps {
 }
 
 // Decorativo por omissão: o texto ao lado é que diz o que o ícone significa (WCAG — estado
-// comunicado por texto, não só por imagem).
-export function IconeDeAdmin({ nome, className = 'w-4 h-4', strokeWidth = 2 }: IconeDeAdminProps) {
+// comunicado por texto, não só por imagem). Traço 1.65 segue a espessura nativa do Iconly Light/Curved.
+export function IconeDeAdmin({ nome, className = 'w-4 h-4', strokeWidth = 1.65 }: IconeDeAdminProps) {
   return (
     <svg className={`shrink-0 ${className}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={strokeWidth} aria-hidden="true">
       {CAMINHOS_DOS_ICONES_DE_ADMIN[nome].map((d) => (

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { AdminUsers } from './AdminUsers'
@@ -8,14 +8,16 @@ const estado = vi.hoisted(() => ({
   lista: [] as AdminUserSummary[],
   isLoading: false,
   isError: false,
+  contagens: undefined as undefined | { all: number; clients: number; technicians: number; companies: number; admins: number },
+  filtros: [] as Array<{ group?: string }>,
 }))
 
 vi.mock('../hooks/useAdminUsers', () => ({
-  useAdminUsers: () => ({
-    data: estado.lista,
-    isLoading: estado.isLoading,
-    isError: estado.isError,
-  }),
+  useAdminUsers: (filtros: { group?: string }) => {
+    estado.filtros.push(filtros)
+    return { data: estado.lista, isLoading: estado.isLoading, isError: estado.isError }
+  },
+  useAdminUserCounts: () => ({ data: estado.contagens }),
 }))
 
 const USER_MOCK: AdminUserSummary = {
@@ -57,10 +59,46 @@ afterEach(() => {
   estado.lista = []
   estado.isLoading = false
   estado.isError = false
+  estado.contagens = undefined
+  estado.filtros = []
+})
+
+describe('AdminUsers — separadores', () => {
+  it('mostra Todos, Clientes, Técnicos, Empresas e Administradores, cada um com o seu total', () => {
+    estado.contagens = { all: 12, clients: 5, technicians: 4, companies: 2, admins: 1 }
+    mostrar()
+
+    const separadores = screen.getAllByRole('tab').map((t) => t.textContent)
+    expect(separadores).toEqual(['Todos12', 'Clientes5', 'Técnicos4', 'Empresas2', 'Administradores1'])
+  })
+
+  it('sem contagens (a carregar ou erro) mostra só os rótulos, sem números', () => {
+    mostrar()
+
+    expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual([
+      'Todos',
+      'Clientes',
+      'Técnicos',
+      'Empresas',
+      'Administradores',
+    ])
+  })
+
+  it('marca o separador escolhido e pede ao servidor o grupo respectivo', () => {
+    mostrar()
+    expect(screen.getByRole('tab', { name: /todos/i }).getAttribute('aria-selected')).toBe('true')
+    expect(estado.filtros.at(-1)?.group).toBeUndefined()
+
+    fireEvent.click(screen.getByRole('tab', { name: /empresas/i }))
+
+    expect(screen.getByRole('tab', { name: /empresas/i }).getAttribute('aria-selected')).toBe('true')
+    expect(screen.getByRole('tab', { name: /todos/i }).getAttribute('aria-selected')).toBe('false')
+    expect(estado.filtros.at(-1)?.group).toBe('COMPANIES')
+  })
 })
 
 describe('AdminUsers', () => {
-  it('mostra a lista com avatar, nome, telefone e badge de papel', () => {
+  it('mostra a lista com avatar circular, nome, cargo, telefone e botão de olho para ver detalhes', () => {
     estado.lista = [USER_MOCK, PROF_MOCK]
     mostrar()
 
@@ -75,8 +113,39 @@ describe('AdminUsers', () => {
     const linkCliente = screen.getByRole('link', { name: /latifa sidik/i })
     expect(linkCliente.getAttribute('href')).toBe('/admin/utilizadores/u1')
 
-    const linkProf = screen.getByRole('link', { name: /amélia nhantumbo/i })
-    expect(linkProf.getAttribute('href')).toBe('/admin/utilizadores/u2')
+    const botoesOlho = screen.getAllByRole('link', { name: 'Ver ficha' })
+    expect(botoesOlho).toHaveLength(2)
+    expect(botoesOlho[0].getAttribute('href')).toBe('/admin/utilizadores/u1')
+    expect(botoesOlho[1].getAttribute('href')).toBe('/admin/utilizadores/u2')
+  })
+
+  it('filtra instantaneamente letra a letra e mostra sugestões ao escrever sem esperar pelo nome completo', () => {
+    estado.lista = [USER_MOCK, PROF_MOCK]
+    mostrar()
+
+    const campoPesquisa = screen.getByRole('textbox', { name: /pesquisar utilizadores/i })
+    fireEvent.focus(campoPesquisa)
+    fireEvent.change(campoPesquisa, { target: { value: 'Am' } })
+
+    // A tabela filtra de imediato: Latifa desaparece e Amélia permanece
+    expect(screen.queryByText('Latifa Sidik')).toBeNull()
+    const caixaSugestoes = screen.getByRole('listbox', { name: /sugestões de utilizadores/i })
+    expect(within(caixaSugestoes).getByText('Amélia Nhantumbo')).toBeTruthy()
+  })
+
+  it('expande e recolhe os detalhes rápidos da linha ao clicar na seta', () => {
+    estado.lista = [USER_MOCK]
+    mostrar()
+
+    const botaoExpandir = screen.getByRole('button', { name: /expandir resumo de latifa sidik/i })
+    fireEvent.click(botaoExpandir)
+
+    expect(screen.getByText('Localização Registada')).toBeTruthy()
+    expect(screen.getByText('Central, Cidade de Maputo, Maputo')).toBeTruthy()
+
+    const botaoRecolher = screen.getByRole('button', { name: /recolher resumo de latifa sidik/i })
+    fireEvent.click(botaoRecolher)
+    expect(screen.queryByText('Localização Registada')).toBeNull()
   })
 
   it('mostra estado vazio quando não há utilizadores', () => {

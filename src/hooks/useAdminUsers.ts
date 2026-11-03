@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   banUser,
   changeUserRole,
+  fetchUserCounts,
   fetchUserDetail,
   fetchUsers,
   resendEmail,
@@ -10,6 +11,13 @@ import {
   type ChangeRolePayload,
   type ResendEmailTemplate,
 } from '../services/adminUsers'
+
+export function useAdminUserCounts() {
+  return useQuery({
+    queryKey: ['admin-users', 'counts'],
+    queryFn: fetchUserCounts,
+  })
+}
 
 // Sem `enabled: session !== null`, mesma decisão de useKycSubmissions/useAuditLog: a
 // rota só é montada dentro de uma tela já protegida por role.
@@ -66,6 +74,8 @@ export function useChangeUserRole() {
     mutationFn: (input: { userId: string; payload: ChangeRolePayload }) => changeUserRole(input.userId, input.payload),
     onSuccess: (_data, input) => {
       queryClient.invalidateQueries({ queryKey: ['admin-users', 'detail', input.userId] })
+      // Mudar de papel muda o separador onde a pessoa aparece e os totais de dois deles.
+      queryClient.invalidateQueries({ queryKey: ['admin-users', 'counts'] })
     },
   })
 }

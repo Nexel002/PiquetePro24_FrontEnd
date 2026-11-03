@@ -18,10 +18,6 @@ interface SeparadoresProps<T extends string> {
   rotulo: string
 }
 
-// A barra de subsecções de uma secção do painel («Tab Anatomy»), no padrão do `Tabs` do
-// ControlCore: `role="tablist"` com `aria-selected`, setas para andar entre separadores e
-// Home/End para os extremos. Só o activo entra na ordem do Tab — com cinco separadores, quem
-// navega por teclado passaria cinco vezes por eles para chegar ao conteúdo.
 export function Separadores<T extends string>({ separadores, activo, aoMudar, rotulo }: SeparadoresProps<T>) {
   function aoTeclado(evento: KeyboardEvent, indice: number) {
     const ultimo = separadores.length - 1
@@ -49,9 +45,9 @@ export function Separadores<T extends string>({ separadores, activo, aoMudar, ro
     <div
       role="tablist"
       aria-label={rotulo}
-      // `overflow-x-auto` porque seis separadores não cabem num telemóvel de 360 px; sem isto, os
-      // últimos ficavam inalcançáveis.
-      className="relative flex gap-1 overflow-x-auto no-scrollbar border-b border-slate-100 px-2 sm:px-4"
+      // A linha de base é uma sombra interior e não um border-b: com `overflow-x-auto` o sublinhado
+      // do separador activo, que sobrepunha essa borda com margem negativa, ficava cortado a 1 px.
+      className="relative flex gap-1 overflow-x-auto no-scrollbar px-4 sm:px-8 bg-white shadow-[inset_0_-1px_0_0_#f1f5f9]"
     >
       {separadores.map((separador, indice) => {
         const estaActivo = separador.id === activo
@@ -64,9 +60,9 @@ export function Separadores<T extends string>({ separadores, activo, aoMudar, ro
             tabIndex={estaActivo ? 0 : -1}
             onClick={() => aoMudar(separador.id)}
             onKeyDown={(evento) => aoTeclado(evento, indice)}
-            className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-3 sm:px-4 py-3.5 -mb-px text-sm font-semibold transition-colors duration-150 rounded-t focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-piquete-blue-bright focus-visible:ring-offset-2 ${
+            className={`flex items-center gap-2 whitespace-nowrap border-b-[3px] px-3 sm:px-4 py-3.5 text-sm font-semibold transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1D5BD8] ${
               estaActivo
-                ? 'border-piquete-blue-bright text-piquete-blue-bright'
+                ? 'border-[#1D5BD8] text-[#1D5BD8]'
                 : 'border-transparent text-slate-500 hover:border-slate-300 hover:text-slate-800'
             }`}
           >
@@ -75,7 +71,7 @@ export function Separadores<T extends string>({ separadores, activo, aoMudar, ro
             {separador.selo !== undefined && separador.selo !== '' && (
               <span
                 className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold ${
-                  estaActivo ? 'bg-piquete-blue-bright/10 text-piquete-blue-bright' : 'bg-slate-100 text-slate-600'
+                  estaActivo ? 'bg-[#1D5BD8]/10 text-[#1D5BD8]' : 'bg-slate-100 text-slate-600'
                 }`}
               >
                 {separador.selo}
@@ -92,12 +88,10 @@ interface SeccaoComSeparadoresProps<T extends string> extends SeparadoresProps<T
   children: ReactNode
 }
 
-// O cartão de uma secção: separadores em cima, o conteúdo do activo em baixo. O conteúdo é
-// montado condicionalmente por quem chama (e não escondido com `hidden`): cada separador busca
-// os seus dados ao montar, e mantê-los todos montados faria um pedido por separador.
+// Ocupa 100% da largura do painel central sem cartões estreitos nem margens laterais supérfluas.
 export function SeccaoComSeparadores<T extends string>({ children, ...separadores }: SeccaoComSeparadoresProps<T>) {
   return (
-    <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden flex flex-col">
+    <div className="w-full bg-white flex flex-col">
       <Separadores {...separadores} />
       {children}
     </div>

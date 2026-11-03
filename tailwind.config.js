@@ -23,8 +23,8 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        heading: ['Outfit', 'sans-serif'],
+        sans: ['"Google Sans"', 'sans-serif'],
+        heading: ['"Google Sans"', 'sans-serif'],
       },
       boxShadow: {
         'card': '0 4px 20px -2px rgba(3, 31, 75, 0.05), 0 2px 6px -1px rgba(3, 31, 75, 0.03)',
@@ -79,9 +79,8 @@ export default {
         cabo: {
           to: { strokeDashoffset: '-14' },
         },
-      }
+      },
     },
   },
   plugins: [],
 }
-
